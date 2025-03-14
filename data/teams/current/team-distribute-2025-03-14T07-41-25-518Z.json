@@ -1,0 +1,79 @@
+{
+  "timestamp": "2025-03-14T07:41:25.518Z",
+  "teamData": {
+    "odd": [
+      {
+        "team": "odd",
+        "idIndex": 0,
+        "id": "odd-1",
+        "memberName": "피존투",
+        "isPM": false
+      },
+      {
+        "team": "odd",
+        "idIndex": 1,
+        "id": "odd-2",
+        "memberName": "야도란",
+        "isPM": false
+      },
+      {
+        "team": "odd",
+        "idIndex": 2,
+        "id": "odd-3",
+        "memberName": "파이리",
+        "isPM": false
+      },
+      {
+        "team": "odd",
+        "idIndex": 3,
+        "id": "odd-4",
+        "memberName": "단데기",
+        "isPM": false
+      },
+      {
+        "team": "odd",
+        "idIndex": 4,
+        "id": "odd-5",
+        "memberName": "꼬부기",
+        "isPM": false
+      }
+    ],
+    "even": [
+      {
+        "team": "even",
+        "idIndex": 0,
+        "id": "even-1",
+        "memberName": "또가스",
+        "isPM": false
+      },
+      {
+        "team": "even",
+        "idIndex": 1,
+        "id": "even-2",
+        "memberName": "버터풀",
+        "isPM": false
+      },
+      {
+        "team": "even",
+        "idIndex": 2,
+        "id": "even-3",
+        "memberName": "피카츄",
+        "isPM": false
+      },
+      {
+        "team": "even",
+        "idIndex": 3,
+        "id": "even-4",
+        "memberName": "딱충이",
+        "isPM": false
+      },
+      {
+        "team": "even",
+        "idIndex": 4,
+        "id": "even-5",
+        "memberName": "라이츄",
+        "isPM": false
+      }
+    ]
+  }
+}
