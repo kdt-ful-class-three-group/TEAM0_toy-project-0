@@ -1,6 +1,7 @@
 import demoMembers from "../../data/demoMembers.js";
 import TeamDistributor from "../core/team-distributor.js";
 import TeamMember from "../models/TeamMember.js";
+import TeamDecisionSaver from '../services/save-team-decision-json.js';
 
 /**
  * @fileoverview 팀 분배 시스템 테스트
@@ -24,6 +25,15 @@ console.log('- 섞인 멤버 순서:', shuffledMembers);
 console.log('\n------------------------------ 팀 분배 결과 ------------------------------');
 console.log('- 팀 분배 결과:');
 console.log(JSON.stringify(distributor.getTeamStatus(), null, 2));
+
+// 팀 분배 결과 저장
+const saver = new TeamDecisionSaver();
+try {
+  await saver.saveTeamDecision(distributor.getTeamStatus());
+  console.log('\n팀 분배 결과가 성공적으로 저장되었습니다.');
+} catch (error) {
+  console.error('팀 분배 결과 저장 중 오류가 발생했습니다:', error);
+}
 
 console.log('\n------------------------------ TeamMember 클래스 기능 테스트 ------------------------------');
 // 2. TeamMember 클래스 기능 테스트
