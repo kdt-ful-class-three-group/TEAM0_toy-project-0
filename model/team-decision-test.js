@@ -38,30 +38,47 @@ import TeamMember from "./modules/TeamMember.js";
  * - TeamMember: 멤버 객체 생성자
  */
 
-// 팀 분배 실행
-const { teams, shuffledMembers } = distributeTeams(demoMembers);
+/**
+ * ===========================
+ * 임시 테스트 실행 코드
+ * TODO: 추후 별도의 테스트 파일로 분리 예정
+ * ===========================
+ */
 
-// 결과 출력
+// 1. 팀 분배 기능 테스트
+console.log('\n[팀 분배 테스트]');
+const { teams, shuffledMembers } = distributeTeams(demoMembers);
 console.log('섞인 멤버 순서:', shuffledMembers);
 
-// getInfo() 메서드를 사용하여 팀 현황 출력
+// 2. 팀 현황 출력 테스트
+console.log('\n[팀 현황 출력 테스트]');
 const teamStatus = {
     odd: teams.odd.map(member => member.getInfo()),
     even: teams.even.map(member => member.getInfo())
 };
-
 console.log('팀 현황:', JSON.stringify(teamStatus, null, 2));
 
-// 테스트 코드
+/**
+ * TeamMember 클래스 기능 테스트
+ * @deprecated 추후 제거 예정
+ */
+console.log('\n[TeamMember 클래스 테스트]');
 const testMember = new TeamMember("피카츄", "odd", 0);
-console.log('테스트 멤버 생성:', testMember.getInfo());
+console.log('1. 멤버 생성:', testMember.getInfo());
 
 testMember.memberName = "라이츄";
 testMember.team = "even";
-console.log('테스트 멤버 정보 수정:', testMember.getInfo());
+console.log('2. 정보 수정:', testMember.getInfo());
 
 testMember.assignPM();
-console.log('PM 지정 후:', testMember.getInfo());
+console.log('3. PM 지정:', testMember.getInfo());
 
 testMember.unassignPM();
-console.log('PM 해제 후:', testMember.getInfo());
+console.log('4. PM 해제:', testMember.getInfo());
+
+/**
+ * @todo
+ * - 별도의 테스트 파일 생성
+ * - Jest 등의 테스트 프레임워크 도입 검토
+ * - 테스트 케이스 체계화
+ */
