@@ -17,6 +17,7 @@ const shuffledMembers = shuffledResult.shuffledArray;
 
 
 
+console.log(shuffledResult);
 console.log('섞인 멤버 순서:', shuffledMembers);
 
 // 배열을 순회하면서 팀 나누기
@@ -33,4 +34,3 @@ shuffledMembers.forEach((member, index) => {
 
   console.log('홀수 팀:', oddTeam);
   console.log('짝수 팀:', evenTeam);
-  
