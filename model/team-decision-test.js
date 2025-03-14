@@ -18,8 +18,9 @@ const shuffledMembers = shuffledResult.shuffledArray;
 const createMemberObject = (member, team, index) => {
     return {
         team: team,
+        idIndex: index,
         id: `${team}-${index + 1}`,
-        member: member,
+        memberName: member,
         isPM: false
     };
 };
