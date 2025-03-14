@@ -1,6 +1,6 @@
-import shuffleArray from "./shffleArray.js";
-import { isOdd } from "./odd-or-even-decision.js";
-import TeamMember from "./TeamMember.js";
+import shuffleArray from "../utils/shuffleArray.js";
+import { isOdd } from "../utils/odd-or-even-decision.js";
+import TeamMember from "../models/TeamMember.js";
 
 /**
  * @function distributeTeams
@@ -45,4 +45,4 @@ const distributeTeams = (members) => {
     };
 };
 
-export default distributeTeams;
+export default distributeTeams; 
