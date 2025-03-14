@@ -14,18 +14,28 @@ const teamState = {
 const shuffledResult = shuffleArray([...demoMembers]);
 const shuffledMembers = shuffledResult.shuffledArray;
 
-console.log('섞인 멤버 순서:', shuffledMembers);
+// 멤버 객체를 생성하는 함수
+const createMemberObject = (member, team, index) => {
+    return {
+        team: team,
+        id: `${team}-${index + 1}`,
+        member: member,
+        isPM: false
+    };
+};
 
 // 배열을 순회하면서 팀 나누기
 shuffledMembers.forEach((member, index) => {
     teamState.temp = member;
     
     if (isOdd(index)) {
-        teamState.teams.odd.push(teamState.temp);
+        const memberObj = createMemberObject(teamState.temp, 'odd', teamState.teams.odd.length);
+        teamState.teams.odd.push(memberObj);
     } else {
-        teamState.teams.even.push(teamState.temp);
+        const memberObj = createMemberObject(teamState.temp, 'even', teamState.teams.even.length);
+        teamState.teams.even.push(memberObj);
     }
 });
 
-// 결과 확인을 위한 콘솔 로그
-console.log('팀 현황:', teamState.teams);
+console.log('섞인 멤버 순서:', shuffledMembers);
+console.log('팀 현황:', JSON.stringify(teamState.teams, null, 2));
