@@ -1,4 +1,4 @@
- // Start of Selection
+// Start of Selection
 /**
  * 주어진 값이 홀수인지 여부를 판단하는 함수입니다.
  *
