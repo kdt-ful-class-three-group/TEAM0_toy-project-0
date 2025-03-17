@@ -2,6 +2,7 @@
  * @file utils/index.js
  * @description 여러 컴포넌트에서 사용하는 유틸리티 함수들을 모듈화합니다.
  */
+import store from '../store/index.js';
 
 /**
  * @function createUtils
@@ -59,17 +60,50 @@ const createUtils = () => {
    * @returns {string} 중복되지 않는 이름
    */
   const generateMemberName = (name, existingNames) => {
-    if (!existingNames.includes(name)) return name;
-
-    let counter = 1;
-    let newName = `${name} ${counter}`;
+    // 접미사가 없는 이름으로 시작하는 모든 멤버 찾기
+    const exactMatch = existingNames.includes(name);
+    const sameBaseNames = existingNames.filter(existingName => 
+      existingName === name || existingName.startsWith(`${name}-`)
+    );
     
-    while (existingNames.includes(newName)) {
-      counter++;
-      newName = `${name} ${counter}`;
+    // 중복된 이름이 있는 경우
+    if (exactMatch || sameBaseNames.length > 0) {
+      // 첫 번째 중복이 발생한 경우 (접미사 없는 이름이 이미 존재)
+      if (exactMatch) {
+        // 기존 멤버 이름에 접미사 부여를 위해 store에서 members 업데이트
+        const state = store.getState();
+        const newMembers = [...state.members];
+        
+        // 접미사가 없는 기존 멤버 찾기
+        const indexOfExistingName = newMembers.findIndex(m => m === name);
+        
+        // 접미사가 없는 기존 멤버에게 -1 접미사 부여
+        if (indexOfExistingName !== -1) {
+          newMembers[indexOfExistingName] = `${name}-1`;
+          store.setState({ members: newMembers });
+          
+          // 새 멤버는 -2를 사용
+          return `${name}-2`;
+        }
+      }
+      
+      // 사용된 접미사 번호 추출
+      const usedSuffixes = sameBaseNames
+        .map(n => {
+          if (n === name) return 0;
+          const match = n.match(new RegExp(`^${name}-([0-9]+)$`));
+          return match ? parseInt(match[1]) : 0;
+        })
+        .filter(n => n !== 0);
+      
+      // 다음 접미사 번호 결정 (최대값 + 1 또는 1)
+      const nextSuffix = usedSuffixes.length > 0 ? Math.max(...usedSuffixes) + 1 : 1;
+      
+      return `${name}-${nextSuffix}`;
     }
     
-    return newName;
+    // 중복이 없으면 원래 이름 사용
+    return name;
   };
 
   /**
