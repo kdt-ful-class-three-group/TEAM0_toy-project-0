@@ -29,7 +29,7 @@
       
       /* 수정 가능한 숫자 스타일 추가 */
       .number-edit {
-        color: #0066cc;
+        color: #333;
         cursor: pointer;
         padding: 0 4px;
       }
@@ -40,14 +40,14 @@
       .number-input {
         width: 40px;
         padding: 2px;
-        border: 1px solid #0066cc;
+        border: 1px solid #333;
         border-radius: 2px;
         font-size: inherit;
       }
       
       /* 수정 가능한 접미사 스타일 수정 */
       .suffix-edit {
-        color: #0066cc;
+        color: #333;
         cursor: pointer;
         padding: 0 4px;
         font-style: italic; /* 수정 가능함을 시각적으로 표시 */
@@ -60,9 +60,56 @@
         width: auto;
         min-width: 60px;
         padding: 2px 4px;
-        border: 1px solid #0066cc;
+        border: 1px solid #333;
         border-radius: 2px;
         font-size: inherit;
+      }
+      
+      /* 수정 버튼 스타일 */
+      .edit-btn {
+        font-size: 0.8em;
+        padding: 2px 6px;
+        margin-left: 8px;
+        background-color: #e6f0ff;
+        border: 1px solid #333;
+        border-radius: 4px;
+        color: #333;
+        cursor: pointer;
+      }
+      .edit-btn:hover {
+        background-color: #333;
+        color: white;
+      }
+      
+      /* 확정 버튼 스타일 */
+      .confirm-btn {
+        font-size: 0.8em;
+        padding: 2px 6px;
+        margin-left: 4px;
+        background-color: #4CAF50;
+        border: 1px solid #45a049;
+        border-radius: 4px;
+        color: white;
+        cursor: pointer;
+      }
+      .confirm-btn:hover {
+        background-color: #45a049;
+      }
+
+      /* 수정 입력 필드 스타일 */
+      .suffix-input {
+        width: 80px;
+        padding: 2px 4px;
+        border: 1px solid #333;
+        border-radius: 4px;
+        margin-right: 4px;
+      }
+
+      /* 수정 모드 컨테이너 */
+      .edit-mode {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
       }
     </style>
   </head>
@@ -167,15 +214,15 @@
 
           if (name.includes('-')) {
             const [baseName, suffix] = name.split('-');
-            const suffixSpan = document.createElement('span');
-            suffixSpan.className = 'suffix-edit';
-            suffixSpan.textContent = suffix;
-            suffixSpan.title = '클릭하여 수정'; // 툴팁 추가
+            nameSpan.textContent = `${baseName}-${suffix}`;
 
-            nameSpan.textContent = `${baseName}-`;
-            nameSpan.appendChild(suffixSpan);
+            // 수정 버튼 추가
+            const editBtn = document.createElement('button');
+            editBtn.className = 'edit-btn';
+            editBtn.textContent = '수정';
+            editBtn.addEventListener('click', (e) => startSuffixEdit(e, index));
 
-            suffixSpan.addEventListener('click', (e) => startSuffixEdit(e, index));
+            nameSpan.appendChild(editBtn);
           } else {
             nameSpan.textContent = name;
           }
@@ -186,14 +233,20 @@
         });
       }
 
-      // 접미사 수정 함수
+      // 접미사 수정 함수 개선
       function startSuffixEdit(event, index) {
-        const suffixSpan = event.target;
+        event.preventDefault();
+        const nameSpan = event.target.parentElement;
         const name = members[index];
         
-        if (suffixSpan.querySelector('input')) return;
+        // 이미 수정 중인지 확인
+        if (nameSpan.querySelector('.edit-mode')) return;
 
         const [baseName, currentSuffix] = name.split('-');
+        
+        // 수정 모드 UI 생성
+        const editMode = document.createElement('span');
+        editMode.className = 'edit-mode';
         
         const input = document.createElement('input');
         input.type = 'text';
@@ -201,23 +254,33 @@
         input.className = 'suffix-input';
         input.placeholder = '접미사 입력';
         
-        function handleEdit(e) {
-          const newSuffix = e.target.value.trim();
+        const confirmBtn = document.createElement('button');
+        confirmBtn.className = 'confirm-btn';
+        confirmBtn.textContent = '확정';
+        
+        editMode.appendChild(input);
+        editMode.appendChild(confirmBtn);
+
+        // 원래 내용 백업
+        const originalContent = nameSpan.innerHTML;
+        nameSpan.innerHTML = `${baseName}-`;
+        nameSpan.appendChild(editMode);
+        
+        function handleConfirm() {
+          const newSuffix = input.value.trim();
           
-          // 빈 값 체크
           if (!newSuffix) {
-            updateMemberList();
+            nameSpan.innerHTML = originalContent;
             return;
           }
 
-          // 중복 체크
           const isDuplicate = members.some((m, i) => 
             i !== index && m === `${baseName}-${newSuffix}`
           );
 
           if (isDuplicate) {
             alert('이미 사용 중인 접미사입니다.');
-            updateMemberList();
+            nameSpan.innerHTML = originalContent;
             return;
           }
 
@@ -225,24 +288,22 @@
           updateMemberList();
         }
 
-        function handleBlur(e) {
-          handleEdit(e);
-          input.removeEventListener('blur', handleBlur);
-          input.removeEventListener('keypress', handleKeyPress);
-        }
-
-        function handleKeyPress(e) {
+        // 이벤트 리스너
+        confirmBtn.addEventListener('click', handleConfirm);
+        input.addEventListener('keypress', (e) => {
           if (e.key === 'Enter') {
-            handleEdit(e);
-            input.blur();
+            handleConfirm();
           }
-        }
+        });
 
-        input.addEventListener('blur', handleBlur);
-        input.addEventListener('keypress', handleKeyPress);
+        // 포커스 아웃 시 원래 상태로 복구
+        input.addEventListener('blur', (e) => {
+          // 확정 버튼 클릭한 경우는 제외
+          if (e.relatedTarget !== confirmBtn) {
+            nameSpan.innerHTML = originalContent;
+          }
+        });
 
-        suffixSpan.textContent = '';
-        suffixSpan.appendChild(input);
         input.focus();
       }
 
