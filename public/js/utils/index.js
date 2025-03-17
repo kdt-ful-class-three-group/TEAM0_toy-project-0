@@ -81,9 +81,11 @@ const createUtils = () => {
         if (indexOfExistingName !== -1) {
           // 중요: 기존 이름을 -1로 변경
           newMembers[indexOfExistingName] = `${name}-1`;
+          
+          // 즉시 상태 업데이트 (비동기 처리 제거)
           store.setState({ members: newMembers });
           
-          // 새 멤버는 -2를 사용
+          // 새 멤버는 -2를 사용하여 반환
           return `${name}-2`;
         }
       }
