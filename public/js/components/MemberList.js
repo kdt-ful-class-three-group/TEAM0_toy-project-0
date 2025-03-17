@@ -10,15 +10,26 @@ export class MemberList extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this.unsubscribe = null;
+    this.initialized = false;
   }
 
   connectedCallback() {
-    this.renderComponent();
+    if (!this.initialized) {
+      // 스타일시트 로드 (최초 1회만)
+      const styleSheet = document.createElement('link');
+      styleSheet.setAttribute('rel', 'stylesheet');
+      styleSheet.setAttribute('href', './css/styles.css');
+      this.shadowRoot.appendChild(styleSheet);
+      
+      // 초기 렌더링
+      this.initialRender();
+      this.initialized = true;
+    }
+    
     // store 구독
     this.unsubscribe = store.subscribe((state) => {
-      this.renderComponent(state.members);
+      this.updateMembersList(state.members);
     });
-    this.addEventListeners();
   }
 
   disconnectedCallback() {
@@ -27,9 +38,28 @@ export class MemberList extends HTMLElement {
     }
   }
 
-  renderComponent(members = store.getState().members) {
-    this.shadowRoot.innerHTML = renderMemberList(members);
-    this.addEventListeners(); // render 후에 이벤트 바인딩
+  initialRender() {
+    const members = store.getState().members;
+    
+    // 컨텐츠 컨테이너 생성
+    const container = document.createElement('div');
+    container.className = 'member-list-container';
+    container.innerHTML = renderMemberList(members);
+    this.shadowRoot.appendChild(container);
+    
+    // 이벤트 리스너 등록
+    this.addEventListeners();
+  }
+
+  updateMembersList(members) {
+    const container = this.shadowRoot.querySelector('.member-list-container');
+    if (!container) return;
+    
+    // 컨테이너 내용 업데이트
+    container.innerHTML = renderMemberList(members);
+    
+    // 이벤트 다시 연결
+    this.addEventListeners();
   }
 
   addEventListeners() {
@@ -43,8 +73,7 @@ export class MemberList extends HTMLElement {
       }
       const parsedIndex = parseInt(index);
 
-      if (event.target.classList.contains("delete-member")) {
-        // breakpoint #4 (멤버 삭제 시점)
+      if (event.target.classList.contains("member-item__delete")) {
         console.warn("멤버 삭제 클릭:", parsedIndex);
 
         const currentState = store.getState();
@@ -53,7 +82,7 @@ export class MemberList extends HTMLElement {
         store.setState({ members: newMembers });
       }
 
-      if (event.target.classList.contains("edit-suffix")) {
+      if (event.target.classList.contains("member-item__edit")) {
         this.startSuffixEdit(event.target, parsedIndex);
       }
     });
@@ -64,12 +93,12 @@ export class MemberList extends HTMLElement {
     const name = currentState.members[index];
     const [baseName, currentSuffix] = name.split("-");
 
-    const nameSpan = button.closest(".member-name");
+    const nameSpan = button.closest(".member-item__name");
     const editMode = document.createElement("span");
     editMode.className = "edit-mode";
     editMode.innerHTML = `
-      <input type="text" class="suffix-input" value="${currentSuffix || ""}" placeholder="접미사 입력">
-      <button class="btn btn-primary confirm-suffix">확정</button>
+      <input type="text" class="input suffix-input" value="${currentSuffix || ""}" placeholder="접미사 입력">
+      <button class="btn confirm-suffix">확정</button>
     `;
 
     const originalContent = nameSpan.innerHTML;
@@ -93,7 +122,6 @@ export class MemberList extends HTMLElement {
 
       if (isDuplicate) {
         console.error("이미 사용 중인 접미사입니다.");
-        alert("이미 사용 중인 접미사입니다.");
         nameSpan.innerHTML = originalContent;
         return;
       }

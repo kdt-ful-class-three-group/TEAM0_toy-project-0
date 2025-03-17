@@ -11,12 +11,25 @@ export class InputForm extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this.unsubscribe = null;
+    this.initialized = false;
   }
 
   connectedCallback() {
-    this.renderComponent();
+    if (!this.initialized) {
+      // 스타일시트 로드 (최초 1회만)
+      const styleSheet = document.createElement('link');
+      styleSheet.setAttribute('rel', 'stylesheet');
+      styleSheet.setAttribute('href', './css/styles.css');
+      this.shadowRoot.appendChild(styleSheet);
+      
+      // 초기 렌더링
+      this.initialRender();
+      this.initialized = true;
+    }
+    
+    // 상태 구독 설정
     this.unsubscribe = store.subscribe((state) => {
-      this.renderComponent(state);
+      this.updateFromState(state);
     });
   }
 
@@ -26,10 +39,65 @@ export class InputForm extends HTMLElement {
     }
   }
 
-  renderComponent(state = store.getState()) {
-    this.shadowRoot.innerHTML = renderInputForm(state);
-    this.updateStatusMessage(state);
+  initialRender() {
+    const state = store.getState();
+    
+    // 컨텐츠 컨테이너 추가
+    const container = document.createElement('div');
+    container.className = 'input-form-container';
+    container.innerHTML = renderInputForm(state);
+    this.shadowRoot.appendChild(container);
+    
+    // 이벤트 리스너 등록 (최초 1회)
     this.addEventListeners();
+    
+    // 메시지 업데이트
+    this.updateStatusMessage(state);
+  }
+
+  updateFromState(state) {
+    // 특정 요소들만 업데이트하여 전체 DOM 리렌더링 방지
+    const root = this.shadowRoot;
+    
+    // 팀 카운트 관련 업데이트
+    const teamCountInput = root.querySelector('.team-count-input');
+    if (teamCountInput) {
+      teamCountInput.value = state.teamCount || '';
+      teamCountInput.disabled = state.isTeamCountConfirmed;
+    }
+    
+    const confirmTeamBtn = root.querySelector('.confirm-team-count');
+    const editTeamBtn = root.querySelector('.edit-team-count');
+    if (confirmTeamBtn && editTeamBtn) {
+      confirmTeamBtn.style.display = state.isTeamCountConfirmed ? 'none' : '';
+      editTeamBtn.style.display = !state.isTeamCountConfirmed ? 'none' : '';
+    }
+    
+    // 총원 설정 관련 업데이트
+    const totalInput = root.querySelector('.number-input');
+    if (totalInput) {
+      totalInput.value = state.totalMembers || '';
+      totalInput.disabled = state.isTotalConfirmed;
+    }
+    
+    const confirmTotalBtn = root.querySelector('.confirm-total');
+    const editTotalBtn = root.querySelector('.edit-total');
+    if (confirmTotalBtn && editTotalBtn) {
+      confirmTotalBtn.style.display = state.isTotalConfirmed ? 'none' : '';
+      editTotalBtn.style.display = !state.isTotalConfirmed ? 'none' : '';
+    }
+    
+    // 멤버 입력 관련 업데이트
+    const memberInput = root.querySelector('.member-input');
+    const addMemberBtn = root.querySelector('.add-member');
+    if (memberInput && addMemberBtn) {
+      const canAdd = utils.canAddMore(state);
+      memberInput.disabled = !canAdd;
+      addMemberBtn.disabled = !canAdd;
+    }
+    
+    // 상태 메시지 업데이트
+    this.updateStatusMessage(state);
   }
 
   addEventListeners() {

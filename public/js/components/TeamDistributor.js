@@ -8,10 +8,31 @@ export class TeamDistributor extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
+    this.unsubscribe = null;
   }
 
   connectedCallback() {
+    // 외부 스타일시트를 document.head에 추가
+    if (!document.querySelector('link[href="./css/styles.css"]')) {
+      const linkElem = document.createElement('link');
+      linkElem.setAttribute('rel', 'stylesheet');
+      linkElem.setAttribute('href', './css/styles.css');
+      document.head.appendChild(linkElem);
+    }
+    
+    // 최초 렌더링
     this.render();
+    
+    // 상태 변경 구독 설정
+    this.unsubscribe = store.subscribe((state) => {
+      this.updateCompletionMessage(state);
+    });
+  }
+  
+  disconnectedCallback() {
+    if (this.unsubscribe) {
+      this.unsubscribe();
+    }
   }
 
   render() {
@@ -59,29 +80,23 @@ export class TeamDistributor extends HTMLElement {
     `;
     console.timeEnd("TeamDistributor Render");
 
-    // 완료 메시지 표시 조건 수정
-    const updateCompletionMessage = (state) => {
-      const msgEl = this.shadowRoot.querySelector(".completion-message");
-      if (!msgEl) return;
-      
-      const isComplete = 
-        state.isTotalConfirmed && 
-        state.totalMembers > 0 && 
-        state.members.length === state.totalMembers;
-      
-      if (isComplete) {
-        msgEl.classList.add("show");
-      } else {
-        msgEl.classList.remove("show");
-      }
-    };
-
-    // 상태 변경 구독 설정
-    const unsubscribe = store.subscribe((state) => {
-      updateCompletionMessage(state);
-    });
+    // 초기 상태로 메시지 업데이트
+    this.updateCompletionMessage(store.getState());
+  }
+  
+  updateCompletionMessage(state) {
+    const msgEl = this.shadowRoot.querySelector(".completion-message");
+    if (!msgEl) return;
     
-    // 초기 상태 확인
-    updateCompletionMessage(store.getState());
+    const isComplete = 
+      state.isTotalConfirmed && 
+      state.totalMembers > 0 && 
+      state.members.length === state.totalMembers;
+    
+    if (isComplete) {
+      msgEl.classList.add("show");
+    } else {
+      msgEl.classList.remove("show");
+    }
   }
 } 
