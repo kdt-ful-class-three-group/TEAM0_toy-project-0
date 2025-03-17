@@ -34,11 +34,14 @@ export class TeamResult extends HTMLElement {
     
     // 상태 구독 설정
     this.unsubscribe = store.subscribe((state) => {
-      // 조건이 충족되었을 때만 팀 배분
+      // 팀 배분 조건 확인
       if (this.shouldDistributeTeams(state)) {
         this.teams = distributeTeams() || [];
-        this.updateView();
+      } else {
+        this.teams = [];
       }
+      // 항상 뷰를 업데이트
+      this.updateView();
     });
     
     // 이벤트 리스너 등록 (한 번만)
@@ -74,21 +77,41 @@ export class TeamResult extends HTMLElement {
     // 초기 상태에서 조건이 충족되면 팀 배분
     if (this.shouldDistributeTeams(state)) {
       this.teams = distributeTeams() || [];
-      this.updateView();
     }
+    
+    // 항상 뷰 업데이트 실행
+    this.updateView();
   }
 
   updateView() {
     const container = this.shadowRoot.querySelector('.team-result-container');
     if (!container) return;
     
+    const state = store.getState();
+    
+    // 팀 배분 결과가 없는 경우 안내 메시지 표시
     if (!this.teams.length) {
+      let message = "팀 구성 결과가 여기에 표시됩니다.";
+      let statusClass = "info";
+      
+      // 더 구체적인 안내 메시지 생성
+      if (!state.isTeamCountConfirmed) {
+        message = "팀 개수를 설정해주세요.";
+      } else if (!state.isTotalConfirmed) {
+        message = "총원을 설정해주세요.";
+      } else if (state.members.length < state.totalMembers) {
+        message = `아직 ${state.totalMembers - state.members.length}명의 멤버가 더 필요합니다.`;
+      }
+      
       container.innerHTML = `
         <div class="card">
           <div class="card__content">
             <h3 class="card__title">팀 구성 결과</h3>
-            <div class="status-message">
-              팀 구성에 필요한 정보를 모두 입력해주세요.
+            <div class="status-message ${statusClass}">
+              ${message}
+            </div>
+            <div class="team-placeholder">
+              <div class="placeholder-item">팀이 구성되면 여기에 표시됩니다.</div>
             </div>
           </div>
         </div>
@@ -96,9 +119,14 @@ export class TeamResult extends HTMLElement {
       return;
     }
     
+    // 팀별 인원 수 계산
+    const teamSizes = this.teams.map(team => team.length);
+    const totalMembers = teamSizes.reduce((sum, size) => sum + size, 0);
+    
+    // 팀 구성 결과 표시
     const teamsHtml = this.teams.map((team, index) => `
       <div class="team-item">
-        <h3 class="team-item__title">Team ${index + 1}</h3>
+        <h3 class="team-item__title">Team ${index + 1} <span class="team-size">(${team.length}명)</span></h3>
         <div class="team-item__members">
           ${team.map(member => `
             <span class="team-item__member">${member}</span>
@@ -110,7 +138,7 @@ export class TeamResult extends HTMLElement {
     container.innerHTML = `
       <div class="card">
         <div class="card__content">
-          <h3 class="card__title">팀 구성 결과</h3>
+          <h3 class="card__title">팀 구성 결과 <span class="team-info">(${state.teamCount}팀, 총 ${totalMembers}명)</span></h3>
           <div class="team-list">
             ${teamsHtml}
           </div>

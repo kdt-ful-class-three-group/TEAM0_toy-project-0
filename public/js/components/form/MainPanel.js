@@ -50,9 +50,17 @@ export class MainPanel extends HTMLElement {
         }
         
         .main-panel {
+          display: grid;
+          grid-template-columns: 1fr 1fr; /* 좌우 균등 분할 */
+          gap: var(--space-5);
+          height: calc(100vh - var(--section-padding) * 2);
+        }
+        
+        .left-panel, .right-panel {
           display: flex;
           flex-direction: column;
           gap: var(--space-4);
+          overflow-y: auto;
         }
         
         .completion-message {
@@ -65,6 +73,7 @@ export class MainPanel extends HTMLElement {
           margin-top: var(--space-3);
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           display: none;
+          grid-column: span 2; /* 메시지는 전체 너비 사용 */
         }
         
         .completion-message.show {
@@ -73,8 +82,12 @@ export class MainPanel extends HTMLElement {
       </style>
       
       <div class="main-panel">
-        <member-list></member-list>
-        <team-result></team-result>
+        <div class="left-panel">
+          <team-result></team-result>
+        </div>
+        <div class="right-panel">
+          <member-list></member-list>
+        </div>
         <div class="completion-message">
           작성 완료! 모든 멤버가 등록되었습니다.
         </div>
