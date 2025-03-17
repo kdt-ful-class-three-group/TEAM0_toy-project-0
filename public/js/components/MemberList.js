@@ -1,9 +1,12 @@
 import { renderMemberList } from '../renderers/index.js';
 import store from '../store/index.js';
+import { memoize } from '../utils/performance.js';
 
 /**
  * 멤버 목록 컴포넌트
  * 가운데 영역의 멤버 목록을 표시합니다.
+ * @class MemberList
+ * @extends HTMLElement
  */
 export class MemberList extends HTMLElement {
   constructor() {
@@ -11,90 +14,167 @@ export class MemberList extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.unsubscribe = null;
     this.initialized = false;
+    this._container = null;
+    this._lastMembersJSON = '';
+    
+    // 메모이제이션 적용 - 디버깅 활성화
+    this.memoizedRenderMemberList = memoize(renderMemberList, {
+      maxSize: 20,
+      debug: true
+    });
+    
+    // 멤버 업데이트 함수를 바인딩하여 this 컨텍스트 유지
+    this.handleMembersUpdate = this.handleMembersUpdate.bind(this);
   }
 
+  /**
+   * 컴포넌트가 DOM에 연결될 때 호출됩니다.
+   */
   connectedCallback() {
     if (!this.initialized) {
-      // 스타일시트 로드 (최초 1회만)
-      const styleSheet = document.createElement('link');
-      styleSheet.setAttribute('rel', 'stylesheet');
-      styleSheet.setAttribute('href', './css/styles.css');
-      this.shadowRoot.appendChild(styleSheet);
-      
-      // 초기 렌더링
+      console.time('memberlist-init');
+      this.initializeStyles();
       this.initialRender();
       this.initialized = true;
+      console.timeEnd('memberlist-init');
     }
     
-    // store 구독
+    // 구독 시작 - 디버깅 로그 추가
+    console.log('MemberList: 상태 구독 시작');
+    
+    // 구독 방법 변경 - 전체 상태를 구독하되 내부에서 members만 추출하여 처리
     this.unsubscribe = store.subscribe((state) => {
-      this.updateMembersList(state.members);
+      console.log('MemberList: 상태 업데이트 감지', state.members);
+      this.handleMembersUpdate(state.members);
     });
   }
 
+  /**
+   * 컴포넌트가 DOM에서 제거될 때 호출됩니다.
+   */
   disconnectedCallback() {
+    console.log('MemberList: 구독 해제');
     if (this.unsubscribe) {
       this.unsubscribe();
+      this.unsubscribe = null;
     }
   }
 
+  /**
+   * 스타일을 초기화합니다.
+   * @private
+   */
+  initializeStyles() {
+    const styleSheet = document.createElement('link');
+    styleSheet.setAttribute('rel', 'stylesheet');
+    styleSheet.setAttribute('href', './css/styles.css');
+    this.shadowRoot.appendChild(styleSheet);
+  }
+
+  /**
+   * 초기 렌더링을 수행합니다.
+   * @private
+   */
   initialRender() {
     const members = store.getState().members;
+    this._lastMembersJSON = JSON.stringify(members);
     
     // 컨텐츠 컨테이너 생성
-    const container = document.createElement('div');
-    container.className = 'member-list-container';
-    container.innerHTML = renderMemberList(members);
-    this.shadowRoot.appendChild(container);
+    this._container = document.createElement('div');
+    this._container.className = 'member-list-container';
+    this._container.innerHTML = this.memoizedRenderMemberList(members);
+    this.shadowRoot.appendChild(this._container);
     
     // 이벤트 리스너 등록
     this.addEventListeners();
   }
 
-  updateMembersList(members) {
-    const container = this.shadowRoot.querySelector('.member-list-container');
-    if (!container) return;
+  /**
+   * 멤버 목록 상태 업데이트 시 호출되는 핸들러
+   * @param {Array} members - 업데이트된 멤버 배열
+   */
+  handleMembersUpdate(members) {
+    console.time('members-update');
+    console.log('MemberList: 멤버 업데이트 처리', members);
     
-    // 기존 상태와 새 상태를 비교하여 변경이 있을 때만 렌더링
-    const currentMembers = JSON.stringify(members);
-    if (this._lastRenderedMembers === currentMembers) {
-      return; // 변경이 없으면 재렌더링 하지 않음
+    // 이전 상태와 비교하기 위한 JSON 문자열
+    const newMembersJSON = JSON.stringify(members);
+    
+    // 상태가 실제로 변경되었는지 확인
+    if (this._lastMembersJSON !== newMembersJSON) {
+      console.log('MemberList: 멤버 변경 감지, DOM 업데이트 진행');
+      this._lastMembersJSON = newMembersJSON;
+      this.updateMembersList(members);
+    } else {
+      console.log('MemberList: 멤버 변경 없음, 업데이트 건너뜀');
     }
     
-    // 컨테이너 내용 업데이트
-    container.innerHTML = renderMemberList(members);
-    
-    // 이벤트 다시 연결
-    this.addEventListeners();
-    
-    // 마지막 렌더링 상태 저장
-    this._lastRenderedMembers = currentMembers;
+    console.timeEnd('members-update');
   }
 
+  /**
+   * 멤버 목록을 업데이트합니다.
+   * @param {Array} members - 업데이트할 멤버 배열
+   */
+  updateMembersList(members) {
+    if (!this._container) return;
+    
+    // 멤버 목록 렌더링 (메모이제이션 사용)
+    try {
+      const newContent = this.memoizedRenderMemberList(members);
+      
+      // DOM 업데이트 적용
+      this._container.innerHTML = newContent;
+      this.addEventListeners();
+    } catch (error) {
+      console.error('멤버 목록 렌더링 중 오류:', error);
+    }
+  }
+
+  /**
+   * 이벤트 리스너를 등록합니다.
+   * @private
+   */
   addEventListeners() {
     const list = this.shadowRoot.querySelector(".member-list");
     if (!list) return;
 
-    list.addEventListener("click", (event) => {
-      const { index } = event.target.dataset;
-      if (!index) {
-        return;
-      }
-      const parsedIndex = parseInt(index);
+    // 이벤트 위임 패턴 적용
+    list.addEventListener("click", this.handleListClick.bind(this));
+  }
 
-      if (event.target.classList.contains("member-item__delete")) {
-        console.warn("멤버 삭제 클릭:", parsedIndex);
+  /**
+   * 리스트 클릭 이벤트 핸들러
+   * @param {Event} event - 클릭 이벤트
+   * @private
+   */
+  handleListClick(event) {
+    const target = event.target;
+    const index = target.dataset.index;
+    
+    if (!index) return;
+    
+    const parsedIndex = parseInt(index);
+    
+    if (target.classList.contains("member-item__delete")) {
+      this.handleMemberDelete(parsedIndex);
+    } else if (target.classList.contains("member-item__edit")) {
+      this.startSuffixEdit(target, parsedIndex);
+    }
+  }
 
-        const currentState = store.getState();
-        const newMembers = [...currentState.members];
-        newMembers.splice(parsedIndex, 1);
-        store.setState({ members: newMembers });
-      }
-
-      if (event.target.classList.contains("member-item__edit")) {
-        this.startSuffixEdit(event.target, parsedIndex);
-      }
-    });
+  /**
+   * 멤버 삭제 핸들러
+   * @param {number} index - 삭제할 멤버의 인덱스
+   * @private
+   */
+  handleMemberDelete(index) {
+    console.warn("멤버 삭제 클릭:", index);
+    
+    const currentState = store.getState();
+    const newMembers = [...currentState.members];
+    newMembers.splice(index, 1);
+    store.setState({ members: newMembers });
   }
 
   startSuffixEdit(button, index) {
