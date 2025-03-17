@@ -25,6 +25,7 @@ const createStore = (reducer, initialState) => {
 
   let state = { ...initialState };
   const listeners = new Set();
+  const subscribersMap = new Map();
 
   /**
    * @function getState
@@ -40,35 +41,85 @@ const createStore = (reducer, initialState) => {
    * @returns {Object} 디스패치된 액션
    */
   const dispatch = (action) => {
+    const prevState = {...state};
     state = reducer(state, action);
+    console.group("액션 디스패치");
+    console.log("액션:", action);
     console.table(state);
-    notify();
+    console.groupEnd();
+    
+    notify(prevState);
     return action;
   };
 
   /**
-   * @function subscribe
-   * @param {Function} listener
-   * @returns {Function} unsubscribe
+   * @function setState
+   * @description 상태를 직접 설정합니다 (디버깅/테스트용).
+   * @param {Object} newState - 새 상태 객체
    */
-  const subscribe = (listener) => {
-    listeners.add(listener);
+  const setState = (newState) => {
+    const prevState = {...state};
+    // 상태 깊은 복사 및 병합
+    state = {...state, ...newState};
+    console.group("상태 직접 변경");
+    console.table(state);
+    console.groupEnd();
+    
+    notify(prevState);
+    return state;
+  };
+
+  /**
+   * @function subscribe
+   * @description 상태 변경을 구독합니다. 선택적으로 특정 상태 부분만 구독 가능합니다.
+   * @param {Function} listener - 상태 변경 시 호출될 리스너
+   * @param {Function} [selector] - 특정 상태 부분을 선택하는 함수 (옵션)
+   * @returns {Function} 구독 해제 함수
+   */
+  const subscribe = (listener, selector) => {
+    if (typeof selector === 'function') {
+      // 선택자 함수가 제공된 경우 (최적화된 구독)
+      const wrappedListener = (newState, prevState) => {
+        // 선택된 상태 부분 추출
+        const selectedNewState = selector(newState);
+        const selectedPrevState = selector(prevState);
+        
+        // 선택된 상태가 변경된 경우에만 리스너 호출
+        if (JSON.stringify(selectedNewState) !== JSON.stringify(selectedPrevState)) {
+          listener(selectedNewState);
+        }
+      };
+      
+      subscribersMap.set(listener, wrappedListener);
+      listeners.add(wrappedListener);
+    } else {
+      // 기존 방식 구독 (전체 상태 구독)
+      listeners.add(listener);
+    }
+    
     return () => {
-      listeners.delete(listener);
+      if (subscribersMap.has(listener)) {
+        const wrappedListener = subscribersMap.get(listener);
+        listeners.delete(wrappedListener);
+        subscribersMap.delete(listener);
+      } else {
+        listeners.delete(listener);
+      }
     };
   };
 
   /**
    * @function notify
    * @description 모든 구독자에게 상태 변경을 알립니다.
+   * @param {Object} prevState - 변경 전 상태
    */
-  const notify = () => {
+  const notify = (prevState) => {
     listeners.forEach((listener) => {
-      listener(getState());
+      listener(getState(), prevState);
     });
   };
 
-  return { getState, dispatch, subscribe };
+  return { getState, dispatch, setState, subscribe };
 };
 
 // 스토어 인스턴스 생성
