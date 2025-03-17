@@ -1,0 +1,51 @@
+/* 메인 그리드 레이아웃 */
+.layout-grid {
+  display: grid;
+  grid-template-columns: var(--nav-width) var(--main-width) var(--sidebar-width);
+  gap: 1px;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--color-dark-1);
+  max-width: 100vw;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* 네비게이터 영역 */
+.nav {
+  display: block;
+  background-color: var(--color-dark-2);
+  color: var(--color-white);
+  padding: var(--section-padding);
+  border-right: var(--border-dark);
+  height: 100vh;
+  overflow-y: auto;
+  min-width: 0;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* 메인 콘텐츠 영역 */
+.main {
+  display: block;
+  background-color: var(--color-dark-2);
+  padding: var(--section-padding);
+  height: 100vh;
+  overflow-y: auto;
+  min-width: 0;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* 사이드바 영역 */
+.sidebar {
+  display: block;
+  background-color: var(--color-dark-2);
+  padding: var(--section-padding);
+  border-left: var(--border-dark);
+  height: 100vh;
+  overflow-y: auto;
+  min-width: 0;
+  will-change: transform;
+  transform: translateZ(0);
+} 

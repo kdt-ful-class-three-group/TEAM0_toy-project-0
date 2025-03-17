@@ -1,0 +1,71 @@
+.team-item {
+  padding: var(--space-4);
+  border-bottom: var(--border-dark);
+}
+
+.team-item:last-child {
+  border-bottom: none;
+}
+
+.team-item__title {
+  color: var(--color-white);
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-3);
+}
+
+.team-item__members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.team-item__member {
+  background-color: var(--color-dark-4);
+  color: var(--color-light);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+}
+
+/* 멤버 리스트 스타일 */
+.member-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3);
+  background-color: var(--color-dark-3);
+  border: var(--border-dark);
+  border-radius: var(--radius-sm);
+}
+
+.member-item__name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-light);
+  font-size: var(--text-base);
+  flex: 1;
+}
+
+.member-item__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.member-item__edit,
+.member-item__delete {
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--text-sm);
+} 
