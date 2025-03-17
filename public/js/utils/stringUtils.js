@@ -59,12 +59,12 @@ export const generateUniqueNameWithSuffix = (baseName, existingNames) => {
   }
   
   try {
-    // 정확히 일치하는지 확인
-    const exactMatch = existingNames.includes(baseName);
+    // 이름이 정확히 일치하는지 확인
+    const exactMatch = existingNames.some(name => name === baseName);
     
     // 같은 기본 이름으로 시작하는 모든 항목 찾기
     const sameBaseNames = existingNames.filter(existingName => 
-      existingName === baseName || existingName.startsWith(`${baseName}-`)
+      existingName === baseName || (existingName.includes('-') && existingName.split('-')[0] === baseName)
     );
     
     // 중복된 이름이 없으면 기본 이름 반환
@@ -76,12 +76,27 @@ export const generateUniqueNameWithSuffix = (baseName, existingNames) => {
     const usedSuffixes = sameBaseNames
       .map(name => {
         if (name === baseName) return 0;
-        return extractSuffixNumber(name, baseName);
+        
+        // "이름-접미사" 형태인 경우만 처리
+        if (name.includes('-')) {
+          const parts = name.split('-');
+          if (parts[0] === baseName && parts.length > 1) {
+            const suffix = parseInt(parts[1], 10);
+            return isNaN(suffix) ? 0 : suffix;
+          }
+        }
+        return 0;
       })
-      .filter(n => n !== 0);
+      .filter(n => n >= 0);
     
     // 다음 접미사 번호 결정 (최대값 + 1 또는 1)
-    const nextSuffix = usedSuffixes.length > 0 ? Math.max(...usedSuffixes) + 1 : 1;
+    let nextSuffix = 1;
+    if (usedSuffixes.length > 0) {
+      nextSuffix = Math.max(...usedSuffixes) + 1;
+    } else if (exactMatch) {
+      // 정확히 일치하는 이름이 있고, 접미사가 없는 경우 접미사 1 사용
+      nextSuffix = 1;
+    }
     
     return `${baseName}-${nextSuffix}`;
   } catch (error) {

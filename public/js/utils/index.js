@@ -9,12 +9,14 @@ export * from './memberUtils.js';
 export * from './teamUtils.js';
 export * from './stringUtils.js';
 export * from './errorHandler.js';
+export * from './performance.js';
 
 // 기본 유틸리티 객체 (기존 코드와의 호환성 유지)
 import * as validation from './validation.js';
 import * as memberUtils from './memberUtils.js';
 import * as teamUtils from './teamUtils.js';
 import * as stringUtils from './stringUtils.js';
+import * as performance from './performance.js';
 
 /**
  * 기존 utils 객체와 호환되는 인터페이스를 제공합니다.
@@ -37,6 +39,11 @@ const utils = {
   
   // teamUtils 모듈
   distributeTeams: teamUtils.distributeTeams,
+  
+  // performance 모듈
+  memoize: performance.memoize,
+  debounce: performance.debounce,
+  throttle: performance.throttle,
   
   // 기타 함수들
   // ...
