@@ -772,7 +772,7 @@
           // 팀 구성 이벤트
           if (teamCountInput) {
             teamCountInput.addEventListener("input", (e) => this.handleTeamCountInput(e));
-            teamCountInput.addEventListener("keypress", (e) => {
+            teamCountInput.addEventListener("keydown", (e) => {
               if (e.key === "Enter") {
                 this.confirmTeamCount();
               }
@@ -790,7 +790,7 @@
           // 총원 설정 이벤트
           if (totalInput) {
             totalInput.addEventListener("input", (e) => this.handleTotalInput(e));
-            totalInput.addEventListener("keypress", (e) => {
+            totalInput.addEventListener("keydown", (e) => {
               if (e.key === "Enter") {
                 this.confirmTotalMembers();
               }
@@ -807,7 +807,7 @@
 
           // 멤버 추가 이벤트
           if (memberInput) {
-            memberInput.addEventListener("keypress", (e) => {
+            memberInput.addEventListener("keydown", (e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
                 this.addMember(memberInput);
@@ -942,14 +942,14 @@
           store.setState({ members: newMembers });
           memberInput.value = "";
 
-          // 포커스 관리 개선 - 총원이 충족되지 않았으면 항상 input으로 포커스 이동
-          setTimeout(() => {
-            if (newMembers.length < state.totalMembers) {
-              memberInput.focus();
-            } else {
-              memberInput.blur();
-            }
-          }, 0);
+          // 포커스 관리 개선 - 즉시 포커스 설정
+          if (newMembers.length < state.totalMembers) {
+            // 즉시 다시 포커스 설정
+            memberInput.focus();
+          } else {
+            // 총원이 모두 채워졌을 때 포커스 제거
+            memberInput.blur();
+          }
         }
 
         showInvalidInput(element) {
