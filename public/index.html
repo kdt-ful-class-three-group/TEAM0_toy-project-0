@@ -5,593 +5,608 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TEAM DISTRIBUTOR</title>
     <style>
-      /* 유틸리티 클래스 스타일링 */
-      .mx-auto {
-        margin: 0 auto;
-      }
-      .p-20 {
-        padding: 20px;
-      }
-      .my-20 {
-        margin: 20px 0;
-      }
-      .p-8 {
-        padding: 8px;
-      }
-      .my-4 {
-        margin: 4px 0;
-      }
-
-      /* 레이아웃 */
-      .flex {
-        display: flex;
-      }
-      .justify-between {
-        justify-content: space-between;
-      }
-      .max-w-600 {
-        max-width: 600px;
-      }
-
-      /* 리스트 스타일 */
-      .list-none {
-        list-style: none;
-      }
-      .p-0 {
+      /* 리셋 및 기본 스타일 */
+      * {
+        margin: 0;
         padding: 0;
+        box-sizing: border-box;
       }
 
-      /* 시각적 스타일 */
-      .bg-gray {
-        background-color: #f5f5f5;
-      }
-      .rounded {
-        border-radius: 4px;
-      }
-      .text-red {
-        color: red;
-      }
-      .cursor-pointer {
+      /* 유틸리티 클래스 */
+      .flex { display: flex; }
+      .flex-between { justify-content: space-between; }
+      .items-center { align-items: center; }
+      .grid { display: grid; }
+      .grid-3-cols { grid-template-columns: 250px 1fr 300px; }
+      .min-h-screen { min-height: 100vh; }
+      
+      .p-4 { padding: 1rem; }
+      .p-5 { padding: 1.25rem; }
+      .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+      .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+      .mb-4 { margin-bottom: 1rem; }
+      .mb-5 { margin-bottom: 1.25rem; }
+      .mt-3 { margin-top: 0.75rem; }
+      .ml-2 { margin-left: 0.5rem; }
+
+      .rounded { border-radius: 0.25rem; }
+      .rounded-md { border-radius: 0.375rem; }
+      
+      .text-sm { font-size: 0.875rem; }
+      .text-base { font-size: 1rem; }
+      .text-lg { font-size: 1.125rem; }
+      .font-bold { font-weight: bold; }
+      .uppercase { text-transform: uppercase; }
+      .text-center { text-align: center; }
+
+      .cursor-pointer { cursor: pointer; }
+      .transition { transition: all 0.3s ease; }
+      .shadow-sm { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); }
+      .hidden { display: none; }
+
+      /* 테마 색상 */
+      .bg-dark { background-color: #1e1e1e; }
+      .bg-dark-2 { background-color: #252526; }
+      .bg-dark-3 { background-color: #2d2d2d; }
+      .bg-dark-4 { background-color: #3c3c3c; }
+      .bg-error { background-color: #4c2727; }
+      .bg-primary { background-color: cadetblue; }
+
+      .text-white { color: #ffffff; }
+      .text-gray { color: #969696; }
+      .text-light { color: #d4d4d4; }
+
+      .border-dark { border: 1px solid #3c3c3c; }
+      .border-error { border: 1px solid #ff4444; }
+      .border-focus { border: 1px solid #007acc; }
+
+      /* 컴포넌트 기본 스타일 */
+      .btn {
+        padding: 0.75rem 1.25rem;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+        font-weight: 500;
         cursor: pointer;
+        transition: all 0.2s ease;
+        border: none;
+        min-width: 80px;
       }
 
-      /* 수정 가능한 숫자 스타일 추가 */
-      .number-edit {
-        color: #333;
-        cursor: pointer;
-        padding: 0 4px;
-      }
-      .number-edit:hover {
-        background-color: #e6f0ff;
-        border-radius: 2px;
-      }
-      .number-input {
-        width: 40px;
-        padding: 2px;
-        border: 1px solid #333;
-        border-radius: 2px;
-        font-size: inherit;
-      }
-
-      /* 수정 가능한 접미사 스타일 수정 */
-      .suffix-edit {
-        color: #333;
-        cursor: pointer;
-        padding: 0 4px;
-        font-style: italic; /* 수정 가능함을 시각적으로 표시 */
-      }
-      .suffix-edit:hover {
-        background-color: #e6f0ff;
-        border-radius: 2px;
-      }
-      .suffix-input {
-        width: auto;
-        min-width: 60px;
-        padding: 2px 4px;
-        border: 1px solid #333;
-        border-radius: 2px;
-        font-size: inherit;
-      }
-
-      /* 수정 버튼 스타일 */
-      .edit-btn {
-        font-size: 0.8em;
-        padding: 2px 6px;
-        margin-left: 8px;
-        background-color: #e6f0ff;
-        border: 1px solid #333;
-        border-radius: 4px;
-        color: #333;
-        cursor: pointer;
-      }
-      .edit-btn:hover {
-        background-color: #333;
+      .btn-primary {
+        background-color: cadetblue;
         color: white;
       }
 
-      /* 확정 버튼 스타일 */
-      .confirm-btn {
-        font-size: 0.8em;
-        padding: 2px 6px;
-        margin-left: 4px;
-        background-color: #4caf50;
-        border: 1px solid #45a049;
-        border-radius: 4px;
+      .btn-primary:hover {
+        background-color: #4f9a9a;
+      }
+
+      .btn-secondary {
+        background-color: #3c3c3c;
         color: white;
-        cursor: pointer;
-      }
-      .confirm-btn:hover {
-        background-color: #45a049;
       }
 
-      /* 수정 입력 필드 스타일 */
-      .suffix-input {
-        width: 80px;
-        padding: 2px 4px;
-        border: 1px solid #333;
-        border-radius: 4px;
-        margin-right: 4px;
+      .btn-secondary:hover {
+        background-color: #4c4c4c;
       }
 
-      /* 수정 모드 컨테이너 */
-      .edit-mode {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-      }
-
-      /* 총원 입력 폼 스타일 */
-      .total-members-form {
-        margin-bottom: 20px;
-        padding: 15px;
-        background-color: #f8f9fa;
-        border-radius: 4px;
-        border: 1px solid #dee2e6;
-      }
-
-      .input-group {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 10px;
-      }
-
-      .number-input-container {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      .status-message {
-        margin-top: 10px;
-        padding: 8px;
-        border-radius: 4px;
-        background-color: #e7f3ff;
-        color: #0066cc;
-      }
-
-      /* 숫자 선택기 스타일 */
-      .number-selector {
-        padding: 4px;
-        border: 1px solid #dee2e6;
-        border-radius: 4px;
-        width: 80px;
-      }
-
-      /* 비활성화된 입력 폼 스타일 */
-      .disabled {
+      .btn[disabled] {
         opacity: 0.6;
         cursor: not-allowed;
       }
 
-      /* 라디오 버튼 그룹 스타일 */
-      .radio-group {
-        display: flex;
-        gap: 15px;
-        margin-bottom: 10px;
+      .input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 0.25rem;
+        background-color: #3c3c3c;
+        color: white;
+        border: 1px solid #4c4c4c;
+        transition: all 0.3s ease;
+        font-size: 0.875rem;
       }
 
-      .radio-group label {
+      .input:focus {
+        border-color: #007acc;
+        outline: none;
+        background-color: #454545;
+      }
+
+      .input.invalid {
+        background-color: #4c2727;
+        border-color: #ff4444;
+      }
+
+      .input:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      /* 상태 메시지 스타일 */
+      .status-message {
+        padding: 0.75rem 1rem;
+        border-radius: 0.25rem;
+        background-color: #252526;
+        color: #d4d4d4;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        border: 1px solid #3c3c3c;
+      }
+
+      /* 멤버 아이템 스타일 */
+      .member-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        background-color: #2d2d2d;
+        margin: 0.5rem 0;
+        border-radius: 0.25rem;
+        border: 1px solid #3c3c3c;
+      }
+
+      .member-item .btn {
+        padding: 0.5rem 1rem;
+        min-width: 60px;
+        margin-left: 0.5rem;
+      }
+
+      .member-name {
         display: flex;
         align-items: center;
-        gap: 5px;
-        cursor: pointer;
+        gap: 0.5rem;
       }
 
-      /* 총원 설정 관련 버튼 스타일 추가 */
-      .total-members-controls {
-        display: flex;
-        gap: 10px;
-        margin-top: 10px;
-      }
-
-      .confirm-total-btn {
-        padding: 6px 12px;
-        background-color: #4CAF50;
-        border: 1px solid #45a049;
-        border-radius: 4px;
+      /* 접미사 입력 스타일 */
+      .suffix-input {
+        width: 100px;
+        padding: 0.5rem 0.75rem;
+        margin-right: 0.5rem;
+        background-color: #3c3c3c;
         color: white;
-        cursor: pointer;
-      }
-      .confirm-total-btn:hover {
-        background-color: #45a049;
+        border: 1px solid #4c4c4c;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
       }
 
-      .edit-total-btn {
-        padding: 6px 12px;
-        background-color: #e6f0ff;
-        border: 1px solid #333;
-        border-radius: 4px;
-        color: #333;
-        cursor: pointer;
-        display: none; /* 초기에는 숨김 */
-      }
-      .edit-total-btn:hover {
-        background-color: #333;
-        color: white;
+      .suffix-input:focus {
+        border-color: #007acc;
+        outline: none;
+        background-color: #454545;
       }
 
       /* 완료 메시지 스타일 */
       .completion-message {
-        margin-top: 20px;
-        padding: 15px;
-        background-color: #dff0d8;
-        border: 1px solid #d6e9c6;
-        border-radius: 4px;
-        color: #3c763d;
+        background-color: cadetblue;
+        color: white;
+        padding: 1rem;
+        border-radius: 0.375rem;
         text-align: center;
-        font-weight: bold;
-        display: none;
+        font-weight: 500;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      /* 애니메이션 */
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+      }
+
+      .shake {
+        animation: shake 0.6s cubic-bezier(.36,.07,.19,.97) both;
+      }
+
+      /* 스핀 버튼 스타일 */
+      .number-input::-webkit-inner-spin-button,
+      .number-input::-webkit-outer-spin-button {
+        opacity: 1;
+        height: 30px;
+        cursor: pointer;
       }
     </style>
   </head>
   <body>
-    <div id="team-distributor" class="max-w-600 mx-auto p-20">
-      <h1>TEAM DISTRIBUTOR</h1>
+    <div class="grid grid-3-cols min-h-screen">
+      <!-- 네비게이터 영역 -->
+      <nav class="bg-dark-2 text-white p-5 border-dark">
+        <div class="mb-5">
+          <h2 class="text-gray text-sm uppercase mb-4">기능</h2>
+          <div class="nav-item px-3 py-2 rounded cursor-pointer">팀 생성</div>
+          <div class="nav-item px-3 py-2 rounded cursor-pointer">팀 관리</div>
+          <div class="nav-item px-3 py-2 rounded cursor-pointer">설정</div>
+        </div>
+        <div class="mb-5">
+          <h2 class="text-gray text-sm uppercase mb-4">최근 기록</h2>
+          <div class="nav-item px-3 py-2 rounded cursor-pointer">저장된 팀 목록</div>
+          <div class="nav-item px-3 py-2 rounded cursor-pointer">히스토리</div>
+        </div>
+      </nav>
 
-      <!-- 총원 입력 폼 -->
-      <div class="total-members-form">
-        <h3>총원 설정</h3>
-        <div class="number-input-container">
-          <!-- 직접 입력 필드 -->
+      <!-- 메인 컨텐츠 영역 -->
+      <main class="bg-dark p-5 text-light">
+        <div class="bg-dark-3 rounded-md p-4 shadow-sm mb-4">
+          <h2 class="text-lg text-white mb-4">멤버 목록</h2>
+          <ul class="member-list"></ul>
+        </div>
+        <div class="completion-message bg-primary text-white p-4 rounded-md text-center mt-3 hidden">
+          작성 완료! 모든 멤버가 등록되었습니다.
+        </div>
+      </main>
+
+      <!-- 입력 패널 -->
+      <aside class="bg-dark-2 p-5 border-dark">
+        <!-- 총원 설정 카드 -->
+        <div class="bg-dark-3 rounded-md p-4 shadow-sm mb-4">
+          <h3 class="text-lg text-white mb-4">총원 설정</h3>
           <input
             type="number"
-            id="total-members-input"
-            class="number-selector"
+            class="number-input input mb-4"
             min="1"
             placeholder="총 인원"
           />
-          <div class="total-members-controls">
-            <button id="confirm-total-btn" class="confirm-total-btn">완료</button>
-            <button id="edit-total-btn" class="edit-total-btn">수정</button>
+          <div class="flex">
+            <button class="btn btn-primary confirm-total">완료</button>
+            <button class="btn btn-secondary edit-total ml-2 hidden">수정</button>
           </div>
+          <div class="status-message mt-3"></div>
         </div>
-        
-        <!-- 상태 메시지 -->
-        <div id="status-message" class="status-message"></div>
-      </div>
 
-      <!-- 완료 메시지 -->
-      <div id="completion-message" class="completion-message">
-        작성 완료! 모든 멤버가 등록되었습니다.
-      </div>
-
-      <!-- 기존 멤버 입력 폼 -->
-      <div class="my-20">
-        <input
-          type="text"
-          id="member-input"
-          placeholder="멤버 이름을 입력하세요"
-          class="p-8"
-          disabled
-        />
-        <button id="add-member-btn" class="p-8 cursor-pointer disabled" disabled>추가</button>
-      </div>
-
-      <!-- 멤버 목록 표시 -->
-      <div>
-        <h2>멤버 목록</h2>
-        <ul id="member-list" class="list-none p-0"></ul>
-      </div>
+        <!-- 멤버 입력 카드 -->
+        <div class="bg-dark-3 rounded-md p-4 shadow-sm">
+          <h3 class="text-lg text-white mb-4">멤버 추가</h3>
+          <input
+            type="text"
+            class="member-input input mb-4"
+            placeholder="멤버 이름을 입력하세요"
+            disabled
+          />
+          <button class="btn btn-secondary add-member" disabled>추가</button>
+        </div>
+      </aside>
     </div>
 
     <script>
-      // 멤버 목록을 저장할 배열
-      let members = [];
-      let totalMembers = 0;
+      const TeamDistributor = {
+        selectors: {
+          memberInput: '.member-input',
+          memberList: '.member-list',
+          addMemberBtn: '.add-member',
+          totalInput: '.number-input',
+          statusMessage: '.status-message',
+          confirmTotalBtn: '.confirm-total',
+          editTotalBtn: '.edit-total',
+          completionMessage: '.completion-message'
+        },
 
-      // DOM 요소
-      const memberInput = document.getElementById("member-input");
-      const memberList = document.getElementById("member-list");
-      const addMemberBtn = document.getElementById("add-member-btn");
-      const totalMembersInput = document.getElementById("total-members-input");
-      const statusMessage = document.getElementById("status-message");
-      const confirmTotalBtn = document.getElementById("confirm-total-btn");
-      const editTotalBtn = document.getElementById("edit-total-btn");
-      const completionMessage = document.getElementById("completion-message");
+        state: {
+          members: [],
+          totalMembers: 0,
+          isTotalConfirmed: false
+        },
 
-      // 총원 설정 상태
-      let isTotalConfirmed = false;
+        init() {
+          this.bindElements();
+          this.bindEvents();
+          this.updateStatusMessage();
+        },
 
-      // 총원 업데이트 함수
-      function updateTotalMembers(value) {
-        totalMembers = parseInt(value) || 0;
-        updateStatusMessage();
-        updateInputState();
-      }
+        bindElements() {
+          this.elements = {};
+          for (const [key, selector] of Object.entries(this.selectors)) {
+            this.elements[key] = document.querySelector(selector);
+          }
+        },
 
-      // 상태 메시지 업데이트
-      function updateStatusMessage() {
-        if (!isTotalConfirmed) {
-          statusMessage.textContent = "총원을 입력하고 완료 버튼을 클릭해주세요.";
-          return;
-        }
+        bindEvents() {
+          this.elements.confirmTotalBtn.addEventListener("click", () => this.confirmTotalMembers());
+          this.elements.editTotalBtn.addEventListener("click", () => this.editTotalMembers());
+          this.elements.addMemberBtn.addEventListener("click", () => this.addMember());
+          this.elements.memberInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") this.addMember();
+          });
+          
+          // 총원 입력 필드 이벤트
+          this.elements.totalInput.addEventListener("input", (e) => {
+            if (!this.state.isTotalConfirmed) {
+              const input = e.target;
+              const value = input.value;
+              
+              // 숫자와 정수 검증
+              if (!/^\d*$/.test(value)) {
+                input.value = value.replace(/[^\d]/g, '');
+                this.showInvalidInput(input);
+                return;
+              }
 
-        if (totalMembers === 0) {
-          statusMessage.textContent = "총원을 입력해주세요.";
-          return;
-        }
+              const numValue = parseInt(value);
+              if (numValue < 1) {
+                input.value = "";
+                this.showInvalidInput(input);
+                this.updateTotalMembers(0);
+                return;
+              }
 
-        const remaining = totalMembers - members.length;
-        if (remaining > 0) {
-          statusMessage.textContent = `${totalMembers}명 중 ${members.length}명 작성됨 (${remaining}명 남음)`;
-        } else if (remaining === 0) {
-          statusMessage.textContent = `${totalMembers}명 모두 작성 완료!`;
-        } else {
-          statusMessage.textContent = `설정된 총원(${totalMembers}명)을 초과했습니다!`;
-        }
-      }
+              input.classList.remove('invalid');
+              this.updateTotalMembers(numValue);
+            }
+          });
 
-      // 입력 상태 업데이트
-      function updateInputState() {
-        const canAddMore = isTotalConfirmed && totalMembers > 0 && members.length < totalMembers;
-        memberInput.disabled = !canAddMore;
-        addMemberBtn.disabled = !canAddMore;
-        
-        if (!canAddMore) {
-          memberInput.classList.add("disabled");
-          addMemberBtn.classList.add("disabled");
-        } else {
-          memberInput.classList.remove("disabled");
-          addMemberBtn.classList.remove("disabled");
-        }
+          // 총원 입력 필드 엔터키 이벤트 추가
+          this.elements.totalInput.addEventListener("keypress", (e) => {
+            if (e.key === "Enter" && !this.state.isTotalConfirmed) {
+              const value = parseInt(e.target.value);
+              if (!value || value < 1) {
+                this.showInvalidInput(e.target);
+                return;
+              }
+              this.confirmTotalMembers();
+            }
+          });
+        },
 
-        // 모든 멤버가 입력완료된 경우
-        if (totalMembers > 0 && members.length === totalMembers) {
-          completionMessage.style.display = "block";
-        } else {
-          completionMessage.style.display = "none";
-        }
-      }
+        updateTotalMembers(value) {
+          const parsedValue = parseInt(value);
+          this.state.totalMembers = !isNaN(parsedValue) && parsedValue > 0 ? parsedValue : 0;
+          this.updateStatusMessage();
+          this.updateInputState();
+        },
 
-      // 총원 확정 함수
-      function confirmTotalMembers() {
-        const value = totalMembersInput.value;
-        if (!value || parseInt(value) < 1) {
-          alert("유효한 총원 수를 입력해주세요.");
-          return;
-        }
+        updateStatusMessage() {
+          const { statusMessage } = this.elements;
+          const { totalMembers, members, isTotalConfirmed } = this.state;
 
-        // 총원 설정 UI 업데이트
-        totalMembersInput.disabled = true;
-        confirmTotalBtn.style.display = "none";
-        editTotalBtn.style.display = "block";
-        isTotalConfirmed = true;
-
-        // 멤버 입력 활성화
-        updateInputState();
-      }
-
-      // 총원 수정 함수
-      function editTotalMembers() {
-        // 이미 입력된 멤버가 있는 경우 경고
-        if (members.length > 0) {
-          if (!confirm("총원을 수정하면 입력된 멤버 목록이 초기화됩니다. 계속하시겠습니까?")) {
+          if (!isTotalConfirmed) {
+            statusMessage.textContent = "총원을 입력하고 완료 버튼을 클릭하거나 엔터를 눌러주세요.";
             return;
           }
-          members = [];
-          updateMemberList();
-        }
 
-        // 총원 설정 UI 초기화
-        totalMembersInput.disabled = false;
-        confirmTotalBtn.style.display = "block";
-        editTotalBtn.style.display = "none";
-        isTotalConfirmed = false;
-
-        // 입력 폼 비활성화
-        updateInputState();
-        completionMessage.style.display = "none";
-      }
-
-      // 총원 입력 이벤트 리스너
-      totalMembersInput.addEventListener("change", (e) => {
-        if (!isTotalConfirmed) {
-          updateTotalMembers(e.target.value);
-        }
-      });
-
-      // 멤버 추가 함수
-      function addMember() {
-        if (members.length >= totalMembers) {
-          alert("더 이상 멤버를 추가할 수 없습니다.");
-          return;
-        }
-
-        let name = memberInput.value.trim();
-
-        // 입력값 검증
-        if (!name) {
-          alert("이름을 입력해주세요.");
-          return;
-        }
-
-        // 동명이인 처리
-        const sameNames = members.filter(
-          (member) =>
-            member === name || // 정확히 같은 이름
-            member.startsWith(name + "-") || // 넘버링이 있는 같은 이름
-            member.replace(/-\d+$/, "") === name // 넘버링을 제거했을 때 같은 이름
-        );
-
-        if (sameNames.length > 0) {
-          // 기존의 넘버링되지 않은 동일 이름을 찾아서 넘버링 추가
-          const baseNameIndex = members.findIndex((member) => member === name);
-          if (baseNameIndex !== -1) {
-            members[baseNameIndex] = `${name}-1`;
+          if (totalMembers === 0) {
+            statusMessage.textContent = "총원을 입력해주세요.";
+            return;
           }
 
-          // 새로운 멤버에 대한 넘버링
-          name = `${name}-${sameNames.length + 1}`;
-        }
-
-        // 멤버 추가
-        members.push(name);
-
-        // UI 업데이트
-        updateMemberList();
-        updateStatusMessage();
-        updateInputState();
-
-        // 입력창 초기화
-        memberInput.value = "";
-      }
-
-      // 멤버 삭제 함수
-      function removeMember(index) {
-        members.splice(index, 1);
-        updateMemberList();
-        updateStatusMessage();
-        updateInputState();
-      }
-
-      // 멤버 목록 UI 업데이트 함수 수정
-      function updateMemberList() {
-        while (memberList.firstChild) {
-          memberList.firstChild.remove();
-        }
-
-        members.forEach((name, index) => {
-          const li = document.createElement("li");
-          li.className = "flex justify-between p-8 my-4 bg-gray rounded";
-
-          const nameSpan = document.createElement("span");
-          nameSpan.className = "member-name";
-          nameSpan.dataset.index = index;
-
-          const deleteBtn = document.createElement("span");
-          deleteBtn.className = "text-red cursor-pointer";
-          deleteBtn.dataset.index = index;
-          deleteBtn.textContent = "×";
-
-          deleteBtn.addEventListener("click", () => removeMember(index));
-
-          if (name.includes("-")) {
-            const [baseName, suffix] = name.split("-");
-            nameSpan.textContent = `${baseName}-${suffix}`;
-
-            // 수정 버튼 추가
-            const editBtn = document.createElement("button");
-            editBtn.className = "edit-btn";
-            editBtn.textContent = "수정";
-            editBtn.addEventListener("click", (e) => startSuffixEdit(e, index));
-
-            nameSpan.appendChild(editBtn);
+          const remaining = totalMembers - members.length;
+          if (remaining > 0) {
+            statusMessage.textContent = `${totalMembers}명 중 ${members.length}명 작성됨 (${remaining}명 남음)`;
+          } else if (remaining === 0) {
+            statusMessage.textContent = `${totalMembers}명 모두 작성 완료!`;
           } else {
-            nameSpan.textContent = name;
+            statusMessage.textContent = `설정된 총원(${totalMembers}명)을 초과했습니다!`;
+          }
+        },
+
+        updateInputState() {
+          const { memberInput, addMemberBtn, completionMessage } = this.elements;
+          const { totalMembers, members, isTotalConfirmed } = this.state;
+
+          const canAddMore = isTotalConfirmed && totalMembers > 0 && members.length < totalMembers;
+
+          memberInput.disabled = !canAddMore;
+          addMemberBtn.disabled = !canAddMore;
+
+          if (!canAddMore) {
+            memberInput.classList.add("disabled");
+            addMemberBtn.classList.add("disabled");
+          } else {
+            memberInput.classList.remove("disabled");
+            addMemberBtn.classList.remove("disabled");
           }
 
-          li.appendChild(nameSpan);
-          li.appendChild(deleteBtn);
-          memberList.appendChild(li);
-        });
-      }
+          if (totalMembers > 0 && members.length === totalMembers) {
+            completionMessage.style.display = "block";
+          } else {
+            completionMessage.style.display = "none";
+          }
+        },
 
-      // 접미사 수정 함수 개선
-      function startSuffixEdit(event, index) {
-        event.preventDefault();
-        const nameSpan = event.target.parentElement;
-        const name = members[index];
+        showInvalidInput(element) {
+          element.classList.add('invalid');
+          element.classList.remove('shake');
+          // 리플로우를 강제로 발생시켜 애니메이션이 다시 시작되도록 함
+          void element.offsetWidth;
+          element.classList.add('shake');
+        },
 
-        // 이미 수정 중인지 확인
-        if (nameSpan.querySelector(".edit-mode")) return;
+        confirmTotalMembers() {
+          const { totalInput, confirmTotalBtn, editTotalBtn } = this.elements;
+          const value = parseInt(totalInput.value);
 
-        const [baseName, currentSuffix] = name.split("-");
-
-        // 수정 모드 UI 생성
-        const editMode = document.createElement("span");
-        editMode.className = "edit-mode";
-
-        const input = document.createElement("input");
-        input.type = "text";
-        input.value = currentSuffix;
-        input.className = "suffix-input";
-        input.placeholder = "접미사 입력";
-
-        const confirmBtn = document.createElement("button");
-        confirmBtn.className = "confirm-btn";
-        confirmBtn.textContent = "확정";
-
-        editMode.appendChild(input);
-        editMode.appendChild(confirmBtn);
-
-        // 원래 내용 백업
-        const originalContent = nameSpan.innerHTML;
-        nameSpan.innerHTML = `${baseName}-`;
-        nameSpan.appendChild(editMode);
-
-        function handleConfirm() {
-          const newSuffix = input.value.trim();
-
-          if (!newSuffix) {
-            nameSpan.innerHTML = originalContent;
+          if (!value || value < 1) {
+            this.showInvalidInput(totalInput);
             return;
           }
 
-          const isDuplicate = members.some(
-            (m, i) => i !== index && m === `${baseName}-${newSuffix}`
+          totalInput.classList.remove('invalid');
+          totalInput.disabled = true;
+          confirmTotalBtn.style.display = "none";
+          editTotalBtn.style.display = "block";
+          this.state.isTotalConfirmed = true;
+
+          this.updateInputState();
+        },
+
+        editTotalMembers() {
+          const { totalInput, confirmTotalBtn, editTotalBtn } = this.elements;
+
+          if (this.state.members.length > 0) {
+            if (!confirm("총원을 수정하면 입력된 멤버 목록이 초기화됩니다. 계속하시겠습니까?")) {
+              return;
+            }
+            this.state.members = [];
+            this.updateMemberList();
+          }
+
+          totalInput.disabled = false;
+          confirmTotalBtn.style.display = "block";
+          editTotalBtn.style.display = "none";
+          this.state.isTotalConfirmed = false;
+
+          this.updateInputState();
+          this.elements.completionMessage.style.display = "none";
+        },
+
+        addMember() {
+          const { memberInput } = this.elements;
+          const { totalMembers, members } = this.state;
+
+          if (members.length >= totalMembers) {
+            this.showInvalidInput(memberInput);
+            return;
+          }
+
+          let name = memberInput.value.trim();
+
+          if (!name) {
+            this.showInvalidInput(memberInput);
+            return;
+          }
+
+          memberInput.classList.remove('invalid');
+
+          const sameNames = members.filter(
+            (member) =>
+              member === name ||
+              member.startsWith(name + "-") ||
+              member.replace(/-\d+$/, "") === name
           );
 
-          if (isDuplicate) {
-            alert("이미 사용 중인 접미사입니다.");
-            nameSpan.innerHTML = originalContent;
-            return;
+          if (sameNames.length > 0) {
+            const baseNameIndex = members.findIndex((member) => member === name);
+            if (baseNameIndex !== -1) {
+              members[baseNameIndex] = `${name}-1`;
+            }
+            name = `${name}-${sameNames.length + 1}`;
           }
 
-          members[index] = `${baseName}-${newSuffix}`;
-          updateMemberList();
-        }
+          this.state.members.push(name);
+          this.updateMemberList();
+          this.updateStatusMessage();
+          this.updateInputState();
+          memberInput.value = "";
+        },
 
-        // 이벤트 리스너
-        confirmBtn.addEventListener("click", handleConfirm);
-        input.addEventListener("keypress", (e) => {
-          if (e.key === "Enter") {
-            handleConfirm();
+        removeMember(index) {
+          this.state.members.splice(index, 1);
+          this.updateMemberList();
+          this.updateStatusMessage();
+          this.updateInputState();
+        },
+
+        startSuffixEdit(event, index) {
+          event.preventDefault();
+          const nameSpan = event.target.parentElement;
+          const name = this.state.members[index];
+
+          if (nameSpan.querySelector(".edit-mode")) return;
+
+          const [baseName, currentSuffix] = name.split("-");
+
+          const editMode = document.createElement("span");
+          editMode.className = "edit-mode";
+
+          const input = document.createElement("input");
+          input.type = "text";
+          input.value = currentSuffix || "";
+          input.className = "suffix-input";
+          input.placeholder = "접미사 입력";
+
+          const confirmBtn = document.createElement("button");
+          confirmBtn.className = "btn btn-primary";
+          confirmBtn.textContent = "확정";
+
+          editMode.appendChild(input);
+          editMode.appendChild(confirmBtn);
+
+          const originalContent = nameSpan.innerHTML;
+          nameSpan.innerHTML = `${baseName}-`;
+          nameSpan.appendChild(editMode);
+
+          const handleConfirm = () => {
+            const newSuffix = input.value.trim();
+
+            if (!newSuffix) {
+              nameSpan.innerHTML = originalContent;
+              return;
+            }
+
+            const isDuplicate = this.state.members.some(
+              (m, i) => i !== index && m === `${baseName}-${newSuffix}`
+            );
+
+            if (isDuplicate) {
+              alert("이미 사용 중인 접미사입니다.");
+              nameSpan.innerHTML = originalContent;
+              return;
+            }
+
+            this.state.members[index] = `${baseName}-${newSuffix}`;
+            this.updateMemberList();
+          };
+
+          confirmBtn.addEventListener("click", handleConfirm);
+          input.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+              handleConfirm();
+            }
+          });
+
+          input.addEventListener("blur", (e) => {
+            if (e.relatedTarget !== confirmBtn) {
+              nameSpan.innerHTML = originalContent;
+            }
+          });
+
+          input.focus();
+        },
+
+        updateMemberList() {
+          const { memberList } = this.elements;
+
+          while (memberList.firstChild) {
+            memberList.firstChild.remove();
           }
-        });
 
-        // 포커스 아웃 시 원래 상태로 복구
-        input.addEventListener("blur", (e) => {
-          // 확정 버튼 클릭한 경우는 제외
-          if (e.relatedTarget !== confirmBtn) {
-            nameSpan.innerHTML = originalContent;
-          }
-        });
+          this.state.members.forEach((name, index) => {
+            const li = document.createElement("li");
+            li.className = "member-item";
 
-        input.focus();
-      }
+            const nameSpan = document.createElement("span");
+            nameSpan.className = "member-name";
+            nameSpan.dataset.index = index;
 
-      // 이벤트 리스너 등록
-      addMemberBtn.addEventListener("click", addMember);
-      memberInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") {
-          addMember();
-        }
+            const deleteBtn = document.createElement("button");
+            deleteBtn.className = "btn btn-secondary";
+            deleteBtn.dataset.index = index;
+            deleteBtn.textContent = "삭제";
+
+            deleteBtn.addEventListener("click", () => this.removeMember(index));
+
+            if (name.includes("-")) {
+              const [baseName, suffix] = name.split("-");
+              nameSpan.textContent = `${baseName}-${suffix}`;
+
+              const editBtn = document.createElement("button");
+              editBtn.className = "btn btn-secondary";
+              editBtn.style.marginLeft = "8px";
+              editBtn.textContent = "수정";
+              editBtn.addEventListener("click", (e) => this.startSuffixEdit(e, index));
+
+              nameSpan.appendChild(editBtn);
+            } else {
+              nameSpan.textContent = name;
+            }
+
+            li.appendChild(nameSpan);
+            li.appendChild(deleteBtn);
+            memberList.appendChild(li);
+          });
+        },
+      };
+
+      document.addEventListener('DOMContentLoaded', () => {
+        TeamDistributor.init();
       });
-
-      // 이벤트 리스너 추가
-      confirmTotalBtn.addEventListener("click", confirmTotalMembers);
-      editTotalBtn.addEventListener("click", editTotalMembers);
     </script>
   </body>
 </html>
