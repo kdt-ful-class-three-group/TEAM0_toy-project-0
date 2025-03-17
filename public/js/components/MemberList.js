@@ -91,18 +91,29 @@ export class MemberList extends HTMLElement {
   startSuffixEdit(button, index) {
     const currentState = store.getState();
     const name = currentState.members[index];
-    const [baseName, currentSuffix] = name.split("-");
+    
+    // 이름과 접미사 분리 (접미사가 있을 경우)
+    let baseName = name;
+    let currentSuffix = "";
+    
+    if (name.includes("-")) {
+      const parts = name.split("-");
+      baseName = parts[0];
+      currentSuffix = parts[1] || "";
+    }
 
     const nameSpan = button.closest(".member-item__name");
     const editMode = document.createElement("span");
     editMode.className = "edit-mode";
+    
     editMode.innerHTML = `
-      <input type="text" class="input suffix-input" value="${currentSuffix || ""}" placeholder="접미사 입력">
-      <button class="btn confirm-suffix">확정</button>
+      <span>${baseName}-</span>
+      <input type="text" class="input suffix-input" value="${currentSuffix}" placeholder="접미사 입력">
+      <button class="btn btn--small confirm-suffix">확정</button>
     `;
 
     const originalContent = nameSpan.innerHTML;
-    nameSpan.innerHTML = `${baseName}-`;
+    nameSpan.innerHTML = "";
     nameSpan.appendChild(editMode);
 
     const input = editMode.querySelector(".suffix-input");
