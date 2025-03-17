@@ -3,7 +3,7 @@
  * @description 팀 구성과 관련된 이벤트 핸들링 로직을 담당하는 모듈
  */
 
-import store from '../store/index.js';
+import store, { actionCreators } from '../store/index.js';
 import utils from '../utils/index.js';
 
 /**
@@ -23,12 +23,12 @@ export const handleTeamCountInput = (e, showInvalidInput) => {
   if (numValue < 1) {
     e.target.value = "";
     showInvalidInput(e.target);
-    store.setState({ teamCount: 0 });
+    store.dispatch(actionCreators.setTeamCount(0));
     return;
   }
 
   e.target.classList.remove("invalid");
-  store.setState({ teamCount: numValue });
+  store.dispatch(actionCreators.setTeamCount(numValue));
 };
 
 /**
@@ -47,17 +47,15 @@ export const confirmTeamCount = (showInvalidInput, inputEl) => {
     return;
   }
 
-  store.setState({ isTeamCountConfirmed: true });
+  store.dispatch(actionCreators.confirmTeamCount());
 };
 
 /**
  * 팀 수 수정을 처리하는 핸들러
  */
 export const editTeamCount = () => {
-  store.setState({
-    teamCount: 0,
-    isTeamCountConfirmed: false
-  });
+  store.dispatch(actionCreators.setTeamCount(0));
+  store.dispatch(actionCreators.confirmTeamCount());
 };
 
 /**

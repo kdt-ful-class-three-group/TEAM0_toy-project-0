@@ -3,7 +3,7 @@
  * @description 멤버 관리와 관련된 이벤트 핸들링 로직을 담당하는 모듈
  */
 
-import store from '../store/index.js';
+import store, { actionCreators } from '../store/index.js';
 import utils from '../utils/index.js';
 
 /**
@@ -23,12 +23,12 @@ export const handleTotalInput = (e, showInvalidInput) => {
   if (numValue < 1) {
     e.target.value = "";
     showInvalidInput(e.target);
-    store.setState({ totalMembers: 0 });
+    store.dispatch(actionCreators.setTotalMembers(0));
     return;
   }
 
   e.target.classList.remove("invalid");
-  store.setState({ totalMembers: numValue });
+  store.dispatch(actionCreators.setTotalMembers(numValue));
 };
 
 /**
@@ -47,7 +47,7 @@ export const confirmTotalMembers = (showInvalidInput, inputEl) => {
     return;
   }
 
-  store.setState({ isTotalConfirmed: true });
+  store.dispatch(actionCreators.confirmTotalMembers());
 };
 
 /**
@@ -62,11 +62,7 @@ export const editTotalMembers = () => {
     }
   }
   
-  store.setState({
-    members: [],
-    isTotalConfirmed: false,
-    totalMembers: 0,
-  });
+  store.dispatch(actionCreators.resetTotalMembers());
   
   return true;
 };
@@ -97,25 +93,15 @@ export const addMember = (memberInput, showInvalidInput) => {
 
   memberInput.classList.remove("invalid");
   
-  // 중복 이름 처리 및 새 멤버 이름 생성
-  const newName = utils.generateMemberName(name, state.members);
-  
-  // generateMemberName에서 첫 번째 중복 멤버의 이름 패턴이 이미 변경되었을 수 있으므로 
-  // 최신 상태 가져오기
-  const updatedState = store.getState();
-  
-  // 상태 업데이트
-  const newMembers = [...updatedState.members, newName];
-  
-  // 상태 업데이트 (비동기로 처리하여 DOM 업데이트 보장)
+  // 멤버 추가 액션 디스패치
   setTimeout(() => {
-    store.setState({ members: newMembers });
+    store.dispatch(actionCreators.addMember(name));
   }, 10);
   
   memberInput.value = "";
 
   // 포커스 관리
-  if (newMembers.length < state.totalMembers) {
+  if (state.members.length < state.totalMembers - 1) {
     // 즉시 다시 포커스 설정
     memberInput.focus();
   } else {
@@ -131,48 +117,9 @@ export const addMember = (memberInput, showInvalidInput) => {
  * @param {number} index - 삭제할 멤버의 인덱스
  */
 export const deleteMember = (index) => {
-  const currentState = store.getState();
-  const members = [...currentState.members];
-  
-  // 삭제할 멤버 정보 저장
-  const memberToDelete = members[index];
-  
-  // 멤버 삭제
-  members.splice(index, 1);
-  
-  // 동일한 기본 이름을 가진 멤버 접미사 처리
-  if (memberToDelete.includes('-')) {
-    const baseName = memberToDelete.split('-')[0];
-    
-    // 같은 기본 이름을 가진 멤버 찾기
-    const sameBaseMembers = members.filter(member => {
-      if (member.includes('-')) {
-        return member.split('-')[0] === baseName;
-      }
-      return false;
-    });
-    
-    // 접미사가 -1인 멤버만 남았고 다른 중복된 멤버가 없다면
-    if (sameBaseMembers.length === 1) {
-      const remainingMemberIndex = members.findIndex(member => 
-        member.includes('-') && member.split('-')[0] === baseName
-      );
-      
-      if (remainingMemberIndex !== -1) {
-        const remainingMember = members[remainingMemberIndex];
-        const suffix = remainingMember.split('-')[1];
-        
-        // 접미사가 1인 경우, 접미사 제거
-        if (suffix === '1') {
-          members[remainingMemberIndex] = baseName;
-        }
-      }
-    }
-  }
-  
-  // 상태 업데이트 (비동기로 처리하여 DOM 업데이트 보장)
+  // 비동기로 처리하여 DOM 업데이트 보장
   setTimeout(() => {
-    store.setState({ members });
+    store.dispatch(actionCreators.deleteMember(index));
   }, 0);
 };
 
@@ -183,25 +130,12 @@ export const deleteMember = (index) => {
  * @returns {boolean} 수정 성공 여부
  */
 export const editMemberName = (index, newName) => {
-  const currentState = store.getState();
-  
   if (!newName.trim()) {
     return false;
   }
   
-  // 중복 검사
-  const isDuplicate = currentState.members.some((m, i) => {
-    return i !== index && m === newName;
-  });
-
-  if (isDuplicate) {
-    console.error("이미 사용 중인 이름입니다.");
-    return false;
-  }
-
-  const newMembers = [...currentState.members];
-  newMembers[index] = newName;
-  store.setState({ members: newMembers });
+  // 액션 디스패치
+  store.dispatch(actionCreators.editMember(index, newName.trim()));
   
   return true;
 }; 
