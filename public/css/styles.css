@@ -26,6 +26,8 @@
   --color-white: #ffffff;
   --color-gray: #969696;
   --color-light: #d4d4d4;
+  --color-tag: #2a6e78;
+  --color-tag-bg: rgba(79, 154, 154, 0.15);
 
   /* 간격 */
   --space-1: 0.25rem;
@@ -59,4 +61,66 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+/* 멤버 이름 스타일 */
+.member-name {
+  font-weight: 500;
+}
+
+/* 숫자 접미사 스타일 */
+.member-suffix-numeric {
+  font-weight: 400;
+  color: var(--color-gray);
+  font-size: 0.9em;
+}
+
+/* 문자열 접미사 스타일 */
+.member-suffix-text {
+  font-weight: 500;
+  color: var(--color-tag);
+  background-color: var(--color-tag-bg);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9em;
+  margin-left: 2px;
+}
+
+.member-item__name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.member-item__edit {
+  margin-left: auto;
+}
+
+.edit-mode {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.suffix-input {
+  width: 120px;
+  min-width: 60px;
+}
+
+/* 입력 필드 포커스 시 스타일 */
+.suffix-input:focus {
+  outline: 2px solid var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* 접미사 도움말 스타일 */
+.suffix-help {
+  font-size: var(--text-sm);
+  color: var(--color-gray);
+  margin-top: var(--space-1);
+  position: absolute;
+  top: 100%;
+  left: 0;
+  white-space: nowrap;
 } 
