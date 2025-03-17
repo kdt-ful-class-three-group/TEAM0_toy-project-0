@@ -1,172 +1,45 @@
 /**
  * @file utils/index.js
- * @description 여러 컴포넌트에서 사용하는 유틸리티 함수들을 모듈화합니다.
+ * @description 모든 유틸리티 모듈을 통합하여 내보내는 진입점입니다.
  */
-import store from '../store/index.js';
+
+// 각 모듈 가져오기
+export * from './validation.js';
+export * from './memberUtils.js';
+export * from './teamUtils.js';
+export * from './stringUtils.js';
+export * from './errorHandler.js';
+
+// 기본 유틸리티 객체 (기존 코드와의 호환성 유지)
+import * as validation from './validation.js';
+import * as memberUtils from './memberUtils.js';
+import * as teamUtils from './teamUtils.js';
+import * as stringUtils from './stringUtils.js';
 
 /**
- * @function createUtils
- * @description 유틸리티 함수를 모아둔 객체를 생성합니다.
+ * 기존 utils 객체와 호환되는 인터페이스를 제공합니다.
+ * 새 코드에서는 개별 모듈에서 직접 함수를 가져와 사용하는 것을 권장합니다.
+ * 
+ * 예시:
+ * import { validateNumber } from '../utils/validation.js';
+ * 또는
+ * import * as validation from '../utils/validation.js';
  */
-const createUtils = () => {
-  console.log("유틸 생성");
-
-  /**
-   * 입력값이 숫자인지 확인합니다.
-   * @param {string|number} value - 확인할 값
-   * @returns {boolean} 숫자 여부
-   */
-  const validateNumber = (value) => {
-    if (value === "" || value === undefined) return false;
-    return !isNaN(value) && parseInt(value) >= 0;
-  };
-
-  /**
-   * 팀 수가 유효한지 확인합니다.
-   * @param {number} teamCount - 팀 수
-   * @returns {boolean} 유효 여부
-   */
-  const validateTeamCount = (teamCount) => {
-    return validateNumber(teamCount) && teamCount > 0;
-  };
-
-  /**
-   * 총원 수가 유효한지 확인합니다.
-   * @param {number} totalMembers - 총원 수
-   * @returns {boolean} 유효 여부
-   */
-  const validateTotalMembers = (totalMembers) => {
-    return validateNumber(totalMembers) && totalMembers > 0;
-  };
-
-  /**
-   * 더 많은 멤버를 추가할 수 있는지 확인합니다.
-   * @param {object} state - 애플리케이션 상태
-   * @returns {boolean} 추가 가능 여부
-   */
-  const canAddMore = (state) => {
-    if (!state) return false;
-    return (
-      state.isTotalConfirmed &&
-      state.totalMembers > 0 &&
-      state.members.length < state.totalMembers
-    );
-  };
-
-  /**
-   * 중복되지 않는 멤버 이름을 생성합니다.
-   * @param {string} name - 기본 이름
-   * @param {Array<string>} existingNames - 기존 이름 배열
-   * @returns {string} 중복되지 않는 이름
-   */
-  const generateMemberName = (name, existingNames) => {
-    // 접미사가 없는 이름으로 시작하는 모든 멤버 찾기
-    const exactMatch = existingNames.includes(name);
-    const sameBaseNames = existingNames.filter(existingName => 
-      existingName === name || existingName.startsWith(`${name}-`)
-    );
-    
-    // 중복된 이름이 있는 경우
-    if (exactMatch || sameBaseNames.length > 0) {
-      // 첫 번째 중복이 발생한 경우 (접미사 없는 이름이 이미 존재)
-      if (exactMatch) {
-        // 기존 멤버 이름에 접미사 부여를 위해 store에서 members 업데이트
-        const state = store.getState();
-        const newMembers = [...state.members];
-        
-        // 접미사가 없는 기존 멤버 찾기
-        const indexOfExistingName = newMembers.findIndex(m => m === name);
-        
-        // 접미사가 없는 기존 멤버에게 -1 접미사 부여
-        if (indexOfExistingName !== -1) {
-          // 중요: 기존 이름을 -1로 변경
-          newMembers[indexOfExistingName] = `${name}-1`;
-          
-          // 즉시 상태 업데이트 (비동기 처리 제거)
-          store.setState({ members: newMembers });
-          
-          // 새 멤버는 -2를 사용하여 반환
-          return `${name}-2`;
-        }
-      }
-      
-      // 사용된 접미사 번호 추출
-      const usedSuffixes = sameBaseNames
-        .map(n => {
-          if (n === name) return 0;
-          const match = n.match(new RegExp(`^${name}-([0-9]+)$`));
-          return match ? parseInt(match[1]) : 0;
-        })
-        .filter(n => n !== 0);
-      
-      // 다음 접미사 번호 결정 (최대값 + 1 또는 1)
-      const nextSuffix = usedSuffixes.length > 0 ? Math.max(...usedSuffixes) + 1 : 1;
-      
-      return `${name}-${nextSuffix}`;
-    }
-    
-    // 중복이 없으면 원래 이름 사용
-    return name;
-  };
-
-  /**
-   * 팀을 공평하게 배분합니다.
-   * @param {Array<string>} members - 멤버 배열
-   * @param {number} teamCount - 팀 수
-   * @returns {Array<Array<string>>} 팀 배열
-   */
-  const distributeTeams = (members, teamCount) => {
-    if (!members || !members.length || !teamCount) {
-      console.warn("팀 배분에 필요한 데이터가 부족합니다.");
-      return [];
-    }
-
-    // 멤버 복사본 무작위 섞기
-    const shuffled = [...members].sort(() => 0.5 - Math.random());
-    
-    // 총 멤버 수
-    const totalMembers = shuffled.length;
-    
-    // 기본 팀당 인원 수 (올림 아닌 내림으로 처리)
-    const baseSize = Math.floor(totalMembers / teamCount);
-    
-    // 나머지 인원 (추가 인원이 필요한 팀 수)
-    const remainder = totalMembers % teamCount;
-    
-    console.log(`총원: ${totalMembers}, 팀 수: ${teamCount}, 기본 팀 크기: ${baseSize}, 나머지: ${remainder}`);
-    
-    // 팀 배열 초기화
-    const teams = Array.from({ length: teamCount }, () => []);
-    
-    // 균등 배분 로직 구현
-    let index = 0;
-    
-    // 각 팀에 기본 인원 + 필요시 추가 인원 배정
-    for (let teamIndex = 0; teamIndex < teamCount; teamIndex++) {
-      // 이 팀에 배정할 멤버 수 (처음 remainder팀에는 추가 인원 1명 배정)
-      const teamSize = baseSize + (teamIndex < remainder ? 1 : 0);
-      
-      // 팀에 멤버 추가
-      for (let i = 0; i < teamSize && index < totalMembers; i++) {
-        teams[teamIndex].push(shuffled[index++]);
-      }
-    }
-    
-    console.log("팀 배분 결과:", teams);
-    return teams;
-  };
-
-  return {
-    validateNumber,
-    validateTeamCount,
-    validateTotalMembers,
-    canAddMore,
-    generateMemberName,
-    distributeTeams
-  };
+const utils = {
+  // validation 모듈
+  validateNumber: validation.validateNumber,
+  validateTeamCount: validation.validateTeamCount,
+  validateTotalMembers: validation.validateTotalMembers,
+  
+  // memberUtils 모듈
+  canAddMore: memberUtils.canAddMore,
+  generateMemberName: memberUtils.generateMemberName,
+  
+  // teamUtils 모듈
+  distributeTeams: teamUtils.distributeTeams,
+  
+  // 기타 함수들
+  // ...
 };
-
-// 유틸리티 인스턴스 생성
-const utils = createUtils();
 
 export default utils; 
