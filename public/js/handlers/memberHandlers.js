@@ -80,13 +80,18 @@ export const editTotalMembers = () => {
  * @returns {boolean} 추가 성공 여부
  */
 export const addMember = (memberInput, showInvalidInput) => {
-  if (!memberInput) return false;
+  console.time('addMember');
+  if (!memberInput) {
+    console.timeEnd('addMember');
+    return false;
+  }
 
   const state = store.getState();
   const name = memberInput.value.trim();
 
   if (!name) {
     showUIError(memberInput, '멤버 이름을 입력하세요.');
+    console.timeEnd('addMember');
     return false;
   }
 
@@ -94,6 +99,7 @@ export const addMember = (memberInput, showInvalidInput) => {
   if (!canAddMore(state)) {
     showUIError(memberInput, '더 이상 멤버를 추가할 수 없습니다.');
     memberInput.blur();
+    console.timeEnd('addMember');
     return false;
   }
 
@@ -101,10 +107,11 @@ export const addMember = (memberInput, showInvalidInput) => {
   
   // 멤버 추가 액션 디스패치
   try {
-    setTimeout(() => {
-      store.dispatch(actionCreators.addMember(name));
-      logger.info('멤버 추가됨', { name });
-    }, 10);
+    console.log('멤버 추가 시작:', name);
+    
+    store.dispatch(actionCreators.addMember(name));
+    console.log('멤버 추가됨:', name, '현재 멤버:', store.getState().members);
+    logger.info('멤버 추가됨', { name });
     
     memberInput.value = "";
 
@@ -117,11 +124,13 @@ export const addMember = (memberInput, showInvalidInput) => {
       memberInput.blur();
     }
     
+    console.timeEnd('addMember');
     return true;
   } catch (error) {
     handleError(error, () => {
       showUIError(memberInput, '멤버 추가 중 오류가 발생했습니다.');
     });
+    console.timeEnd('addMember');
     return false;
   }
 };
