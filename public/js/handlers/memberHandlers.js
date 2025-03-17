@@ -4,7 +4,12 @@
  */
 
 import store, { actionCreators } from '../store/index.js';
-import utils from '../utils/index.js';
+import { validateNumber, validateTotalMembers } from '../utils/validation.js';
+import { canAddMore, generateMemberName } from '../utils/memberUtils.js';
+import { ValidationError, handleError, showUIError } from '../utils/errorHandler.js';
+import { createErrorLogger } from '../utils/errorHandler.js';
+
+const logger = createErrorLogger('memberHandlers');
 
 /**
  * 총원 수 입력을 처리하는 핸들러
@@ -13,16 +18,16 @@ import utils from '../utils/index.js';
  */
 export const handleTotalInput = (e, showInvalidInput) => {
   const value = e.target.value;
-  if (!utils.validateNumber(value)) {
+  if (!validateNumber(value)) {
     e.target.value = value.replace(/[^\d]/g, "");
-    showInvalidInput(e.target);
+    showUIError(e.target, '숫자만 입력할 수 있습니다.');
     return;
   }
 
   const numValue = parseInt(e.target.value);
   if (numValue < 1) {
     e.target.value = "";
-    showInvalidInput(e.target);
+    showUIError(e.target, '1 이상의 숫자를 입력하세요.');
     store.dispatch(actionCreators.setTotalMembers(0));
     return;
   }
@@ -40,9 +45,10 @@ export const confirmTotalMembers = (showInvalidInput, inputEl) => {
   const state = store.getState();
   const value = state.totalMembers;
 
-  if (!utils.validateTotalMembers(value)) {
+  if (!validateTotalMembers(value)) {
     if (inputEl) {
-      showInvalidInput(inputEl);
+      const error = new ValidationError('유효한 총원 수를 입력하세요.', { value });
+      handleError(error, () => showUIError(inputEl, '유효한 총원 수를 입력하세요.'));
     }
     return;
   }
@@ -80,13 +86,13 @@ export const addMember = (memberInput, showInvalidInput) => {
   const name = memberInput.value.trim();
 
   if (!name) {
-    showInvalidInput(memberInput);
+    showUIError(memberInput, '멤버 이름을 입력하세요.');
     return false;
   }
 
   // 총원 초과 체크
-  if (state.members.length >= state.totalMembers) {
-    showInvalidInput(memberInput);
+  if (!canAddMore(state)) {
+    showUIError(memberInput, '더 이상 멤버를 추가할 수 없습니다.');
     memberInput.blur();
     return false;
   }
@@ -94,22 +100,30 @@ export const addMember = (memberInput, showInvalidInput) => {
   memberInput.classList.remove("invalid");
   
   // 멤버 추가 액션 디스패치
-  setTimeout(() => {
-    store.dispatch(actionCreators.addMember(name));
-  }, 10);
-  
-  memberInput.value = "";
+  try {
+    setTimeout(() => {
+      store.dispatch(actionCreators.addMember(name));
+      logger.info('멤버 추가됨', { name });
+    }, 10);
+    
+    memberInput.value = "";
 
-  // 포커스 관리
-  if (state.members.length < state.totalMembers - 1) {
-    // 즉시 다시 포커스 설정
-    memberInput.focus();
-  } else {
-    // 총원이 모두 채워졌을 때 포커스 제거
-    memberInput.blur();
+    // 포커스 관리
+    if (state.members.length < state.totalMembers - 1) {
+      // 즉시 다시 포커스 설정
+      memberInput.focus();
+    } else {
+      // 총원이 모두 채워졌을 때 포커스 제거
+      memberInput.blur();
+    }
+    
+    return true;
+  } catch (error) {
+    handleError(error, () => {
+      showUIError(memberInput, '멤버 추가 중 오류가 발생했습니다.');
+    });
+    return false;
   }
-  
-  return true;
 };
 
 /**
@@ -120,6 +134,7 @@ export const deleteMember = (index) => {
   // 비동기로 처리하여 DOM 업데이트 보장
   setTimeout(() => {
     store.dispatch(actionCreators.deleteMember(index));
+    logger.info('멤버 삭제됨', { index });
   }, 0);
 };
 
@@ -131,11 +146,17 @@ export const deleteMember = (index) => {
  */
 export const editMemberName = (index, newName) => {
   if (!newName.trim()) {
+    logger.warn('빈 멤버 이름으로 수정 시도', { index });
     return false;
   }
   
   // 액션 디스패치
-  store.dispatch(actionCreators.editMember(index, newName.trim()));
-  
-  return true;
+  try {
+    store.dispatch(actionCreators.editMember(index, newName.trim()));
+    logger.info('멤버 이름 수정됨', { index, newName });
+    return true;
+  } catch (error) {
+    handleError(error);
+    return false;
+  }
 }; 
