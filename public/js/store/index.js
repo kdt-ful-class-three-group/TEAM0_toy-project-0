@@ -1,4 +1,12 @@
 /**
+ * @file store/index.js
+ * @description Action/Reducer 패턴을 사용한 상태 관리 시스템
+ */
+
+import { rootReducer, initialState } from './reducers.js';
+import * as actions from './actions.js';
+
+/**
  * @typedef {Object} State
  * @property {Array<string>} members - 멤버 이름 배열
  * @property {number} totalMembers - 총원
@@ -9,10 +17,10 @@
 
 /**
  * @function createStore
- * @description 전역 상태를 관리하는 Store를 생성합니다.
- * @returns {{ getState: Function, setState: Function, subscribe: Function }}
+ * @description Action/Reducer 패턴을 사용한 상태 관리 스토어를 생성합니다.
+ * @returns {{ getState: Function, dispatch: Function, subscribe: Function }}
  */
-const createStore = (initialState) => {
+const createStore = (reducer, initialState) => {
   console.info("스토어 생성 - 초기 상태:", initialState);
 
   let state = { ...initialState };
@@ -27,14 +35,15 @@ const createStore = (initialState) => {
   };
 
   /**
-   * @function setState
-   * @param {Partial<State>} newState
-   * @returns {void}
+   * @function dispatch
+   * @param {Object} action - 디스패치할 액션 객체
+   * @returns {Object} 디스패치된 액션
    */
-  const setState = (newState) => {
-    state = { ...state, ...newState };
+  const dispatch = (action) => {
+    state = reducer(state, action);
     console.table(state);
     notify();
+    return action;
   };
 
   /**
@@ -59,16 +68,14 @@ const createStore = (initialState) => {
     });
   };
 
-  return { getState, setState, subscribe };
+  return { getState, dispatch, subscribe };
 };
 
 // 스토어 인스턴스 생성
-const store = createStore({
-  members: [],
-  totalMembers: 0,
-  isTotalConfirmed: false,
-  teamCount: 0,
-  isTeamCountConfirmed: false
-});
+const store = createStore(rootReducer, initialState);
 
+// 액션 크리에이터 익스포트
+export const actionCreators = actions;
+
+// 스토어 익스포트
 export default store; 
