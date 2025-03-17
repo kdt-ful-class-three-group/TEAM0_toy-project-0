@@ -117,21 +117,42 @@ const createUtils = () => {
    */
   const distributeTeams = (members, teamCount) => {
     if (!members || !members.length || !teamCount) {
+      console.warn("팀 배분에 필요한 데이터가 부족합니다.");
       return [];
     }
 
     // 멤버 복사본 무작위 섞기
     const shuffled = [...members].sort(() => 0.5 - Math.random());
     
+    // 총 멤버 수
+    const totalMembers = shuffled.length;
+    
+    // 기본 팀당 인원 수 (올림 아닌 내림으로 처리)
+    const baseSize = Math.floor(totalMembers / teamCount);
+    
+    // 나머지 인원 (추가 인원이 필요한 팀 수)
+    const remainder = totalMembers % teamCount;
+    
+    console.log(`총원: ${totalMembers}, 팀 수: ${teamCount}, 기본 팀 크기: ${baseSize}, 나머지: ${remainder}`);
+    
     // 팀 배열 초기화
     const teams = Array.from({ length: teamCount }, () => []);
     
-    // 멤버 공평하게 분배
-    shuffled.forEach((member, index) => {
-      const teamIndex = index % teamCount;
-      teams[teamIndex].push(member);
-    });
+    // 균등 배분 로직 구현
+    let index = 0;
     
+    // 각 팀에 기본 인원 + 필요시 추가 인원 배정
+    for (let teamIndex = 0; teamIndex < teamCount; teamIndex++) {
+      // 이 팀에 배정할 멤버 수 (처음 remainder팀에는 추가 인원 1명 배정)
+      const teamSize = baseSize + (teamIndex < remainder ? 1 : 0);
+      
+      // 팀에 멤버 추가
+      for (let i = 0; i < teamSize && index < totalMembers; i++) {
+        teams[teamIndex].push(shuffled[index++]);
+      }
+    }
+    
+    console.log("팀 배분 결과:", teams);
     return teams;
   };
 
