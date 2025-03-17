@@ -20,15 +20,14 @@ export const renderMemberList = (members = []) => {
 
   let listItems = "";
   members.forEach((name, index) => {
+    // 이름에 접미사가 있는지 확인
+    const hasSuffix = name.includes("-");
+    
     listItems += `
       <li class="member-item">
         <span class="member-item__name" data-index="${index}">
           ${name}
-          ${
-            name.includes("-")
-              ? `<button class="btn btn--secondary member-item__edit" data-index="${index}">수정</button>`
-              : ""
-          }
+          <button class="btn btn--small member-item__edit" data-index="${index}">수정</button>
         </span>
         <div class="member-item__actions">
           <button class="btn btn--secondary member-item__delete" data-index="${index}">삭제</button>
