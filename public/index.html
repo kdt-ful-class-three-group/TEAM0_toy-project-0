@@ -2,10 +2,18 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TEAM DISTRIBUTOR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>TEAM DISTRIBUTOR (Functional Web Components)</title>
     <style>
-      /* CSS 변수로 디자인 토큰 정의 */
+      /* 
+        check order #1
+        [Prerequisites] 
+          - JavaScript 언어와 Web Components 개념을 알아야 합니다.
+          - box-sizing, grid, CSS 변수 사용에 대한 이해가 필요합니다.
+
+        아래는 디자인 토큰과 레이아웃을 위한 CSS 변수들입니다.
+        카드가 잘리지 않도록 오른쪽 패널(.sidebar)에 넉넉한 폭을 부여했습니다.
+      */
       :root {
         /* 색상 */
         --color-dark-1: #1e1e1e;
@@ -33,20 +41,18 @@
         --text-base: 1rem;
         --text-lg: 1.125rem;
 
-        /* 테두리 */
+        /* 테두리, 그림자 */
         --radius-sm: 0.25rem;
         --radius-md: 0.375rem;
         --border-dark: 1px solid var(--color-dark-4);
+        --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.2);
 
         /* 레이아웃 크기 */
         --nav-width: 200px;
-        --main-width: minmax(400px, 1fr);
-        --sidebar-width: minmax(320px, 400px);
+        --main-width: 1fr;
+        --sidebar-width: 320px; /* 오른쪽 패널을 고정 폭으로 늘림 */
         --header-height: 3rem;
-        --section-padding: clamp(0.75rem, 1.5vw, 1.25rem);
-        --card-padding: clamp(0.5rem, 1vw, 1rem);
-        --card-margin: 1rem;
-        --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.2);
+        --section-padding: 1rem;
       }
 
       /* 전역 리셋 */
@@ -55,322 +61,473 @@
         padding: 0;
         box-sizing: border-box;
       }
-
-      /* 공통 스타일 템플릿 */
-      template#common-styles {
-        display: none;
-      }
     </style>
-    <!-- 공통 스타일 템플릿 정의 -->
-    <template id="common-styles">
-      <style>
-        /* 레이아웃 */
-        .flex { display: flex; }
-        .flex-between { justify-content: space-between; }
-        .items-center { align-items: center; }
-        .grid { display: grid; }
-
-        /* 간격 */
-        .p-4 { padding: var(--space-4); }
-        .p-5 { padding: var(--space-5); }
-        .px-3 { padding-left: var(--space-3); padding-right: var(--space-3); }
-        .py-2 { padding-top: var(--space-2); padding-bottom: var(--space-2); }
-        .mb-4 { margin-bottom: var(--space-4); }
-        .mt-3 { margin-top: var(--space-3); }
-        .ml-2 { margin-left: var(--space-2); }
-
-        /* 타이포그래피 */
-        .text-sm { font-size: var(--text-sm); }
-        .text-lg { font-size: var(--text-lg); }
-        .text-white { color: var(--color-white); }
-        .text-gray { color: var(--color-gray); }
-        .text-light { color: var(--color-light); }
-        .font-bold { font-weight: bold; }
-        .text-center { text-align: center; }
-
-        /* 배경 */
-        .bg-dark { background-color: var(--color-dark-1); }
-        .bg-dark-2 { background-color: var(--color-dark-2); }
-        .bg-dark-3 { background-color: var(--color-dark-3); }
-        .bg-dark-4 { background-color: var(--color-dark-4); }
-        .bg-primary { background-color: var(--color-primary); }
-        .bg-error { background-color: var(--color-error); }
-
-        /* 테두리 */
-        .rounded { border-radius: var(--radius-sm); }
-        .rounded-md { border-radius: var(--radius-md); }
-        .border-dark { border: var(--border-dark); }
-
-        /* 버튼 */
-        .btn {
-          padding: var(--space-3) var(--space-5);
-          border-radius: var(--radius-sm);
-          font-size: var(--text-sm);
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          border: none;
-          min-width: 80px;
-        }
-
-        .btn-primary {
-          background-color: var(--color-primary);
-          color: var(--color-white);
-        }
-
-        .btn-primary:hover {
-          background-color: var(--color-primary-hover);
-        }
-
-        .btn-secondary {
-          background-color: var(--color-dark-4);
-          color: var(--color-white);
-        }
-
-        .btn-secondary:hover {
-          background-color: #4c4c4c;
-        }
-
-        .btn[disabled] {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        /* 입력 필드 */
-        .input {
-          width: 100%;
-          padding: var(--space-3) var(--space-4);
-          border-radius: var(--radius-sm);
-          background-color: var(--color-dark-4);
-          color: var(--color-white);
-          border: 1px solid var(--color-dark-4);
-          transition: all 0.3s ease;
-          font-size: var(--text-sm);
-        }
-
-        .input:focus {
-          border-color: #007acc;
-          outline: none;
-          background-color: #454545;
-        }
-
-        .input.invalid {
-          background-color: var(--color-error);
-          border-color: var(--color-error-border);
-        }
-
-        .input:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        /* 애니메이션 */
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-          20%, 40%, 60%, 80% { transform: translateX(5px); }
-        }
-
-        .shake {
-          animation: shake 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-        }
-
-        .hidden {
-          display: none;
-        }
-      </style>
-    </template>
   </head>
+
   <body>
+    <!-- 
+      check order #2
+      메인 Web Component: team-distributor 
+    -->
     <team-distributor></team-distributor>
 
     <script>
-      // 공통 스타일 적용 헬퍼 함수
-      function applyCommonStyles(shadowRoot) {
-        const template = document.querySelector('#common-styles');
-        const styles = template.content.cloneNode(true);
-        shadowRoot.appendChild(styles);
-      }
+      /**
+       * @typedef {Object} State
+       * @property {Array<string>} members - 멤버 이름 배열
+       * @property {number} totalMembers - 총원
+       * @property {boolean} isTotalConfirmed - 총원 확정 여부
+       */
 
-      // 상태 관리를 위한 Store 클래스
-      class Store {
-        constructor(initialState = {}) {
-          this.state = initialState;
-          this.listeners = new Set();
-        }
+      /**
+       * @function createStore
+       * @description (한국어) 전역 상태를 관리하는 Store를 생성합니다.
+       * @returns {{ getState: Function, setState: Function, subscribe: Function }}
+       * @example
+       * const store = createStore({ members: [], totalMembers: 0, isTotalConfirmed: false });
+       * store.subscribe((state) => { console.log('새로운 상태:', state); });
+       */
+      const createStore = (initialState) => {
+        // breakpoint #1 (store 생성 시점 확인)
+        console.info("스토어 생성 - 초기 상태:", initialState);
 
-        getState() {
-          return { ...this.state };
-        }
+        let state = { ...initialState };
+        const listeners = new Set();
 
-        setState(newState) {
-          this.state = { ...this.state, ...newState };
-          this.notify();
-        }
+        /**
+         * @function getState
+         * @returns {State}
+         */
+        const getState = () => {
+          return { ...state };
+        };
 
-        subscribe(listener) {
-          this.listeners.add(listener);
-          return () => this.listeners.delete(listener);
-        }
+        /**
+         * @function setState
+         * @param {Partial<State>} newState
+         * @returns {void}
+         */
+        const setState = (newState) => {
+          state = { ...state, ...newState };
+          console.table(state); // console.table 예시
+          notify();
+        };
 
-        notify() {
-          this.listeners.forEach(listener => listener(this.state));
-        }
-      }
+        /**
+         * @function subscribe
+         * @param {Function} listener
+         * @returns {Function} unsubscribe
+         */
+        const subscribe = (listener) => {
+          listeners.add(listener);
+          return () => {
+            listeners.delete(listener);
+          };
+        };
 
-      // 전역 상태 저장소
-      const store = new Store({
-        members: [],
-        totalMembers: 0,
-        isTotalConfirmed: false
-      });
+        /**
+         * @function notify
+         * @description 모든 구독자에게 상태 변경을 알립니다.
+         */
+        const notify = () => {
+          listeners.forEach((listener) => {
+            listener(getState());
+          });
+        };
 
-      // 유틸리티 함수들
-      const utils = {
-        validateNumber: (value) => /^\d*$/.test(value),
-        
-        validateTotalMembers: (value) => {
+        return { getState, setState, subscribe };
+      };
+
+      /**
+       * @function createUtils
+       * @description (한국어) 유틸리티 함수를 모아둔 객체를 생성합니다.
+       * @returns {{ validateNumber: Function, validateTotalMembers: Function, generateMemberName: Function }}
+       */
+      const createUtils = () => {
+        // breakpoint #2 (utils 생성 시점)
+        console.log("유틸 생성");
+
+        /**
+         * @function validateNumber
+         * @param {string} value
+         * @returns {boolean}
+         */
+        const validateNumber = (value) => {
+          return /^\d*$/.test(value);
+        };
+
+        /**
+         * @function validateTotalMembers
+         * @param {number} value
+         * @returns {boolean}
+         */
+        const validateTotalMembers = (value) => {
           const num = parseInt(value);
-          return !isNaN(num) && num > 0;
-        },
+          if (isNaN(num) || num <= 0) {
+            return false;
+          } else {
+            return true;
+          }
+        };
 
-        generateMemberName: (name, existingMembers) => {
-          const sameNames = existingMembers.filter(
-            member => member === name ||
-            member.startsWith(name + "-") ||
-            member.replace(/-\d+$/, "") === name
-          );
+        /**
+         * @function generateMemberName
+         * @param {string} name
+         * @param {Array<string>} existingMembers
+         * @returns {string}
+         */
+        const generateMemberName = (name, existingMembers) => {
+          // breakpoint #3 (이름 생성 시점)
+          console.time("generateMemberName"); // 성능 측정 시작
 
-          if (sameNames.length === 0) return name;
+          const sameNames = existingMembers.filter((member) => {
+            return (
+              member === name ||
+              member.startsWith(name + "-") ||
+              member.replace(/-\d+$/, "") === name
+            );
+          });
 
-          const baseNameIndex = existingMembers.findIndex(member => member === name);
+          if (sameNames.length === 0) {
+            console.timeEnd("generateMemberName"); // 성능 측정 종료
+            return name;
+          }
+
+          const baseNameIndex = existingMembers.findIndex((member) => {
+            return member === name;
+          });
           if (baseNameIndex !== -1) {
             existingMembers[baseNameIndex] = `${name}-1`;
           }
+          console.timeEnd("generateMemberName"); // 성능 측정 종료
           return `${name}-${sameNames.length + 1}`;
-        }
+        };
+
+        return {
+          validateNumber,
+          validateTotalMembers,
+          generateMemberName,
+        };
       };
 
-      // 네비게이터 컴포넌트
-      class NavigatorComponent extends HTMLElement {
-        constructor() {
-          super();
-          this.attachShadow({ mode: 'open' });
-        }
+      /**
+       * 전역 store와 utils를 생성합니다.
+       */
+      const store = createStore({
+        members: [],
+        totalMembers: 0,
+        isTotalConfirmed: false,
+      });
+      const utils = createUtils();
 
-        connectedCallback() {
-          this.render();
-          applyCommonStyles(this.shadowRoot);
-        }
+      // -----------------------------------------------------------------------
+      // [ 함수형 + Web Component ]: UI 렌더링 로직을 별도 함수로 분리
+      // -----------------------------------------------------------------------
 
-        render() {
-          this.shadowRoot.innerHTML = `
-            <style>
-              :host {
-                display: block;
-                background-color: var(--color-dark-2);
-                color: var(--color-white);
-                padding: var(--section-padding);
-                border-right: var(--border-dark);
-                height: 100vh;
-                overflow-y: auto;
-                min-width: 0;
-              }
-              .nav-section {
-                margin-bottom: var(--space-4);
-                padding: var(--card-padding);
-              }
-              .nav-item {
-                padding: var(--card-padding);
-                border-radius: var(--radius-sm);
-                cursor: pointer;
-                margin: var(--space-1) 0;
-                font-size: 0.9rem;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-              }
-              .nav-item:hover {
-                background-color: var(--color-dark-4);
-              }
-            </style>
-            <div class="nav-section">
-              <h2 class="text-gray text-sm mb-4">기능</h2>
-              <div class="nav-item">팀 생성</div>
-              <div class="nav-item">팀 관리</div>
-              <div class="nav-item">설정</div>
-            </div>
-            <div class="nav-section">
-              <h2 class="text-gray text-sm mb-4">최근 기록</h2>
-              <div class="nav-item">저장된 팀 목록</div>
-              <div class="nav-item">히스토리</div>
-            </div>
-          `;
-        }
-      }
+      /**
+       * @function renderNavigator
+       * @description (한국어) 네비게이터(왼쪽 영역)의 innerHTML 템플릿을 반환합니다.
+       * @returns {string} HTML
+       */
+      const renderNavigator = () => {
+        return `
+          <style>
+            :host {
+              display: block;
+              background-color: var(--color-dark-2);
+              color: var(--color-white);
+              padding: var(--section-padding);
+              border-right: var(--border-dark);
+              height: 100vh;
+              overflow-y: auto;
+              min-width: 0;
+            }
+            .nav-section {
+              margin-bottom: var(--space-4);
+              padding: var(--space-4);
+            }
+            .nav-item {
+              padding: var(--space-3);
+              border-radius: var(--radius-sm);
+              cursor: pointer;
+              margin: var(--space-1) 0;
+              font-size: 0.9rem;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+            .nav-item:hover {
+              background-color: var(--color-dark-4);
+            }
+          </style>
+          <div class="nav-section">
+            <h2 class="text-gray text-sm mb-4">기능</h2>
+            <div class="nav-item">팀 생성</div>
+            <div class="nav-item">팀 관리</div>
+            <div class="nav-item">설정</div>
+          </div>
+          <div class="nav-section">
+            <h2 class="text-gray text-sm mb-4">최근 기록</h2>
+            <div class="nav-item">저장된 팀 목록</div>
+            <div class="nav-item">히스토리</div>
+          </div>
+        `;
+      };
 
-      // 멤버 목록 컴포넌트
-      class MemberListComponent extends HTMLElement {
-        constructor() {
-          super();
-          this.attachShadow({ mode: 'open' });
-        }
-
-        connectedCallback() {
-          this.render();
-          applyCommonStyles(this.shadowRoot);
-          store.subscribe(state => this.updateList(state.members));
-        }
-
-        updateList(members) {
-          const list = this.shadowRoot.querySelector('.member-list');
-          if (!list) return;
-
-          list.innerHTML = members.map((name, index) => `
+      /**
+       * @function renderMemberList
+       * @description (한국어) 멤버 목록(가운데 영역)의 innerHTML 템플릿을 반환합니다.
+       * @param {Array<string>} members
+       * @returns {string} HTML
+       */
+      const renderMemberList = (members) => {
+        let listItems = "";
+        members.forEach((name, index) => {
+          listItems += `
             <li class="member-item">
               <span class="member-name" data-index="${index}">
                 ${name}
-                ${name.includes('-') ? `
-                  <button class="btn btn-secondary edit-suffix" data-index="${index}">수정</button>
-                ` : ''}
+                ${
+                  name.includes("-")
+                    ? `<button class="btn btn-secondary edit-suffix" data-index="${index}">수정</button>`
+                    : ""
+                }
               </span>
               <button class="btn btn-secondary delete-member" data-index="${index}">삭제</button>
             </li>
-          `).join('');
+          `;
+        });
 
+        return `
+          <style>
+            .member-list {
+              list-style: none;
+              padding: 0;
+              max-height: calc(100vh - var(--header-height) - var(--space-4) * 2);
+              overflow-y: auto;
+            }
+            .member-item {
+              padding: var(--space-3);
+              margin: var(--space-2) 0;
+              min-width: 0;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+            }
+            .member-name {
+              display: flex;
+              align-items: center;
+              gap: var(--space-2);
+            }
+            .suffix-input {
+              width: 100px;
+              padding: var(--space-2) var(--space-3);
+              margin-right: var(--space-2);
+              background-color: var(--color-dark-4);
+              color: var(--color-white);
+              border: var(--border-dark);
+              border-radius: var(--radius-sm);
+              font-size: var(--text-sm);
+            }
+          </style>
+          <div class="bg-dark-3 rounded-md p-4 shadow-sm mb-4">
+            <h2 class="text-lg text-white mb-4">멤버 목록</h2>
+            <ul class="member-list">${listItems}</ul>
+          </div>
+        `;
+      };
+
+      /**
+       * @function renderInputForm
+       * @description (한국어) 입력 폼(오른쪽 영역)의 innerHTML 템플릿을 반환합니다.
+       * @param {Object} state
+       * @returns {string} HTML
+       */
+      const renderInputForm = (state) => {
+        return `
+          <style>
+            :host {
+              display: block;
+              background-color: var(--color-dark-2);
+              padding: var(--section-padding);
+              border-left: var(--border-dark);
+              height: 100vh;
+              overflow-y: auto;
+              width: 100%;
+              min-width: 0;
+            }
+            .input-card {
+              background-color: var(--color-dark-3);
+              border-radius: var(--radius-md);
+              padding: var(--space-4);
+              margin-bottom: var(--space-4);
+              box-shadow: var(--card-shadow);
+            }
+            .input-card h3 {
+              margin-bottom: var(--space-4);
+              color: var(--color-white);
+              font-size: var(--text-lg);
+              white-space: nowrap;
+            }
+            .input-wrapper {
+              width: 100%;
+              margin-bottom: var(--space-4);
+            }
+            .button-group {
+              display: flex;
+              gap: var(--space-2);
+              margin-top: var(--space-4);
+            }
+            .button-group .btn {
+              flex: 1;
+              min-width: 60px;
+              white-space: nowrap;
+              box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+              transition: all 0.2s ease;
+            }
+            .button-group .btn:hover {
+              transform: translateY(-1px);
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            }
+            .status-message {
+              padding: var(--space-3) var(--space-4);
+              border-radius: var(--radius-sm);
+              background-color: var(--color-dark-2);
+              color: var(--color-light);
+              font-size: var(--text-sm);
+              line-height: 1.5;
+              border: var(--border-dark);
+              word-break: keep-all;
+              overflow-wrap: break-word;
+              margin-top: var(--space-3);
+              box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            }
+          </style>
+          <div class="input-card">
+            <h3>총원 설정</h3>
+            <div class="input-wrapper">
+              <input type="number" class="number-input input" min="1" placeholder="총 인원"
+                value="${state.totalMembers}" ${state.isTotalConfirmed ? "disabled" : ""} />
+            </div>
+            <div class="button-group">
+              <button class="btn btn-primary confirm-total" style="display: ${
+                state.isTotalConfirmed ? "none" : "block"
+              }">완료</button>
+              <button class="btn btn-secondary edit-total" style="display: ${
+                state.isTotalConfirmed ? "block" : "none"
+              }">수정</button>
+            </div>
+            <div class="status-message mt-3"></div>
+          </div>
+
+          <div class="input-card">
+            <h3>멤버 추가</h3>
+            <div class="input-wrapper">
+              <input type="text" class="member-input input" placeholder="멤버 이름을 입력하세요"
+                ${!canAddMore(state) ? "disabled" : ""} />
+            </div>
+            <button class="btn btn-secondary add-member" ${!canAddMore(state) ? "disabled" : ""}>
+              추가
+            </button>
+          </div>
+        `;
+      };
+
+      /**
+       * @function canAddMore
+       * @description (한국어) 멤버를 더 추가할 수 있는지 여부를 판단합니다.
+       * @param {State} state
+       * @returns {boolean}
+       */
+      const canAddMore = (state) => {
+        if (state.isTotalConfirmed === true && state.totalMembers > 0 && state.members.length < state.totalMembers) {
+          return true;
+        } else {
+          return false;
+        }
+      };
+
+      // -----------------------------------------------------------------------
+      // Web Component 정의
+      // -----------------------------------------------------------------------
+
+      // 네비게이터
+      class NavComponent extends HTMLElement {
+        constructor() {
+          super();
+          this.attachShadow({ mode: "open" });
+        }
+
+        connectedCallback() {
+          this.shadowRoot.innerHTML = renderNavigator();
+        }
+      }
+
+      // 멤버 목록
+      class MemberList extends HTMLElement {
+        constructor() {
+          super();
+          this.attachShadow({ mode: "open" });
+          this.unsubscribe = null;
+        }
+
+        connectedCallback() {
+          this.renderComponent();
+          // store 구독
+          this.unsubscribe = store.subscribe((state) => {
+            this.renderComponent(state.members);
+          });
           this.addEventListeners();
         }
 
-        addEventListeners() {
-          const list = this.shadowRoot.querySelector('.member-list');
-          
-          list.addEventListener('click', (e) => {
-            const target = e.target;
-            const index = parseInt(target.dataset.index);
+        disconnectedCallback() {
+          if (this.unsubscribe) {
+            this.unsubscribe();
+          }
+        }
 
-            if (target.classList.contains('delete-member')) {
-              const state = store.getState();
-              const newMembers = [...state.members];
-              newMembers.splice(index, 1);
+        renderComponent(members = store.getState().members) {
+          this.shadowRoot.innerHTML = renderMemberList(members);
+          this.addEventListeners(); // render 후에 이벤트 바인딩
+        }
+
+        addEventListeners() {
+          const list = this.shadowRoot.querySelector(".member-list");
+          if (!list) return;
+
+          list.addEventListener("click", (event) => {
+            const { index } = event.target.dataset;
+            if (!index) {
+              return;
+            }
+            const parsedIndex = parseInt(index);
+
+            if (event.target.classList.contains("delete-member")) {
+              // breakpoint #4 (멤버 삭제 시점)
+              console.warn("멤버 삭제 클릭:", parsedIndex);
+
+              const currentState = store.getState();
+              const newMembers = [...currentState.members];
+              newMembers.splice(parsedIndex, 1);
               store.setState({ members: newMembers });
             }
 
-            if (target.classList.contains('edit-suffix')) {
-              this.startSuffixEdit(target, index);
+            if (event.target.classList.contains("edit-suffix")) {
+              this.startSuffixEdit(event.target, parsedIndex);
             }
           });
         }
 
         startSuffixEdit(button, index) {
-          const state = store.getState();
-          const name = state.members[index];
-          const [baseName, currentSuffix] = name.split('-');
-          
-          const nameSpan = button.closest('.member-name');
-          const editMode = document.createElement('span');
-          editMode.className = 'edit-mode';
+          const currentState = store.getState();
+          const name = currentState.members[index];
+          const [baseName, currentSuffix] = name.split("-");
+
+          const nameSpan = button.closest(".member-name");
+          const editMode = document.createElement("span");
+          editMode.className = "edit-mode";
           editMode.innerHTML = `
-            <input type="text" class="suffix-input" value="${currentSuffix || ''}" placeholder="접미사 입력">
+            <input type="text" class="suffix-input" value="${currentSuffix || ""}" placeholder="접미사 입력">
             <button class="btn btn-primary confirm-suffix">확정</button>
           `;
 
@@ -378,8 +535,8 @@
           nameSpan.innerHTML = `${baseName}-`;
           nameSpan.appendChild(editMode);
 
-          const input = editMode.querySelector('.suffix-input');
-          const confirmBtn = editMode.querySelector('.confirm-suffix');
+          const input = editMode.querySelector(".suffix-input");
+          const confirmBtn = editMode.querySelector(".confirm-suffix");
 
           const handleConfirm = () => {
             const newSuffix = input.value.trim();
@@ -389,27 +546,33 @@
             }
 
             const newName = `${baseName}-${newSuffix}`;
-            const isDuplicate = state.members.some(
-              (m, i) => i !== index && m === newName
-            );
+            const isDuplicate = currentState.members.some((m, i) => {
+              return i !== index && m === newName;
+            });
 
             if (isDuplicate) {
-              alert('이미 사용 중인 접미사입니다.');
+              console.error("이미 사용 중인 접미사입니다.");
+              alert("이미 사용 중인 접미사입니다.");
               nameSpan.innerHTML = originalContent;
               return;
             }
 
-            const newMembers = [...state.members];
+            const newMembers = [...currentState.members];
             newMembers[index] = newName;
             store.setState({ members: newMembers });
           };
 
-          confirmBtn.addEventListener('click', handleConfirm);
-          input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleConfirm();
+          confirmBtn.addEventListener("click", () => {
+            return handleConfirm();
           });
 
-          input.addEventListener('blur', (e) => {
+          input.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") {
+              return handleConfirm();
+            }
+          });
+
+          input.addEventListener("blur", (e) => {
             if (e.relatedTarget !== confirmBtn) {
               nameSpan.innerHTML = originalContent;
             }
@@ -417,229 +580,144 @@
 
           input.focus();
         }
-
-        render() {
-          this.shadowRoot.innerHTML = `
-            <style>
-              .member-list {
-                list-style: none;
-                padding: 0;
-                max-height: calc(100vh - var(--header-height) - var(--space-4) * 2);
-                overflow-y: auto;
-                display: flex;
-                flex-direction: column;
-                gap: var(--space-2);
-                margin: 0;
-                width: 100%;
-              }
-              .member-item {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: var(--space-3) var(--space-4);
-                background-color: var(--color-dark-3);
-                border-radius: var(--radius-sm);
-                border: var(--border-dark);
-                width: 100%;
-                box-sizing: border-box;
-              }
-              .member-name {
-                display: flex;
-                align-items: center;
-                gap: var(--space-2);
-                color: var(--color-light);
-                font-size: var(--text-base);
-                flex: 1;
-                min-width: 0;
-              }
-              .member-actions {
-                display: flex;
-                align-items: center;
-                gap: var(--space-2);
-                flex-shrink: 0;
-              }
-              .delete-member {
-                padding: var(--space-1) var(--space-2);
-                font-size: var(--text-sm);
-                min-width: auto;
-                height: auto;
-              }
-              .edit-suffix {
-                padding: var(--space-1) var(--space-2);
-                font-size: var(--text-sm);
-                min-width: auto;
-                height: auto;
-              }
-              .suffix-input {
-                width: 60px;
-                padding: var(--space-1) var(--space-2);
-                background-color: var(--color-dark-4);
-                color: var(--color-white);
-                border: 1px solid var(--color-dark-4);
-                border-radius: var(--radius-sm);
-                font-size: var(--text-sm);
-              }
-              .edit-mode {
-                display: flex;
-                align-items: center;
-                gap: var(--space-2);
-              }
-            </style>
-            <div class="bg-dark-3 rounded-md p-4 shadow-sm mb-4">
-              <h2 class="text-lg text-white mb-4">멤버 목록</h2>
-              <ul class="member-list"></ul>
-            </div>
-          `;
-        }
       }
 
-      // 입력 폼 컴포넌트
-      class InputFormComponent extends HTMLElement {
+      // 입력 폼
+      class InputForm extends HTMLElement {
         constructor() {
           super();
-          this.attachShadow({ mode: 'open' });
+          this.attachShadow({ mode: "open" });
+          this.unsubscribe = null;
         }
 
         connectedCallback() {
-          this.render();
-          applyCommonStyles(this.shadowRoot);
-          this.bindEvents();
-          store.subscribe(state => this.updateState(state));
+          this.renderComponent();
+          this.unsubscribe = store.subscribe((state) => {
+            this.renderComponent(state);
+          });
         }
 
-        updateState(state) {
-          const { totalMembers, isTotalConfirmed, members } = state;
-          const totalInput = this.shadowRoot.querySelector('.number-input');
-          const memberInput = this.shadowRoot.querySelector('.member-input');
-          const addMemberBtn = this.shadowRoot.querySelector('.add-member');
-          const confirmBtn = this.shadowRoot.querySelector('.confirm-total');
-          const editBtn = this.shadowRoot.querySelector('.edit-total');
-          const statusMessage = this.shadowRoot.querySelector('.status-message');
+        disconnectedCallback() {
+          if (this.unsubscribe) {
+            this.unsubscribe();
+          }
+        }
 
-          // Update total members input state
-          totalInput.disabled = isTotalConfirmed;
-          confirmBtn.style.display = isTotalConfirmed ? 'none' : 'block';
-          editBtn.style.display = isTotalConfirmed ? 'block' : 'none';
-
-          // Update member input state
-          const canAddMore = isTotalConfirmed && totalMembers > 0 && members.length < totalMembers;
-          memberInput.disabled = !canAddMore;
-          addMemberBtn.disabled = !canAddMore;
-
-          // Update status message
+        renderComponent(state = store.getState()) {
+          this.shadowRoot.innerHTML = renderInputForm(state);
           this.updateStatusMessage(state);
+          this.addEventListeners();
         }
 
-        updateStatusMessage(state) {
-          const { totalMembers, members, isTotalConfirmed } = state;
-          const statusMessage = this.shadowRoot.querySelector('.status-message');
+        addEventListeners() {
+          const shadow = this.shadowRoot;
+          const totalInput = shadow.querySelector(".number-input");
+          const memberInput = shadow.querySelector(".member-input");
+          const confirmBtn = shadow.querySelector(".confirm-total");
+          const editBtn = shadow.querySelector(".edit-total");
+          const addMemberBtn = shadow.querySelector(".add-member");
 
-          if (!isTotalConfirmed) {
-            statusMessage.textContent = "총원을 입력하고 완료 버튼을 클릭하거나 엔터를 눌러주세요.";
-            return;
+          if (totalInput) {
+            totalInput.addEventListener("input", (e) => {
+              return this.handleTotalInput(e);
+            });
+            totalInput.addEventListener("keypress", (e) => {
+              if (e.key === "Enter") {
+                return this.confirmTotalMembers();
+              }
+            });
           }
 
-          if (totalMembers === 0) {
-            statusMessage.textContent = "총원을 입력해주세요.";
-            return;
+          if (confirmBtn) {
+            confirmBtn.addEventListener("click", () => {
+              return this.confirmTotalMembers();
+            });
           }
 
-          const remaining = totalMembers - members.length;
-          if (remaining > 0) {
-            statusMessage.textContent = `${totalMembers}명 중 ${members.length}명 작성됨 (${remaining}명 남음)`;
-          } else if (remaining === 0) {
-            statusMessage.textContent = `${totalMembers}명 모두 작성 완료!`;
-          } else {
-            statusMessage.textContent = `설정된 총원(${totalMembers}명)을 초과했습니다!`;
+          if (editBtn) {
+            editBtn.addEventListener("click", () => {
+              return this.editTotalMembers();
+            });
           }
-        }
 
-        bindEvents() {
-          const totalInput = this.shadowRoot.querySelector('.number-input');
-          const memberInput = this.shadowRoot.querySelector('.member-input');
-          const addMemberBtn = this.shadowRoot.querySelector('.add-member');
-          const confirmBtn = this.shadowRoot.querySelector('.confirm-total');
-          const editBtn = this.shadowRoot.querySelector('.edit-total');
+          if (memberInput) {
+            memberInput.addEventListener("keypress", (e) => {
+              if (e.key === "Enter") {
+                return this.addMember();
+              }
+            });
+          }
 
-          totalInput.addEventListener('input', e => this.handleTotalInput(e));
-          totalInput.addEventListener('keypress', e => {
-            if (e.key === 'Enter') this.confirmTotalMembers();
-          });
-
-          confirmBtn.addEventListener('click', () => this.confirmTotalMembers());
-          editBtn.addEventListener('click', () => this.editTotalMembers());
-          
-          memberInput.addEventListener('keypress', e => {
-            if (e.key === 'Enter') this.addMember();
-          });
-          addMemberBtn.addEventListener('click', () => this.addMember());
+          if (addMemberBtn) {
+            addMemberBtn.addEventListener("click", () => {
+              return this.addMember();
+            });
+          }
         }
 
         handleTotalInput(e) {
-          const state = store.getState();
-          if (state.isTotalConfirmed) return;
-
-          const input = e.target;
-          const value = input.value;
-
+          const value = e.target.value;
           if (!utils.validateNumber(value)) {
-            input.value = value.replace(/[^\d]/g, '');
-            this.showInvalidInput(input);
+            e.target.value = value.replace(/[^\d]/g, "");
+            this.showInvalidInput(e.target);
             return;
           }
 
-          const numValue = parseInt(value);
+          const numValue = parseInt(e.target.value);
           if (numValue < 1) {
-            input.value = '';
-            this.showInvalidInput(input);
+            e.target.value = "";
+            this.showInvalidInput(e.target);
             store.setState({ totalMembers: 0 });
             return;
           }
 
-          input.classList.remove('invalid');
+          e.target.classList.remove("invalid");
           store.setState({ totalMembers: numValue });
         }
 
         showInvalidInput(element) {
-          element.classList.add('invalid');
-          element.classList.remove('shake');
-          void element.offsetWidth;
-          element.classList.add('shake');
+          element.classList.add("invalid");
+          element.classList.remove("shake");
+          void element.offsetWidth; // reflow
+          element.classList.add("shake");
         }
 
         confirmTotalMembers() {
-          const totalInput = this.shadowRoot.querySelector('.number-input');
-          const value = parseInt(totalInput.value);
+          const state = store.getState();
+          const value = state.totalMembers;
 
           if (!utils.validateTotalMembers(value)) {
-            this.showInvalidInput(totalInput);
+            const inputEl = this.shadowRoot.querySelector(".number-input");
+            if (inputEl) {
+              this.showInvalidInput(inputEl);
+            }
             return;
           }
 
-          store.setState({
-            totalMembers: value,
-            isTotalConfirmed: true
-          });
+          store.setState({ isTotalConfirmed: true });
         }
 
         editTotalMembers() {
           const state = store.getState();
           if (state.members.length > 0) {
-            if (!confirm('총원을 수정하면 입력된 멤버 목록이 초기화됩니다. 계속하시겠습니까?')) {
+            if (!confirm("총원을 수정하면 입력된 멤버 목록이 초기화됩니다. 계속하시겠습니까?")) {
               return;
             }
           }
-
           store.setState({
             members: [],
-            isTotalConfirmed: false
+            isTotalConfirmed: false,
+            totalMembers: 0,
           });
         }
 
         addMember() {
-          const memberInput = this.shadowRoot.querySelector('.member-input');
           const state = store.getState();
-          
+          const memberInput = this.shadowRoot.querySelector(".member-input");
+
+          if (!memberInput) {
+            return;
+          }
           if (state.members.length >= state.totalMembers) {
             this.showInvalidInput(memberInput);
             return;
@@ -651,160 +729,34 @@
             return;
           }
 
-          memberInput.classList.remove('invalid');
+          memberInput.classList.remove("invalid");
           const newName = utils.generateMemberName(name, state.members);
-          store.setState({
-            members: [...state.members, newName]
-          });
-          
-          memberInput.value = '';
+          store.setState({ members: [...state.members, newName] });
+          memberInput.value = "";
         }
 
-        render() {
-          this.shadowRoot.innerHTML = `
-            <style>
-              :host {
-                display: block;
-                background-color: var(--color-dark-2);
-                padding: var(--section-padding);
-                border-left: var(--border-dark);
-                height: 100vh;
-                overflow-y: auto;
-                width: 100%;
-                min-width: 0;
-                box-sizing: border-box;
-              }
-              .input-card {
-                background-color: var(--color-dark-3);
-                border-radius: var(--radius-md);
-                padding: var(--space-5);
-                margin-bottom: var(--card-margin);
-                box-shadow: var(--card-shadow);
-                box-sizing: border-box;
-                width: 100%;
-                max-width: 100%;
-                display: flex;
-                flex-direction: column;
-                gap: var(--space-4);
-              }
-              .input-card h3 {
-                color: var(--color-white);
-                font-size: var(--text-lg);
-                white-space: nowrap;
-                margin: 0;
-              }
-              .input-wrapper {
-                position: relative;
-                width: 100%;
-                box-sizing: border-box;
-                display: flex;
-                flex-direction: column;
-                gap: var(--space-3);
-              }
-              .input {
-                width: 100%;
-                min-width: 0;
-                max-width: 100%;
-                height: 2.5rem;
-                background-color: var(--color-dark-4);
-                color: var(--color-white);
-                border: 1px solid var(--color-dark-4);
-                border-radius: var(--radius-sm);
-                padding: 0 var(--space-3);
-                font-size: var(--text-base);
-                transition: all 0.2s ease;
-                box-sizing: border-box;
-              }
-              .input:focus {
-                outline: none;
-                border-color: var(--color-primary);
-                background-color: var(--color-dark-3);
-              }
-              .input:disabled {
-                opacity: 0.6;
-                cursor: not-allowed;
-              }
-              .button-group {
-                display: flex;
-                gap: var(--space-2);
-                width: 100%;
-              }
-              .button-group .btn {
-                flex: 1;
-                min-width: 60px;
-                height: 2.5rem;
-                white-space: nowrap;
-                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-                transition: all 0.2s ease;
-                font-size: var(--text-base);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-              }
-              .btn {
-                background-color: var(--color-primary);
-                color: var(--color-white);
-                border: none;
-                border-radius: var(--radius-sm);
-                padding: 0 var(--space-4);
-                cursor: pointer;
-                transition: all 0.2s ease;
-                width: 100%;
-                height: 2.5rem;
-                font-size: var(--text-base);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                box-sizing: border-box;
-              }
-              .btn:hover:not(:disabled) {
-                background-color: var(--color-primary-hover);
-                transform: translateY(-1px);
-                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-              }
-              .btn:disabled {
-                opacity: 0.6;
-                cursor: not-allowed;
-              }
-              .btn-secondary {
-                background-color: var(--color-dark-4);
-              }
-              .btn-secondary:hover:not(:disabled) {
-                background-color: var(--color-dark-3);
-              }
-              .status-message {
-                padding: var(--space-3) var(--space-4);
-                border-radius: var(--radius-sm);
-                background-color: var(--color-dark-2);
-                color: var(--color-light);
-                font-size: var(--text-sm);
-                line-height: 1.5;
-                border: var(--border-dark);
-                word-break: keep-all;
-                overflow-wrap: break-word;
-                margin-top: var(--space-3);
-                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-              }
-            </style>
-            <div class="input-card">
-              <h3>총원 설정</h3>
-              <div class="input-wrapper">
-                <input type="number" class="number-input input" min="1" placeholder="총 인원">
-              </div>
-              <div class="button-group">
-                <button class="btn btn-primary confirm-total">완료</button>
-                <button class="btn btn-secondary edit-total hidden">수정</button>
-              </div>
-              <div class="status-message mt-3"></div>
-            </div>
-            <div class="input-card">
-              <h3>멤버 추가</h3>
-              <div class="input-wrapper">
-                <input type="text" class="member-input input" placeholder="멤버 이름을 입력하세요" disabled>
-              </div>
-              <button class="btn btn-secondary add-member" disabled>추가</button>
-            </div>
-          `;
+        updateStatusMessage(state) {
+          const statusMessage = this.shadowRoot.querySelector(".status-message");
+          if (!statusMessage) return;
+
+          if (!state.isTotalConfirmed) {
+            statusMessage.textContent = "총원을 입력하고 완료 버튼을 클릭하거나 엔터를 눌러주세요.";
+            return;
+          }
+
+          if (state.totalMembers === 0) {
+            statusMessage.textContent = "총원을 입력해주세요.";
+            return;
+          }
+
+          const remaining = state.totalMembers - state.members.length;
+          if (remaining > 0) {
+            statusMessage.textContent = `${state.totalMembers}명 중 ${state.members.length}명 작성됨 (${remaining}명 남음)`;
+          } else if (remaining === 0) {
+            statusMessage.textContent = `${state.totalMembers}명 모두 작성 완료!`;
+          } else {
+            statusMessage.textContent = `설정된 총원(${state.totalMembers}명)을 초과했습니다!`;
+          }
         }
       }
 
@@ -812,15 +764,16 @@
       class TeamDistributor extends HTMLElement {
         constructor() {
           super();
-          this.attachShadow({ mode: 'open' });
+          this.attachShadow({ mode: "open" });
         }
 
         connectedCallback() {
           this.render();
-          applyCommonStyles(this.shadowRoot);
         }
 
         render() {
+          // breakpoint #5 (메인 컴포넌트 렌더링)
+          console.time("TeamDistributor Render");
           this.shadowRoot.innerHTML = `
             <style>
               :host {
@@ -831,8 +784,6 @@
                 overflow: hidden;
                 background-color: var(--color-dark-1);
                 max-width: 100vw;
-                margin: 0 auto;
-                padding: 0 var(--space-4);
               }
               main {
                 padding: var(--section-padding);
@@ -860,14 +811,48 @@
             </main>
             <input-form></input-form>
           `;
+          console.timeEnd("TeamDistributor Render");
+
+          // 멤버 수가 총원과 같아지는 순간, 완료 메시지를 표시
+          store.subscribe((state) => {
+            const msgEl = this.shadowRoot.querySelector(".completion-message");
+            if (!msgEl) {
+              return;
+            }
+            if (state.totalMembers > 0 && state.members.length === state.totalMembers) {
+              msgEl.classList.remove("hidden");
+            } else {
+              msgEl.classList.add("hidden");
+            }
+          });
         }
       }
 
-      // 컴포넌트 등록
-      customElements.define('team-distributor', TeamDistributor);
-      customElements.define('nav-component', NavigatorComponent);
-      customElements.define('member-list', MemberListComponent);
-      customElements.define('input-form', InputFormComponent);
+      // -----------------------------------------------------------------------
+      // [checkpoint] 메인 함수
+      // -----------------------------------------------------------------------
+      /**
+       * @function checkpoint
+       * @description (한국어) 웹 컴포넌트를 등록하고 애플리케이션을 초기화합니다.
+       * @returns {void}
+       * @example
+       * // Usage
+       * checkpoint(); // 모든 웹 컴포넌트가 정의되고, 애플리케이션이 동작 시작
+       */
+      const checkpoint = () => {
+        console.trace("checkpoint - Web Component 등록 시작"); // console.trace 예시
+
+        customElements.define("nav-component", NavComponent);
+        customElements.define("member-list", MemberList);
+        customElements.define("input-form", InputForm);
+        customElements.define("team-distributor", TeamDistributor);
+
+        // breakpoint #6 (웹 컴포넌트 등록 완료)
+        console.info("모든 웹 컴포넌트 등록 완료");
+      };
+
+      // 실제로 함수 호출 (애플리케이션 시작)
+      checkpoint();
     </script>
   </body>
 </html>
