@@ -96,11 +96,22 @@ export const addMember = (memberInput, showInvalidInput) => {
   }
 
   memberInput.classList.remove("invalid");
+  
+  // 중복 이름 처리 및 새 멤버 이름 생성
   const newName = utils.generateMemberName(name, state.members);
   
+  // generateMemberName에서 첫 번째 중복 멤버의 이름 패턴이 이미 변경되었을 수 있으므로 
+  // 최신 상태 가져오기
+  const updatedState = store.getState();
+  
   // 상태 업데이트
-  const newMembers = [...state.members, newName];
-  store.setState({ members: newMembers });
+  const newMembers = [...updatedState.members, newName];
+  
+  // 상태 업데이트 (비동기로 처리하여 DOM 업데이트 보장)
+  setTimeout(() => {
+    store.setState({ members: newMembers });
+  }, 10);
+  
   memberInput.value = "";
 
   // 포커스 관리
@@ -121,9 +132,48 @@ export const addMember = (memberInput, showInvalidInput) => {
  */
 export const deleteMember = (index) => {
   const currentState = store.getState();
-  const newMembers = [...currentState.members];
-  newMembers.splice(index, 1);
-  store.setState({ members: newMembers });
+  const members = [...currentState.members];
+  
+  // 삭제할 멤버 정보 저장
+  const memberToDelete = members[index];
+  
+  // 멤버 삭제
+  members.splice(index, 1);
+  
+  // 동일한 기본 이름을 가진 멤버 접미사 처리
+  if (memberToDelete.includes('-')) {
+    const baseName = memberToDelete.split('-')[0];
+    
+    // 같은 기본 이름을 가진 멤버 찾기
+    const sameBaseMembers = members.filter(member => {
+      if (member.includes('-')) {
+        return member.split('-')[0] === baseName;
+      }
+      return false;
+    });
+    
+    // 접미사가 -1인 멤버만 남았고 다른 중복된 멤버가 없다면
+    if (sameBaseMembers.length === 1) {
+      const remainingMemberIndex = members.findIndex(member => 
+        member.includes('-') && member.split('-')[0] === baseName
+      );
+      
+      if (remainingMemberIndex !== -1) {
+        const remainingMember = members[remainingMemberIndex];
+        const suffix = remainingMember.split('-')[1];
+        
+        // 접미사가 1인 경우, 접미사 제거
+        if (suffix === '1') {
+          members[remainingMemberIndex] = baseName;
+        }
+      }
+    }
+  }
+  
+  // 상태 업데이트 (비동기로 처리하여 DOM 업데이트 보장)
+  setTimeout(() => {
+    store.setState({ members });
+  }, 0);
 };
 
 /**
