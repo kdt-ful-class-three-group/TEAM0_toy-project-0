@@ -5,356 +5,534 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TEAM DISTRIBUTOR</title>
     <style>
-      /* 리셋 및 기본 스타일 */
+      /* CSS 변수로 디자인 토큰 정의 */
+      :root {
+        /* 색상 */
+        --color-dark-1: #1e1e1e;
+        --color-dark-2: #252526;
+        --color-dark-3: #2d2d2d;
+        --color-dark-4: #3c3c3c;
+        --color-primary: cadetblue;
+        --color-primary-hover: #4f9a9a;
+        --color-error: #4c2727;
+        --color-error-border: #ff4444;
+        --color-white: #ffffff;
+        --color-gray: #969696;
+        --color-light: #d4d4d4;
+
+        /* 간격 */
+        --space-1: 0.25rem;
+        --space-2: 0.5rem;
+        --space-3: 0.75rem;
+        --space-4: 1rem;
+        --space-5: 1.25rem;
+        --space-6: 1.5rem;
+
+        /* 폰트 크기 */
+        --text-sm: 0.875rem;
+        --text-base: 1rem;
+        --text-lg: 1.125rem;
+
+        /* 테두리 */
+        --radius-sm: 0.25rem;
+        --radius-md: 0.375rem;
+        --border-dark: 1px solid var(--color-dark-4);
+
+        /* 레이아웃 크기 */
+        --nav-width: 200px;
+        --main-width: minmax(400px, 1fr);
+        --sidebar-width: minmax(320px, 400px);
+        --header-height: 3rem;
+        --section-padding: clamp(0.75rem, 1.5vw, 1.25rem);
+        --card-padding: clamp(0.5rem, 1vw, 1rem);
+        --card-margin: 1rem;
+        --card-shadow: 0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.2);
+      }
+
+      /* 전역 리셋 */
       * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
       }
 
-      /* 유틸리티 클래스 */
-      .flex { display: flex; }
-      .flex-between { justify-content: space-between; }
-      .items-center { align-items: center; }
-      .grid { display: grid; }
-      .grid-3-cols { grid-template-columns: 250px 1fr 300px; }
-      .min-h-screen { min-height: 100vh; }
-      
-      .p-4 { padding: 1rem; }
-      .p-5 { padding: 1.25rem; }
-      .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
-      .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
-      .mb-4 { margin-bottom: 1rem; }
-      .mb-5 { margin-bottom: 1.25rem; }
-      .mt-3 { margin-top: 0.75rem; }
-      .ml-2 { margin-left: 0.5rem; }
-
-      .rounded { border-radius: 0.25rem; }
-      .rounded-md { border-radius: 0.375rem; }
-      
-      .text-sm { font-size: 0.875rem; }
-      .text-base { font-size: 1rem; }
-      .text-lg { font-size: 1.125rem; }
-      .font-bold { font-weight: bold; }
-      .uppercase { text-transform: uppercase; }
-      .text-center { text-align: center; }
-
-      .cursor-pointer { cursor: pointer; }
-      .transition { transition: all 0.3s ease; }
-      .shadow-sm { box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); }
-      .hidden { display: none; }
-
-      /* 테마 색상 */
-      .bg-dark { background-color: #1e1e1e; }
-      .bg-dark-2 { background-color: #252526; }
-      .bg-dark-3 { background-color: #2d2d2d; }
-      .bg-dark-4 { background-color: #3c3c3c; }
-      .bg-error { background-color: #4c2727; }
-      .bg-primary { background-color: cadetblue; }
-
-      .text-white { color: #ffffff; }
-      .text-gray { color: #969696; }
-      .text-light { color: #d4d4d4; }
-
-      .border-dark { border: 1px solid #3c3c3c; }
-      .border-error { border: 1px solid #ff4444; }
-      .border-focus { border: 1px solid #007acc; }
-
-      /* 컴포넌트 기본 스타일 */
-      .btn {
-        padding: 0.75rem 1.25rem;
-        border-radius: 0.25rem;
-        font-size: 0.875rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        border: none;
-        min-width: 80px;
-      }
-
-      .btn-primary {
-        background-color: cadetblue;
-        color: white;
-      }
-
-      .btn-primary:hover {
-        background-color: #4f9a9a;
-      }
-
-      .btn-secondary {
-        background-color: #3c3c3c;
-        color: white;
-      }
-
-      .btn-secondary:hover {
-        background-color: #4c4c4c;
-      }
-
-      .btn[disabled] {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
-
-      .input {
-        width: 100%;
-        padding: 0.75rem 1rem;
-        border-radius: 0.25rem;
-        background-color: #3c3c3c;
-        color: white;
-        border: 1px solid #4c4c4c;
-        transition: all 0.3s ease;
-        font-size: 0.875rem;
-      }
-
-      .input:focus {
-        border-color: #007acc;
-        outline: none;
-        background-color: #454545;
-      }
-
-      .input.invalid {
-        background-color: #4c2727;
-        border-color: #ff4444;
-      }
-
-      .input:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-      }
-
-      /* 상태 메시지 스타일 */
-      .status-message {
-        padding: 0.75rem 1rem;
-        border-radius: 0.25rem;
-        background-color: #252526;
-        color: #d4d4d4;
-        font-size: 0.875rem;
-        line-height: 1.5;
-        border: 1px solid #3c3c3c;
-      }
-
-      /* 멤버 아이템 스타일 */
-      .member-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.75rem 1rem;
-        background-color: #2d2d2d;
-        margin: 0.5rem 0;
-        border-radius: 0.25rem;
-        border: 1px solid #3c3c3c;
-      }
-
-      .member-item .btn {
-        padding: 0.5rem 1rem;
-        min-width: 60px;
-        margin-left: 0.5rem;
-      }
-
-      .member-name {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-      }
-
-      /* 접미사 입력 스타일 */
-      .suffix-input {
-        width: 100px;
-        padding: 0.5rem 0.75rem;
-        margin-right: 0.5rem;
-        background-color: #3c3c3c;
-        color: white;
-        border: 1px solid #4c4c4c;
-        border-radius: 0.25rem;
-        font-size: 0.875rem;
-      }
-
-      .suffix-input:focus {
-        border-color: #007acc;
-        outline: none;
-        background-color: #454545;
-      }
-
-      /* 완료 메시지 스타일 */
-      .completion-message {
-        background-color: cadetblue;
-        color: white;
-        padding: 1rem;
-        border-radius: 0.375rem;
-        text-align: center;
-        font-weight: 500;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-
-      /* 애니메이션 */
-      @keyframes shake {
-        0%, 100% { transform: translateX(0); }
-        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-        20%, 40%, 60%, 80% { transform: translateX(5px); }
-      }
-
-      .shake {
-        animation: shake 0.6s cubic-bezier(.36,.07,.19,.97) both;
-      }
-
-      /* 스핀 버튼 스타일 */
-      .number-input::-webkit-inner-spin-button,
-      .number-input::-webkit-outer-spin-button {
-        opacity: 1;
-        height: 30px;
-        cursor: pointer;
+      /* 공통 스타일 템플릿 */
+      template#common-styles {
+        display: none;
       }
     </style>
+    <!-- 공통 스타일 템플릿 정의 -->
+    <template id="common-styles">
+      <style>
+        /* 레이아웃 */
+        .flex { display: flex; }
+        .flex-between { justify-content: space-between; }
+        .items-center { align-items: center; }
+        .grid { display: grid; }
+
+        /* 간격 */
+        .p-4 { padding: var(--space-4); }
+        .p-5 { padding: var(--space-5); }
+        .px-3 { padding-left: var(--space-3); padding-right: var(--space-3); }
+        .py-2 { padding-top: var(--space-2); padding-bottom: var(--space-2); }
+        .mb-4 { margin-bottom: var(--space-4); }
+        .mt-3 { margin-top: var(--space-3); }
+        .ml-2 { margin-left: var(--space-2); }
+
+        /* 타이포그래피 */
+        .text-sm { font-size: var(--text-sm); }
+        .text-lg { font-size: var(--text-lg); }
+        .text-white { color: var(--color-white); }
+        .text-gray { color: var(--color-gray); }
+        .text-light { color: var(--color-light); }
+        .font-bold { font-weight: bold; }
+        .text-center { text-align: center; }
+
+        /* 배경 */
+        .bg-dark { background-color: var(--color-dark-1); }
+        .bg-dark-2 { background-color: var(--color-dark-2); }
+        .bg-dark-3 { background-color: var(--color-dark-3); }
+        .bg-dark-4 { background-color: var(--color-dark-4); }
+        .bg-primary { background-color: var(--color-primary); }
+        .bg-error { background-color: var(--color-error); }
+
+        /* 테두리 */
+        .rounded { border-radius: var(--radius-sm); }
+        .rounded-md { border-radius: var(--radius-md); }
+        .border-dark { border: var(--border-dark); }
+
+        /* 버튼 */
+        .btn {
+          padding: var(--space-3) var(--space-5);
+          border-radius: var(--radius-sm);
+          font-size: var(--text-sm);
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          border: none;
+          min-width: 80px;
+        }
+
+        .btn-primary {
+          background-color: var(--color-primary);
+          color: var(--color-white);
+        }
+
+        .btn-primary:hover {
+          background-color: var(--color-primary-hover);
+        }
+
+        .btn-secondary {
+          background-color: var(--color-dark-4);
+          color: var(--color-white);
+        }
+
+        .btn-secondary:hover {
+          background-color: #4c4c4c;
+        }
+
+        .btn[disabled] {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        /* 입력 필드 */
+        .input {
+          width: 100%;
+          padding: var(--space-3) var(--space-4);
+          border-radius: var(--radius-sm);
+          background-color: var(--color-dark-4);
+          color: var(--color-white);
+          border: 1px solid var(--color-dark-4);
+          transition: all 0.3s ease;
+          font-size: var(--text-sm);
+        }
+
+        .input:focus {
+          border-color: #007acc;
+          outline: none;
+          background-color: #454545;
+        }
+
+        .input.invalid {
+          background-color: var(--color-error);
+          border-color: var(--color-error-border);
+        }
+
+        .input:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        /* 애니메이션 */
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+          20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        .shake {
+          animation: shake 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        }
+
+        .hidden {
+          display: none;
+        }
+      </style>
+    </template>
   </head>
   <body>
-    <div class="grid grid-3-cols min-h-screen">
-      <!-- 네비게이터 영역 -->
-      <nav class="bg-dark-2 text-white p-5 border-dark">
-        <div class="mb-5">
-          <h2 class="text-gray text-sm uppercase mb-4">기능</h2>
-          <div class="nav-item px-3 py-2 rounded cursor-pointer">팀 생성</div>
-          <div class="nav-item px-3 py-2 rounded cursor-pointer">팀 관리</div>
-          <div class="nav-item px-3 py-2 rounded cursor-pointer">설정</div>
-        </div>
-        <div class="mb-5">
-          <h2 class="text-gray text-sm uppercase mb-4">최근 기록</h2>
-          <div class="nav-item px-3 py-2 rounded cursor-pointer">저장된 팀 목록</div>
-          <div class="nav-item px-3 py-2 rounded cursor-pointer">히스토리</div>
-        </div>
-      </nav>
-
-      <!-- 메인 컨텐츠 영역 -->
-      <main class="bg-dark p-5 text-light">
-        <div class="bg-dark-3 rounded-md p-4 shadow-sm mb-4">
-          <h2 class="text-lg text-white mb-4">멤버 목록</h2>
-          <ul class="member-list"></ul>
-        </div>
-        <div class="completion-message bg-primary text-white p-4 rounded-md text-center mt-3 hidden">
-          작성 완료! 모든 멤버가 등록되었습니다.
-        </div>
-      </main>
-
-      <!-- 입력 패널 -->
-      <aside class="bg-dark-2 p-5 border-dark">
-        <!-- 총원 설정 카드 -->
-        <div class="bg-dark-3 rounded-md p-4 shadow-sm mb-4">
-          <h3 class="text-lg text-white mb-4">총원 설정</h3>
-          <input
-            type="number"
-            class="number-input input mb-4"
-            min="1"
-            placeholder="총 인원"
-          />
-          <div class="flex">
-            <button class="btn btn-primary confirm-total">완료</button>
-            <button class="btn btn-secondary edit-total ml-2 hidden">수정</button>
-          </div>
-          <div class="status-message mt-3"></div>
-        </div>
-
-        <!-- 멤버 입력 카드 -->
-        <div class="bg-dark-3 rounded-md p-4 shadow-sm">
-          <h3 class="text-lg text-white mb-4">멤버 추가</h3>
-          <input
-            type="text"
-            class="member-input input mb-4"
-            placeholder="멤버 이름을 입력하세요"
-            disabled
-          />
-          <button class="btn btn-secondary add-member" disabled>추가</button>
-        </div>
-      </aside>
-    </div>
+    <team-distributor></team-distributor>
 
     <script>
-      const TeamDistributor = {
-        selectors: {
-          memberInput: '.member-input',
-          memberList: '.member-list',
-          addMemberBtn: '.add-member',
-          totalInput: '.number-input',
-          statusMessage: '.status-message',
-          confirmTotalBtn: '.confirm-total',
-          editTotalBtn: '.edit-total',
-          completionMessage: '.completion-message'
+      // 공통 스타일 적용 헬퍼 함수
+      function applyCommonStyles(shadowRoot) {
+        const template = document.querySelector('#common-styles');
+        const styles = template.content.cloneNode(true);
+        shadowRoot.appendChild(styles);
+      }
+
+      // 상태 관리를 위한 Store 클래스
+      class Store {
+        constructor(initialState = {}) {
+          this.state = initialState;
+          this.listeners = new Set();
+        }
+
+        getState() {
+          return { ...this.state };
+        }
+
+        setState(newState) {
+          this.state = { ...this.state, ...newState };
+          this.notify();
+        }
+
+        subscribe(listener) {
+          this.listeners.add(listener);
+          return () => this.listeners.delete(listener);
+        }
+
+        notify() {
+          this.listeners.forEach(listener => listener(this.state));
+        }
+      }
+
+      // 전역 상태 저장소
+      const store = new Store({
+        members: [],
+        totalMembers: 0,
+        isTotalConfirmed: false
+      });
+
+      // 유틸리티 함수들
+      const utils = {
+        validateNumber: (value) => /^\d*$/.test(value),
+        
+        validateTotalMembers: (value) => {
+          const num = parseInt(value);
+          return !isNaN(num) && num > 0;
         },
 
-        state: {
-          members: [],
-          totalMembers: 0,
-          isTotalConfirmed: false
-        },
+        generateMemberName: (name, existingMembers) => {
+          const sameNames = existingMembers.filter(
+            member => member === name ||
+            member.startsWith(name + "-") ||
+            member.replace(/-\d+$/, "") === name
+          );
 
-        init() {
-          this.bindElements();
-          this.bindEvents();
-          this.updateStatusMessage();
-        },
+          if (sameNames.length === 0) return name;
 
-        bindElements() {
-          this.elements = {};
-          for (const [key, selector] of Object.entries(this.selectors)) {
-            this.elements[key] = document.querySelector(selector);
+          const baseNameIndex = existingMembers.findIndex(member => member === name);
+          if (baseNameIndex !== -1) {
+            existingMembers[baseNameIndex] = `${name}-1`;
           }
-        },
+          return `${name}-${sameNames.length + 1}`;
+        }
+      };
 
-        bindEvents() {
-          this.elements.confirmTotalBtn.addEventListener("click", () => this.confirmTotalMembers());
-          this.elements.editTotalBtn.addEventListener("click", () => this.editTotalMembers());
-          this.elements.addMemberBtn.addEventListener("click", () => this.addMember());
-          this.elements.memberInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") this.addMember();
-          });
+      // 네비게이터 컴포넌트
+      class NavigatorComponent extends HTMLElement {
+        constructor() {
+          super();
+          this.attachShadow({ mode: 'open' });
+        }
+
+        connectedCallback() {
+          this.render();
+          applyCommonStyles(this.shadowRoot);
+        }
+
+        render() {
+          this.shadowRoot.innerHTML = `
+            <style>
+              :host {
+                display: block;
+                background-color: var(--color-dark-2);
+                color: var(--color-white);
+                padding: var(--section-padding);
+                border-right: var(--border-dark);
+                height: 100vh;
+                overflow-y: auto;
+                min-width: 0;
+              }
+              .nav-section {
+                margin-bottom: var(--space-4);
+                padding: var(--card-padding);
+              }
+              .nav-item {
+                padding: var(--card-padding);
+                border-radius: var(--radius-sm);
+                cursor: pointer;
+                margin: var(--space-1) 0;
+                font-size: 0.9rem;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+              }
+              .nav-item:hover {
+                background-color: var(--color-dark-4);
+              }
+            </style>
+            <div class="nav-section">
+              <h2 class="text-gray text-sm mb-4">기능</h2>
+              <div class="nav-item">팀 생성</div>
+              <div class="nav-item">팀 관리</div>
+              <div class="nav-item">설정</div>
+            </div>
+            <div class="nav-section">
+              <h2 class="text-gray text-sm mb-4">최근 기록</h2>
+              <div class="nav-item">저장된 팀 목록</div>
+              <div class="nav-item">히스토리</div>
+            </div>
+          `;
+        }
+      }
+
+      // 멤버 목록 컴포넌트
+      class MemberListComponent extends HTMLElement {
+        constructor() {
+          super();
+          this.attachShadow({ mode: 'open' });
+        }
+
+        connectedCallback() {
+          this.render();
+          applyCommonStyles(this.shadowRoot);
+          store.subscribe(state => this.updateList(state.members));
+        }
+
+        updateList(members) {
+          const list = this.shadowRoot.querySelector('.member-list');
+          if (!list) return;
+
+          list.innerHTML = members.map((name, index) => `
+            <li class="member-item">
+              <span class="member-name" data-index="${index}">
+                ${name}
+                ${name.includes('-') ? `
+                  <button class="btn btn-secondary edit-suffix" data-index="${index}">수정</button>
+                ` : ''}
+              </span>
+              <button class="btn btn-secondary delete-member" data-index="${index}">삭제</button>
+            </li>
+          `).join('');
+
+          this.addEventListeners();
+        }
+
+        addEventListeners() {
+          const list = this.shadowRoot.querySelector('.member-list');
           
-          // 총원 입력 필드 이벤트
-          this.elements.totalInput.addEventListener("input", (e) => {
-            if (!this.state.isTotalConfirmed) {
-              const input = e.target;
-              const value = input.value;
-              
-              // 숫자와 정수 검증
-              if (!/^\d*$/.test(value)) {
-                input.value = value.replace(/[^\d]/g, '');
-                this.showInvalidInput(input);
-                return;
-              }
+          list.addEventListener('click', (e) => {
+            const target = e.target;
+            const index = parseInt(target.dataset.index);
 
-              const numValue = parseInt(value);
-              if (numValue < 1) {
-                input.value = "";
-                this.showInvalidInput(input);
-                this.updateTotalMembers(0);
-                return;
-              }
+            if (target.classList.contains('delete-member')) {
+              const state = store.getState();
+              const newMembers = [...state.members];
+              newMembers.splice(index, 1);
+              store.setState({ members: newMembers });
+            }
 
-              input.classList.remove('invalid');
-              this.updateTotalMembers(numValue);
+            if (target.classList.contains('edit-suffix')) {
+              this.startSuffixEdit(target, index);
+            }
+          });
+        }
+
+        startSuffixEdit(button, index) {
+          const state = store.getState();
+          const name = state.members[index];
+          const [baseName, currentSuffix] = name.split('-');
+          
+          const nameSpan = button.closest('.member-name');
+          const editMode = document.createElement('span');
+          editMode.className = 'edit-mode';
+          editMode.innerHTML = `
+            <input type="text" class="suffix-input" value="${currentSuffix || ''}" placeholder="접미사 입력">
+            <button class="btn btn-primary confirm-suffix">확정</button>
+          `;
+
+          const originalContent = nameSpan.innerHTML;
+          nameSpan.innerHTML = `${baseName}-`;
+          nameSpan.appendChild(editMode);
+
+          const input = editMode.querySelector('.suffix-input');
+          const confirmBtn = editMode.querySelector('.confirm-suffix');
+
+          const handleConfirm = () => {
+            const newSuffix = input.value.trim();
+            if (!newSuffix) {
+              nameSpan.innerHTML = originalContent;
+              return;
+            }
+
+            const newName = `${baseName}-${newSuffix}`;
+            const isDuplicate = state.members.some(
+              (m, i) => i !== index && m === newName
+            );
+
+            if (isDuplicate) {
+              alert('이미 사용 중인 접미사입니다.');
+              nameSpan.innerHTML = originalContent;
+              return;
+            }
+
+            const newMembers = [...state.members];
+            newMembers[index] = newName;
+            store.setState({ members: newMembers });
+          };
+
+          confirmBtn.addEventListener('click', handleConfirm);
+          input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleConfirm();
+          });
+
+          input.addEventListener('blur', (e) => {
+            if (e.relatedTarget !== confirmBtn) {
+              nameSpan.innerHTML = originalContent;
             }
           });
 
-          // 총원 입력 필드 엔터키 이벤트 추가
-          this.elements.totalInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter" && !this.state.isTotalConfirmed) {
-              const value = parseInt(e.target.value);
-              if (!value || value < 1) {
-                this.showInvalidInput(e.target);
-                return;
+          input.focus();
+        }
+
+        render() {
+          this.shadowRoot.innerHTML = `
+            <style>
+              .member-list {
+                list-style: none;
+                padding: 0;
+                max-height: calc(100vh - var(--header-height) - var(--space-4) * 2);
+                overflow-y: auto;
+                display: flex;
+                flex-direction: column;
+                gap: var(--space-2);
+                margin: 0;
+                width: 100%;
               }
-              this.confirmTotalMembers();
-            }
-          });
-        },
+              .member-item {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: var(--space-3) var(--space-4);
+                background-color: var(--color-dark-3);
+                border-radius: var(--radius-sm);
+                border: var(--border-dark);
+                width: 100%;
+                box-sizing: border-box;
+              }
+              .member-name {
+                display: flex;
+                align-items: center;
+                gap: var(--space-2);
+                color: var(--color-light);
+                font-size: var(--text-base);
+                flex: 1;
+                min-width: 0;
+              }
+              .member-actions {
+                display: flex;
+                align-items: center;
+                gap: var(--space-2);
+                flex-shrink: 0;
+              }
+              .delete-member {
+                padding: var(--space-1) var(--space-2);
+                font-size: var(--text-sm);
+                min-width: auto;
+                height: auto;
+              }
+              .edit-suffix {
+                padding: var(--space-1) var(--space-2);
+                font-size: var(--text-sm);
+                min-width: auto;
+                height: auto;
+              }
+              .suffix-input {
+                width: 60px;
+                padding: var(--space-1) var(--space-2);
+                background-color: var(--color-dark-4);
+                color: var(--color-white);
+                border: 1px solid var(--color-dark-4);
+                border-radius: var(--radius-sm);
+                font-size: var(--text-sm);
+              }
+              .edit-mode {
+                display: flex;
+                align-items: center;
+                gap: var(--space-2);
+              }
+            </style>
+            <div class="bg-dark-3 rounded-md p-4 shadow-sm mb-4">
+              <h2 class="text-lg text-white mb-4">멤버 목록</h2>
+              <ul class="member-list"></ul>
+            </div>
+          `;
+        }
+      }
 
-        updateTotalMembers(value) {
-          const parsedValue = parseInt(value);
-          this.state.totalMembers = !isNaN(parsedValue) && parsedValue > 0 ? parsedValue : 0;
-          this.updateStatusMessage();
-          this.updateInputState();
-        },
+      // 입력 폼 컴포넌트
+      class InputFormComponent extends HTMLElement {
+        constructor() {
+          super();
+          this.attachShadow({ mode: 'open' });
+        }
 
-        updateStatusMessage() {
-          const { statusMessage } = this.elements;
-          const { totalMembers, members, isTotalConfirmed } = this.state;
+        connectedCallback() {
+          this.render();
+          applyCommonStyles(this.shadowRoot);
+          this.bindEvents();
+          store.subscribe(state => this.updateState(state));
+        }
+
+        updateState(state) {
+          const { totalMembers, isTotalConfirmed, members } = state;
+          const totalInput = this.shadowRoot.querySelector('.number-input');
+          const memberInput = this.shadowRoot.querySelector('.member-input');
+          const addMemberBtn = this.shadowRoot.querySelector('.add-member');
+          const confirmBtn = this.shadowRoot.querySelector('.confirm-total');
+          const editBtn = this.shadowRoot.querySelector('.edit-total');
+          const statusMessage = this.shadowRoot.querySelector('.status-message');
+
+          // Update total members input state
+          totalInput.disabled = isTotalConfirmed;
+          confirmBtn.style.display = isTotalConfirmed ? 'none' : 'block';
+          editBtn.style.display = isTotalConfirmed ? 'block' : 'none';
+
+          // Update member input state
+          const canAddMore = isTotalConfirmed && totalMembers > 0 && members.length < totalMembers;
+          memberInput.disabled = !canAddMore;
+          addMemberBtn.disabled = !canAddMore;
+
+          // Update status message
+          this.updateStatusMessage(state);
+        }
+
+        updateStatusMessage(state) {
+          const { totalMembers, members, isTotalConfirmed } = state;
+          const statusMessage = this.shadowRoot.querySelector('.status-message');
 
           if (!isTotalConfirmed) {
             statusMessage.textContent = "총원을 입력하고 완료 버튼을 클릭하거나 엔터를 눌러주세요.";
@@ -374,239 +552,322 @@
           } else {
             statusMessage.textContent = `설정된 총원(${totalMembers}명)을 초과했습니다!`;
           }
-        },
+        }
 
-        updateInputState() {
-          const { memberInput, addMemberBtn, completionMessage } = this.elements;
-          const { totalMembers, members, isTotalConfirmed } = this.state;
+        bindEvents() {
+          const totalInput = this.shadowRoot.querySelector('.number-input');
+          const memberInput = this.shadowRoot.querySelector('.member-input');
+          const addMemberBtn = this.shadowRoot.querySelector('.add-member');
+          const confirmBtn = this.shadowRoot.querySelector('.confirm-total');
+          const editBtn = this.shadowRoot.querySelector('.edit-total');
 
-          const canAddMore = isTotalConfirmed && totalMembers > 0 && members.length < totalMembers;
+          totalInput.addEventListener('input', e => this.handleTotalInput(e));
+          totalInput.addEventListener('keypress', e => {
+            if (e.key === 'Enter') this.confirmTotalMembers();
+          });
 
-          memberInput.disabled = !canAddMore;
-          addMemberBtn.disabled = !canAddMore;
+          confirmBtn.addEventListener('click', () => this.confirmTotalMembers());
+          editBtn.addEventListener('click', () => this.editTotalMembers());
+          
+          memberInput.addEventListener('keypress', e => {
+            if (e.key === 'Enter') this.addMember();
+          });
+          addMemberBtn.addEventListener('click', () => this.addMember());
+        }
 
-          if (!canAddMore) {
-            memberInput.classList.add("disabled");
-            addMemberBtn.classList.add("disabled");
-          } else {
-            memberInput.classList.remove("disabled");
-            addMemberBtn.classList.remove("disabled");
+        handleTotalInput(e) {
+          const state = store.getState();
+          if (state.isTotalConfirmed) return;
+
+          const input = e.target;
+          const value = input.value;
+
+          if (!utils.validateNumber(value)) {
+            input.value = value.replace(/[^\d]/g, '');
+            this.showInvalidInput(input);
+            return;
           }
 
-          if (totalMembers > 0 && members.length === totalMembers) {
-            completionMessage.style.display = "block";
-          } else {
-            completionMessage.style.display = "none";
+          const numValue = parseInt(value);
+          if (numValue < 1) {
+            input.value = '';
+            this.showInvalidInput(input);
+            store.setState({ totalMembers: 0 });
+            return;
           }
-        },
+
+          input.classList.remove('invalid');
+          store.setState({ totalMembers: numValue });
+        }
 
         showInvalidInput(element) {
           element.classList.add('invalid');
           element.classList.remove('shake');
-          // 리플로우를 강제로 발생시켜 애니메이션이 다시 시작되도록 함
           void element.offsetWidth;
           element.classList.add('shake');
-        },
+        }
 
         confirmTotalMembers() {
-          const { totalInput, confirmTotalBtn, editTotalBtn } = this.elements;
+          const totalInput = this.shadowRoot.querySelector('.number-input');
           const value = parseInt(totalInput.value);
 
-          if (!value || value < 1) {
+          if (!utils.validateTotalMembers(value)) {
             this.showInvalidInput(totalInput);
             return;
           }
 
-          totalInput.classList.remove('invalid');
-          totalInput.disabled = true;
-          confirmTotalBtn.style.display = "none";
-          editTotalBtn.style.display = "block";
-          this.state.isTotalConfirmed = true;
-
-          this.updateInputState();
-        },
+          store.setState({
+            totalMembers: value,
+            isTotalConfirmed: true
+          });
+        }
 
         editTotalMembers() {
-          const { totalInput, confirmTotalBtn, editTotalBtn } = this.elements;
-
-          if (this.state.members.length > 0) {
-            if (!confirm("총원을 수정하면 입력된 멤버 목록이 초기화됩니다. 계속하시겠습니까?")) {
+          const state = store.getState();
+          if (state.members.length > 0) {
+            if (!confirm('총원을 수정하면 입력된 멤버 목록이 초기화됩니다. 계속하시겠습니까?')) {
               return;
             }
-            this.state.members = [];
-            this.updateMemberList();
           }
 
-          totalInput.disabled = false;
-          confirmTotalBtn.style.display = "block";
-          editTotalBtn.style.display = "none";
-          this.state.isTotalConfirmed = false;
-
-          this.updateInputState();
-          this.elements.completionMessage.style.display = "none";
-        },
+          store.setState({
+            members: [],
+            isTotalConfirmed: false
+          });
+        }
 
         addMember() {
-          const { memberInput } = this.elements;
-          const { totalMembers, members } = this.state;
-
-          if (members.length >= totalMembers) {
+          const memberInput = this.shadowRoot.querySelector('.member-input');
+          const state = store.getState();
+          
+          if (state.members.length >= state.totalMembers) {
             this.showInvalidInput(memberInput);
             return;
           }
 
-          let name = memberInput.value.trim();
-
+          const name = memberInput.value.trim();
           if (!name) {
             this.showInvalidInput(memberInput);
             return;
           }
 
           memberInput.classList.remove('invalid');
-
-          const sameNames = members.filter(
-            (member) =>
-              member === name ||
-              member.startsWith(name + "-") ||
-              member.replace(/-\d+$/, "") === name
-          );
-
-          if (sameNames.length > 0) {
-            const baseNameIndex = members.findIndex((member) => member === name);
-            if (baseNameIndex !== -1) {
-              members[baseNameIndex] = `${name}-1`;
-            }
-            name = `${name}-${sameNames.length + 1}`;
-          }
-
-          this.state.members.push(name);
-          this.updateMemberList();
-          this.updateStatusMessage();
-          this.updateInputState();
-          memberInput.value = "";
-        },
-
-        removeMember(index) {
-          this.state.members.splice(index, 1);
-          this.updateMemberList();
-          this.updateStatusMessage();
-          this.updateInputState();
-        },
-
-        startSuffixEdit(event, index) {
-          event.preventDefault();
-          const nameSpan = event.target.parentElement;
-          const name = this.state.members[index];
-
-          if (nameSpan.querySelector(".edit-mode")) return;
-
-          const [baseName, currentSuffix] = name.split("-");
-
-          const editMode = document.createElement("span");
-          editMode.className = "edit-mode";
-
-          const input = document.createElement("input");
-          input.type = "text";
-          input.value = currentSuffix || "";
-          input.className = "suffix-input";
-          input.placeholder = "접미사 입력";
-
-          const confirmBtn = document.createElement("button");
-          confirmBtn.className = "btn btn-primary";
-          confirmBtn.textContent = "확정";
-
-          editMode.appendChild(input);
-          editMode.appendChild(confirmBtn);
-
-          const originalContent = nameSpan.innerHTML;
-          nameSpan.innerHTML = `${baseName}-`;
-          nameSpan.appendChild(editMode);
-
-          const handleConfirm = () => {
-            const newSuffix = input.value.trim();
-
-            if (!newSuffix) {
-              nameSpan.innerHTML = originalContent;
-              return;
-            }
-
-            const isDuplicate = this.state.members.some(
-              (m, i) => i !== index && m === `${baseName}-${newSuffix}`
-            );
-
-            if (isDuplicate) {
-              alert("이미 사용 중인 접미사입니다.");
-              nameSpan.innerHTML = originalContent;
-              return;
-            }
-
-            this.state.members[index] = `${baseName}-${newSuffix}`;
-            this.updateMemberList();
-          };
-
-          confirmBtn.addEventListener("click", handleConfirm);
-          input.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") {
-              handleConfirm();
-            }
+          const newName = utils.generateMemberName(name, state.members);
+          store.setState({
+            members: [...state.members, newName]
           });
+          
+          memberInput.value = '';
+        }
 
-          input.addEventListener("blur", (e) => {
-            if (e.relatedTarget !== confirmBtn) {
-              nameSpan.innerHTML = originalContent;
-            }
-          });
+        render() {
+          this.shadowRoot.innerHTML = `
+            <style>
+              :host {
+                display: block;
+                background-color: var(--color-dark-2);
+                padding: var(--section-padding);
+                border-left: var(--border-dark);
+                height: 100vh;
+                overflow-y: auto;
+                width: 100%;
+                min-width: 0;
+                box-sizing: border-box;
+              }
+              .input-card {
+                background-color: var(--color-dark-3);
+                border-radius: var(--radius-md);
+                padding: var(--space-5);
+                margin-bottom: var(--card-margin);
+                box-shadow: var(--card-shadow);
+                box-sizing: border-box;
+                width: 100%;
+                max-width: 100%;
+                display: flex;
+                flex-direction: column;
+                gap: var(--space-4);
+              }
+              .input-card h3 {
+                color: var(--color-white);
+                font-size: var(--text-lg);
+                white-space: nowrap;
+                margin: 0;
+              }
+              .input-wrapper {
+                position: relative;
+                width: 100%;
+                box-sizing: border-box;
+                display: flex;
+                flex-direction: column;
+                gap: var(--space-3);
+              }
+              .input {
+                width: 100%;
+                min-width: 0;
+                max-width: 100%;
+                height: 2.5rem;
+                background-color: var(--color-dark-4);
+                color: var(--color-white);
+                border: 1px solid var(--color-dark-4);
+                border-radius: var(--radius-sm);
+                padding: 0 var(--space-3);
+                font-size: var(--text-base);
+                transition: all 0.2s ease;
+                box-sizing: border-box;
+              }
+              .input:focus {
+                outline: none;
+                border-color: var(--color-primary);
+                background-color: var(--color-dark-3);
+              }
+              .input:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+              }
+              .button-group {
+                display: flex;
+                gap: var(--space-2);
+                width: 100%;
+              }
+              .button-group .btn {
+                flex: 1;
+                min-width: 60px;
+                height: 2.5rem;
+                white-space: nowrap;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+                transition: all 0.2s ease;
+                font-size: var(--text-base);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              }
+              .btn {
+                background-color: var(--color-primary);
+                color: var(--color-white);
+                border: none;
+                border-radius: var(--radius-sm);
+                padding: 0 var(--space-4);
+                cursor: pointer;
+                transition: all 0.2s ease;
+                width: 100%;
+                height: 2.5rem;
+                font-size: var(--text-base);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-sizing: border-box;
+              }
+              .btn:hover:not(:disabled) {
+                background-color: var(--color-primary-hover);
+                transform: translateY(-1px);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+              }
+              .btn:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+              }
+              .btn-secondary {
+                background-color: var(--color-dark-4);
+              }
+              .btn-secondary:hover:not(:disabled) {
+                background-color: var(--color-dark-3);
+              }
+              .status-message {
+                padding: var(--space-3) var(--space-4);
+                border-radius: var(--radius-sm);
+                background-color: var(--color-dark-2);
+                color: var(--color-light);
+                font-size: var(--text-sm);
+                line-height: 1.5;
+                border: var(--border-dark);
+                word-break: keep-all;
+                overflow-wrap: break-word;
+                margin-top: var(--space-3);
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+              }
+            </style>
+            <div class="input-card">
+              <h3>총원 설정</h3>
+              <div class="input-wrapper">
+                <input type="number" class="number-input input" min="1" placeholder="총 인원">
+              </div>
+              <div class="button-group">
+                <button class="btn btn-primary confirm-total">완료</button>
+                <button class="btn btn-secondary edit-total hidden">수정</button>
+              </div>
+              <div class="status-message mt-3"></div>
+            </div>
+            <div class="input-card">
+              <h3>멤버 추가</h3>
+              <div class="input-wrapper">
+                <input type="text" class="member-input input" placeholder="멤버 이름을 입력하세요" disabled>
+              </div>
+              <button class="btn btn-secondary add-member" disabled>추가</button>
+            </div>
+          `;
+        }
+      }
 
-          input.focus();
-        },
+      // 메인 컴포넌트
+      class TeamDistributor extends HTMLElement {
+        constructor() {
+          super();
+          this.attachShadow({ mode: 'open' });
+        }
 
-        updateMemberList() {
-          const { memberList } = this.elements;
+        connectedCallback() {
+          this.render();
+          applyCommonStyles(this.shadowRoot);
+        }
 
-          while (memberList.firstChild) {
-            memberList.firstChild.remove();
-          }
+        render() {
+          this.shadowRoot.innerHTML = `
+            <style>
+              :host {
+                display: grid;
+                grid-template-columns: var(--nav-width) var(--main-width) var(--sidebar-width);
+                gap: 1px;
+                height: 100vh;
+                overflow: hidden;
+                background-color: var(--color-dark-1);
+                max-width: 100vw;
+                margin: 0 auto;
+                padding: 0 var(--space-4);
+              }
+              main {
+                padding: var(--section-padding);
+                color: var(--color-light);
+                overflow-y: auto;
+                height: 100vh;
+              }
+              .completion-message {
+                background-color: var(--color-primary);
+                color: var(--color-white);
+                padding: var(--space-4);
+                border-radius: var(--radius-md);
+                text-align: center;
+                font-weight: 500;
+                margin-top: var(--space-3);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+              }
+            </style>
+            <nav-component></nav-component>
+            <main>
+              <member-list></member-list>
+              <div class="completion-message hidden">
+                작성 완료! 모든 멤버가 등록되었습니다.
+              </div>
+            </main>
+            <input-form></input-form>
+          `;
+        }
+      }
 
-          this.state.members.forEach((name, index) => {
-            const li = document.createElement("li");
-            li.className = "member-item";
-
-            const nameSpan = document.createElement("span");
-            nameSpan.className = "member-name";
-            nameSpan.dataset.index = index;
-
-            const deleteBtn = document.createElement("button");
-            deleteBtn.className = "btn btn-secondary";
-            deleteBtn.dataset.index = index;
-            deleteBtn.textContent = "삭제";
-
-            deleteBtn.addEventListener("click", () => this.removeMember(index));
-
-            if (name.includes("-")) {
-              const [baseName, suffix] = name.split("-");
-              nameSpan.textContent = `${baseName}-${suffix}`;
-
-              const editBtn = document.createElement("button");
-              editBtn.className = "btn btn-secondary";
-              editBtn.style.marginLeft = "8px";
-              editBtn.textContent = "수정";
-              editBtn.addEventListener("click", (e) => this.startSuffixEdit(e, index));
-
-              nameSpan.appendChild(editBtn);
-            } else {
-              nameSpan.textContent = name;
-            }
-
-            li.appendChild(nameSpan);
-            li.appendChild(deleteBtn);
-            memberList.appendChild(li);
-          });
-        },
-      };
-
-      document.addEventListener('DOMContentLoaded', () => {
-        TeamDistributor.init();
-      });
+      // 컴포넌트 등록
+      customElements.define('team-distributor', TeamDistributor);
+      customElements.define('nav-component', NavigatorComponent);
+      customElements.define('member-list', MemberListComponent);
+      customElements.define('input-form', InputFormComponent);
     </script>
   </body>
 </html>
