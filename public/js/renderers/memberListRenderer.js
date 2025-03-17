@@ -20,13 +20,26 @@ export const renderMemberList = (members = []) => {
 
   let listItems = "";
   members.forEach((name, index) => {
-    // 이름에 접미사가 있는지 확인
-    const hasSuffix = name.includes("-");
+    // 이름과 접미사 분리 (접미사가 있는 경우)
+    let displayName = name;
+    if (name.includes("-")) {
+      const parts = name.split("-");
+      const baseName = parts[0];
+      const suffix = parts[1] || "";
+      
+      // 접미사가 숫자인지 문자열인지 확인
+      const isSuffixNumeric = !isNaN(suffix);
+      
+      // 시각적 구분을 위해 접미사 표시 방식 변경
+      // 숫자 접미사와 문자열 접미사의 스타일을 다르게 적용
+      const suffixClass = isSuffixNumeric ? "member-suffix-numeric" : "member-suffix-text";
+      displayName = `<span class="member-name">${baseName}</span><span class="${suffixClass}">-${suffix}</span>`;
+    }
     
     listItems += `
-      <li class="member-item">
+      <li class="member-item" data-name="${name}">
         <span class="member-item__name" data-index="${index}">
-          ${name}
+          ${displayName}
           <button class="btn btn--small member-item__edit" data-index="${index}">수정</button>
         </span>
         <div class="member-item__actions">
