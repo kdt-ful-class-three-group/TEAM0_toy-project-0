@@ -203,10 +203,21 @@
           return `${name}-${sameNames.length + 1}`;
         };
 
+        /**
+         * @function validateTeamCount
+         * @param {number} value
+         * @returns {boolean}
+         */
+        const validateTeamCount = (value) => {
+          const num = parseInt(value);
+          return !isNaN(num) && num > 0;
+        };
+
         return {
           validateNumber,
           validateTotalMembers,
           generateMemberName,
+          validateTeamCount
         };
       };
 
@@ -217,6 +228,8 @@
         members: [],
         totalMembers: 0,
         isTotalConfirmed: false,
+        teamCount: 0,
+        isTeamCountConfirmed: false
       });
       const utils = createUtils();
 
@@ -293,7 +306,9 @@
                     : ""
                 }
               </span>
-              <button class="btn btn-secondary delete-member" data-index="${index}">삭제</button>
+              <div class="member-actions">
+                <button class="btn btn-secondary delete-member" data-index="${index}">삭제</button>
+              </div>
             </li>
           `;
         });
@@ -305,29 +320,66 @@
               padding: 0;
               max-height: calc(100vh - var(--header-height) - var(--space-4) * 2);
               overflow-y: auto;
+              display: flex;
+              flex-direction: column;
+              gap: var(--space-2);
+              margin: 0;
+              width: 100%;
             }
             .member-item {
-              padding: var(--space-3);
-              margin: var(--space-2) 0;
-              min-width: 0;
               display: flex;
               align-items: center;
               justify-content: space-between;
+              padding: var(--space-3) var(--space-4);
+              background-color: var(--color-dark-3);
+              border-radius: var(--radius-sm);
+              border: var(--border-dark);
+              width: 100%;
+              box-sizing: border-box;
             }
             .member-name {
               display: flex;
               align-items: center;
               gap: var(--space-2);
+              color: var(--color-light);
+              font-size: var(--text-base);
+              flex: 1;
+              min-width: 0;
             }
-            .suffix-input {
-              width: 100px;
-              padding: var(--space-2) var(--space-3);
-              margin-right: var(--space-2);
+            .member-actions {
+              display: flex;
+              align-items: center;
+              gap: var(--space-2);
+              flex-shrink: 0;
+            }
+            .delete-member, .edit-suffix {
+              padding: var(--space-1) var(--space-2);
+              font-size: var(--text-sm);
+              min-width: auto;
+              height: auto;
               background-color: var(--color-dark-4);
               color: var(--color-white);
-              border: var(--border-dark);
+              border: none;
+              border-radius: var(--radius-sm);
+              cursor: pointer;
+              transition: all 0.2s ease;
+            }
+            .delete-member:hover, .edit-suffix:hover {
+              background-color: var(--color-dark-3);
+            }
+            .suffix-input {
+              width: 60px;
+              padding: var(--space-1) var(--space-2);
+              background-color: var(--color-dark-4);
+              color: var(--color-white);
+              border: 1px solid var(--color-dark-4);
               border-radius: var(--radius-sm);
               font-size: var(--text-sm);
+            }
+            .edit-mode {
+              display: flex;
+              align-items: center;
+              gap: var(--space-2);
             }
           </style>
           <div class="bg-dark-3 rounded-md p-4 shadow-sm mb-4">
@@ -355,39 +407,105 @@
               overflow-y: auto;
               width: 100%;
               min-width: 0;
+              box-sizing: border-box;
             }
             .input-card {
               background-color: var(--color-dark-3);
               border-radius: var(--radius-md);
-              padding: var(--space-4);
+              padding: var(--space-5);
               margin-bottom: var(--space-4);
               box-shadow: var(--card-shadow);
+              box-sizing: border-box;
+              width: 100%;
+              max-width: 100%;
+              display: flex;
+              flex-direction: column;
+              gap: var(--space-4);
             }
             .input-card h3 {
-              margin-bottom: var(--space-4);
               color: var(--color-white);
               font-size: var(--text-lg);
               white-space: nowrap;
+              margin: 0;
             }
             .input-wrapper {
+              position: relative;
               width: 100%;
-              margin-bottom: var(--space-4);
+              box-sizing: border-box;
+              display: flex;
+              flex-direction: column;
+              gap: var(--space-3);
+            }
+            .input {
+              width: 100%;
+              min-width: 0;
+              max-width: 100%;
+              height: 2.5rem;
+              background-color: var(--color-dark-4);
+              color: var(--color-white);
+              border: 1px solid var(--color-dark-4);
+              border-radius: var(--radius-sm);
+              padding: 0 var(--space-3);
+              font-size: var(--text-base);
+              transition: all 0.2s ease;
+              box-sizing: border-box;
+            }
+            .input:focus {
+              outline: none;
+              border-color: var(--color-primary);
+              background-color: var(--color-dark-3);
+            }
+            .input:disabled {
+              opacity: 0.6;
+              cursor: not-allowed;
             }
             .button-group {
               display: flex;
               gap: var(--space-2);
-              margin-top: var(--space-4);
+              width: 100%;
             }
             .button-group .btn {
               flex: 1;
               min-width: 60px;
+              height: 2.5rem;
               white-space: nowrap;
               box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
               transition: all 0.2s ease;
+              font-size: var(--text-base);
+              display: flex;
+              align-items: center;
+              justify-content: center;
             }
-            .button-group .btn:hover {
+            .btn {
+              background-color: var(--color-primary);
+              color: var(--color-white);
+              border: none;
+              border-radius: var(--radius-sm);
+              padding: 0 var(--space-4);
+              cursor: pointer;
+              transition: all 0.2s ease;
+              width: 100%;
+              height: 2.5rem;
+              font-size: var(--text-base);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              box-sizing: border-box;
+            }
+            .btn:hover:not(:disabled) {
+              background-color: var(--color-primary-hover);
               transform: translateY(-1px);
               box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            }
+            .btn:disabled {
+              opacity: 0.6;
+              cursor: not-allowed;
+            }
+            .btn-secondary {
+              background-color: var(--color-dark-4);
+            }
+            .btn-secondary:hover:not(:disabled) {
+              background-color: var(--color-dark-3);
             }
             .status-message {
               padding: var(--space-3) var(--space-4);
@@ -402,7 +520,36 @@
               margin-top: var(--space-3);
               box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
             }
+            .hidden {
+              display: none;
+            }
+            @keyframes shake {
+              0%, 100% { transform: translateX(0); }
+              10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+              20%, 40%, 60%, 80% { transform: translateX(5px); }
+            }
+            .shake {
+              animation: shake 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+            }
+            .invalid {
+              background-color: var(--color-error);
+              border-color: var(--color-error-border);
+            }
           </style>
+
+          <div class="input-card">
+            <h3>팀 구성</h3>
+            <div class="input-wrapper">
+              <input type="number" class="team-count-input input" min="1" placeholder="팀 개수"
+                value="${state.teamCount}" ${state.isTeamCountConfirmed ? "disabled" : ""} />
+            </div>
+            <div class="button-group">
+              <button class="btn btn-primary confirm-team-count" ${state.isTeamCountConfirmed ? "style='display: none;'" : ""}>완료</button>
+              <button class="btn btn-secondary edit-team-count" ${!state.isTeamCountConfirmed ? "style='display: none;'" : ""}>수정</button>
+            </div>
+            <div class="team-status-message status-message"></div>
+          </div>
+
           <div class="input-card">
             <h3>총원 설정</h3>
             <div class="input-wrapper">
@@ -410,14 +557,10 @@
                 value="${state.totalMembers}" ${state.isTotalConfirmed ? "disabled" : ""} />
             </div>
             <div class="button-group">
-              <button class="btn btn-primary confirm-total" style="display: ${
-                state.isTotalConfirmed ? "none" : "block"
-              }">완료</button>
-              <button class="btn btn-secondary edit-total" style="display: ${
-                state.isTotalConfirmed ? "block" : "none"
-              }">수정</button>
+              <button class="btn btn-primary confirm-total" ${state.isTotalConfirmed ? "style='display: none;'" : ""}>완료</button>
+              <button class="btn btn-secondary edit-total" ${!state.isTotalConfirmed ? "style='display: none;'" : ""}>수정</button>
             </div>
-            <div class="status-message mt-3"></div>
+            <div class="total-status-message status-message"></div>
           </div>
 
           <div class="input-card">
@@ -611,48 +754,117 @@
 
         addEventListeners() {
           const shadow = this.shadowRoot;
+          
+          // 팀 구성 관련 요소
+          const teamCountInput = shadow.querySelector(".team-count-input");
+          const confirmTeamCountBtn = shadow.querySelector(".confirm-team-count");
+          const editTeamCountBtn = shadow.querySelector(".edit-team-count");
+
+          // 총원 설정 관련 요소
           const totalInput = shadow.querySelector(".number-input");
+          const confirmTotalBtn = shadow.querySelector(".confirm-total");
+          const editTotalBtn = shadow.querySelector(".edit-total");
+
+          // 멤버 추가 관련 요소
           const memberInput = shadow.querySelector(".member-input");
-          const confirmBtn = shadow.querySelector(".confirm-total");
-          const editBtn = shadow.querySelector(".edit-total");
           const addMemberBtn = shadow.querySelector(".add-member");
 
-          if (totalInput) {
-            totalInput.addEventListener("input", (e) => {
-              return this.handleTotalInput(e);
-            });
-            totalInput.addEventListener("keypress", (e) => {
+          // 팀 구성 이벤트
+          if (teamCountInput) {
+            teamCountInput.addEventListener("input", (e) => this.handleTeamCountInput(e));
+            teamCountInput.addEventListener("keypress", (e) => {
               if (e.key === "Enter") {
-                return this.confirmTotalMembers();
+                this.confirmTeamCount();
               }
             });
           }
 
-          if (confirmBtn) {
-            confirmBtn.addEventListener("click", () => {
-              return this.confirmTotalMembers();
+          if (confirmTeamCountBtn) {
+            confirmTeamCountBtn.addEventListener("click", () => this.confirmTeamCount());
+          }
+
+          if (editTeamCountBtn) {
+            editTeamCountBtn.addEventListener("click", () => this.editTeamCount());
+          }
+
+          // 총원 설정 이벤트
+          if (totalInput) {
+            totalInput.addEventListener("input", (e) => this.handleTotalInput(e));
+            totalInput.addEventListener("keypress", (e) => {
+              if (e.key === "Enter") {
+                this.confirmTotalMembers();
+              }
             });
           }
 
-          if (editBtn) {
-            editBtn.addEventListener("click", () => {
-              return this.editTotalMembers();
-            });
+          if (confirmTotalBtn) {
+            confirmTotalBtn.addEventListener("click", () => this.confirmTotalMembers());
           }
 
+          if (editTotalBtn) {
+            editTotalBtn.addEventListener("click", () => this.editTotalMembers());
+          }
+
+          // 멤버 추가 이벤트
           if (memberInput) {
             memberInput.addEventListener("keypress", (e) => {
               if (e.key === "Enter") {
-                return this.addMember();
+                e.preventDefault();
+                this.addMember(memberInput);
               }
             });
           }
 
           if (addMemberBtn) {
             addMemberBtn.addEventListener("click", () => {
-              return this.addMember();
+              const input = shadow.querySelector(".member-input");
+              if (input) {
+                this.addMember(input);
+              }
             });
           }
+        }
+
+        handleTeamCountInput(e) {
+          const value = e.target.value;
+          if (!utils.validateNumber(value)) {
+            e.target.value = value.replace(/[^\d]/g, "");
+            this.showInvalidInput(e.target);
+            return;
+          }
+
+          const numValue = parseInt(value);
+          if (numValue < 1) {
+            e.target.value = "";
+            this.showInvalidInput(e.target);
+            store.setState({ teamCount: 0 });
+            return;
+          }
+
+          e.target.classList.remove("invalid");
+          store.setState({ teamCount: numValue });
+        }
+
+        confirmTeamCount() {
+          const state = store.getState();
+          const value = state.teamCount;
+
+          if (!utils.validateTeamCount(value)) {
+            const inputEl = this.shadowRoot.querySelector(".team-count-input");
+            if (inputEl) {
+              this.showInvalidInput(inputEl);
+            }
+            return;
+          }
+
+          store.setState({ isTeamCountConfirmed: true });
+        }
+
+        editTeamCount() {
+          store.setState({
+            teamCount: 0,
+            isTeamCountConfirmed: false
+          });
         }
 
         handleTotalInput(e) {
@@ -673,13 +885,6 @@
 
           e.target.classList.remove("invalid");
           store.setState({ totalMembers: numValue });
-        }
-
-        showInvalidInput(element) {
-          element.classList.add("invalid");
-          element.classList.remove("shake");
-          void element.offsetWidth; // reflow
-          element.classList.add("shake");
         }
 
         confirmTotalMembers() {
@@ -711,51 +916,80 @@
           });
         }
 
-        addMember() {
+        addMember(memberInput) {
+          if (!memberInput) return;
+
           const state = store.getState();
-          const memberInput = this.shadowRoot.querySelector(".member-input");
-
-          if (!memberInput) {
-            return;
-          }
-          if (state.members.length >= state.totalMembers) {
-            this.showInvalidInput(memberInput);
-            return;
-          }
-
           const name = memberInput.value.trim();
+
           if (!name) {
             this.showInvalidInput(memberInput);
             return;
           }
 
+          // 총원 초과 체크
+          if (state.members.length >= state.totalMembers) {
+            this.showInvalidInput(memberInput);
+            memberInput.blur();
+            return;
+          }
+
           memberInput.classList.remove("invalid");
           const newName = utils.generateMemberName(name, state.members);
-          store.setState({ members: [...state.members, newName] });
+          
+          // 상태 업데이트
+          const newMembers = [...state.members, newName];
+          store.setState({ members: newMembers });
           memberInput.value = "";
+
+          // 포커스 관리 개선 - 총원이 충족되지 않았으면 항상 input으로 포커스 이동
+          setTimeout(() => {
+            if (newMembers.length < state.totalMembers) {
+              memberInput.focus();
+            } else {
+              memberInput.blur();
+            }
+          }, 0);
+        }
+
+        showInvalidInput(element) {
+          element.classList.add("invalid");
+          element.classList.remove("shake");
+          void element.offsetWidth; // reflow
+          element.classList.add("shake");
         }
 
         updateStatusMessage(state) {
-          const statusMessage = this.shadowRoot.querySelector(".status-message");
-          if (!statusMessage) return;
+          const teamStatusMessage = this.shadowRoot.querySelector(".team-status-message");
+          const totalStatusMessage = this.shadowRoot.querySelector(".total-status-message");
 
-          if (!state.isTotalConfirmed) {
-            statusMessage.textContent = "총원을 입력하고 완료 버튼을 클릭하거나 엔터를 눌러주세요.";
-            return;
+          if (teamStatusMessage) {
+            if (!state.isTeamCountConfirmed) {
+              teamStatusMessage.textContent = "팀 개수를 입력하고 완료 버튼을 클릭하거나 엔터를 눌러주세요.";
+            } else {
+              teamStatusMessage.textContent = `${state.teamCount}개의 팀으로 구성됩니다.`;
+            }
           }
 
-          if (state.totalMembers === 0) {
-            statusMessage.textContent = "총원을 입력해주세요.";
-            return;
-          }
+          if (totalStatusMessage) {
+            if (!state.isTotalConfirmed) {
+              totalStatusMessage.textContent = "총원을 입력하고 완료 버튼을 클릭하거나 엔터를 눌러주세요.";
+              return;
+            }
 
-          const remaining = state.totalMembers - state.members.length;
-          if (remaining > 0) {
-            statusMessage.textContent = `${state.totalMembers}명 중 ${state.members.length}명 작성됨 (${remaining}명 남음)`;
-          } else if (remaining === 0) {
-            statusMessage.textContent = `${state.totalMembers}명 모두 작성 완료!`;
-          } else {
-            statusMessage.textContent = `설정된 총원(${state.totalMembers}명)을 초과했습니다!`;
+            if (state.totalMembers === 0) {
+              totalStatusMessage.textContent = "총원을 입력해주세요.";
+              return;
+            }
+
+            const remaining = state.totalMembers - state.members.length;
+            if (remaining > 0) {
+              totalStatusMessage.textContent = `${state.totalMembers}명 중 ${state.members.length}명 작성됨 (${remaining}명 남음)`;
+            } else if (remaining === 0) {
+              totalStatusMessage.textContent = `${state.totalMembers}명 모두 작성 완료!`;
+            } else {
+              totalStatusMessage.textContent = `설정된 총원(${state.totalMembers}명)을 초과했습니다!`;
+            }
           }
         }
       }
@@ -772,7 +1006,6 @@
         }
 
         render() {
-          // breakpoint #5 (메인 컴포넌트 렌더링)
           console.time("TeamDistributor Render");
           this.shadowRoot.innerHTML = `
             <style>
@@ -800,12 +1033,16 @@
                 font-weight: 500;
                 margin-top: var(--space-3);
                 box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                display: none; /* hidden 클래스 대신 display: none으로 기본 상태 설정 */
+              }
+              .completion-message.show {
+                display: block; /* show 클래스가 있을 때만 표시 */
               }
             </style>
             <nav-component></nav-component>
             <main>
               <member-list></member-list>
-              <div class="completion-message hidden">
+              <div class="completion-message">
                 작성 완료! 모든 멤버가 등록되었습니다.
               </div>
             </main>
@@ -813,18 +1050,30 @@
           `;
           console.timeEnd("TeamDistributor Render");
 
-          // 멤버 수가 총원과 같아지는 순간, 완료 메시지를 표시
-          store.subscribe((state) => {
+          // 완료 메시지 표시 조건 수정
+          const updateCompletionMessage = (state) => {
             const msgEl = this.shadowRoot.querySelector(".completion-message");
-            if (!msgEl) {
-              return;
-            }
-            if (state.totalMembers > 0 && state.members.length === state.totalMembers) {
-              msgEl.classList.remove("hidden");
+            if (!msgEl) return;
+            
+            const isComplete = 
+              state.isTotalConfirmed && 
+              state.totalMembers > 0 && 
+              state.members.length === state.totalMembers;
+            
+            if (isComplete) {
+              msgEl.classList.add("show");
             } else {
-              msgEl.classList.add("hidden");
+              msgEl.classList.remove("show");
             }
+          };
+
+          // 상태 변경 구독 설정
+          const unsubscribe = store.subscribe((state) => {
+            updateCompletionMessage(state);
           });
+          
+          // 초기 상태 확인
+          updateCompletionMessage(store.getState());
         }
       }
 
