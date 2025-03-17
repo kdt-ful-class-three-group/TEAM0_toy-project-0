@@ -3,8 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="팀 분배 애플리케이션 - 웹 컴포넌트 기반으로 구현된 팀 생성 도구" />
+    <meta name="theme-color" content="#2d2d2d" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    
     <title>TEAM DISTRIBUTOR (Functional Web Components)</title>
+    
+    <!-- 기본 스타일시트 -->
     <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- 성능 측정 -->
+    <script>
+      // 페이지 로딩 성능 측정
+      window.addEventListener('load', () => {
+        const perfData = window.performance.timing;
+        const pageLoadTime = perfData.loadEventEnd - perfData.navigationStart;
+        console.info(`페이지 로딩 시간: ${pageLoadTime}ms`);
+      });
+    </script>
   </head>
 
   <body>
@@ -13,6 +29,7 @@
     -->
     <team-distributor></team-distributor>
 
+    <!-- 앱 진입점 -->
     <script type="module" src="js/app.js"></script>
   </body>
 </html>
