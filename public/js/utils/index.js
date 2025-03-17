@@ -79,6 +79,7 @@ const createUtils = () => {
         
         // 접미사가 없는 기존 멤버에게 -1 접미사 부여
         if (indexOfExistingName !== -1) {
+          // 중요: 기존 이름을 -1로 변경
           newMembers[indexOfExistingName] = `${name}-1`;
           store.setState({ members: newMembers });
           

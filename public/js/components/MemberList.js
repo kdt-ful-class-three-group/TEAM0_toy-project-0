@@ -121,13 +121,44 @@ export class MemberList extends HTMLElement {
 
     const handleConfirm = () => {
       const newSuffix = input.value.trim();
+      
+      // 중복 체크를 위해 현재 멤버 목록 가져오기
+      const members = [...currentState.members];
+      
+      // 접미사가 비어있는 경우 - 기본 이름으로 돌아가려는 시도
       if (!newSuffix) {
-        nameSpan.innerHTML = originalContent;
-        return;
+        // 동일한 기본 이름을 가진 다른 멤버가 있는지 확인
+        const sameBaseNames = members.filter((member, idx) => {
+          if (idx === index) return false; // 현재 멤버는 제외
+          
+          // 다른 멤버의 기본 이름 추출
+          let otherBaseName = member;
+          if (member.includes('-')) {
+            otherBaseName = member.split('-')[0];
+          }
+          
+          return otherBaseName === baseName;
+        });
+        
+        // 동일한 기본 이름을 가진 멤버가 없으면 접미사 제거 가능
+        if (sameBaseNames.length === 0) {
+          const newMembers = [...members];
+          newMembers[index] = baseName; // 접미사 제거
+          store.setState({ members: newMembers });
+          return;
+        } else {
+          // 동일한 기본 이름이 있으면 접미사 제거 불가
+          console.error("동일한 이름이 이미 존재하여 접미사를 제거할 수 없습니다.");
+          nameSpan.innerHTML = originalContent;
+          return;
+        }
       }
 
+      // 접미사가 있는 경우 - 새 이름 생성
       const newName = `${baseName}-${newSuffix}`;
-      const isDuplicate = currentState.members.some((m, i) => {
+      
+      // 중복 체크
+      const isDuplicate = members.some((m, i) => {
         return i !== index && m === newName;
       });
 
@@ -137,8 +168,23 @@ export class MemberList extends HTMLElement {
         return;
       }
 
-      const newMembers = [...currentState.members];
+      // 새 이름으로 업데이트
+      const newMembers = [...members];
       newMembers[index] = newName;
+      
+      // 같은 기본 이름을 가진 멤버가 하나만 남았다면 접미사 제거
+      if (newSuffix === "1") {
+        const sameBaseWithSuffix = newMembers.filter((member, idx) => {
+          if (idx === index) return false; // 현재 멤버는 제외
+          return member.startsWith(`${baseName}-`);
+        });
+        
+        if (sameBaseWithSuffix.length === 0) {
+          // 혼자만 접미사를 가지고 있다면 제거 가능
+          newMembers[index] = baseName;
+        }
+      }
+      
       store.setState({ members: newMembers });
     };
 
