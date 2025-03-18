@@ -11,27 +11,60 @@ export class TeamDistributor extends BaseComponent {
   constructor() {
     super({
       useShadow: true,
-      styleSheet: null,
       styles: teamDistributorStyles,
       useCommonStyles: false,
-      useUtilityStyles: false
+      useUtilityStyles: false,
+      deferRender: true, // 최초 렌더링을 지연시켜 초기화 성능 개선
+      optimizeUpdates: true // DOM 업데이트 최적화 활성화
     });
-    this.unsubscribe = null;
+    
+    // 상태 구독 초기화
+    this.state = {
+      isInitialized: false
+    };
   }
 
   initialize() {
-    // 스토어 구독 설정이 필요한 경우 여기에 추가
+    console.time("TeamDistributor Init");
     
-    // Shadow DOM 안에 슬롯 생성을 위한 준비
+    // 스토어 구독 설정
+    const unsubscribe = store.subscribe(state => {
+      this.updateFromStore(state);
+    });
+    
+    // 이벤트 구독 해제 자동화
+    this.addUnsubscriber(unsubscribe);
+    
+    // Shadow DOM 안에 컨테이너 생성
     const container = document.createElement('div');
     container.className = 'team-distributor-container';
     this.shadowRoot.appendChild(container);
+    
+    this.state.isInitialized = true;
+    console.timeEnd("TeamDistributor Init");
   }
   
-  cleanup() {
-    // BaseComponent의 disconnectedCallback에서 자동으로 호출됨
-    if (this.unsubscribe) {
-      this.unsubscribe();
+  updateFromStore(state) {
+    // 상태 변경 시 특정 조건에 따라 렌더링 최적화
+    // 실제 필요한 경우에만 리렌더링 실행
+    if (this.shouldRerender(state)) {
+      this.requestRender();
+    }
+  }
+  
+  // 불필요한 리렌더링 방지를 위한 메서드
+  shouldRerender(newState) {
+    // 현재는 항상 true 반환하지만, 필요에 따라 조건부 리렌더링 구현 가능
+    return true;
+  }
+  
+  // 렌더링 요청 (스로틀링 적용)
+  requestRender() {
+    if (this.options.renderThrottle > 0) {
+      clearTimeout(this._renderTimer);
+      this._renderTimer = setTimeout(() => this.render(), this.options.renderThrottle);
+    } else {
+      this.render();
     }
   }
 
@@ -40,31 +73,37 @@ export class TeamDistributor extends BaseComponent {
     
     // Shadow DOM 내부에서 슬롯을 사용하여 내부 컴포넌트를 Light DOM으로 표시
     const container = this.shadowRoot.querySelector('.team-distributor-container');
-    if (container) {
-      container.innerHTML = `
-        <div class="team-distributor-layout">
-          <slot name="nav"></slot>
-          <slot name="main"></slot>
-          <slot name="form"></slot>
-        </div>
-      `;
-      
-      // 외부 DOM에 실제 컴포넌트 생성 (Light DOM)
-      if (!this.querySelector('[slot="nav"]')) {
-        const nav = document.createElement('nav-component');
-        nav.setAttribute('slot', 'nav');
-        this.appendChild(nav);
-        
-        const main = document.createElement('main-panel');
-        main.setAttribute('slot', 'main');
-        this.appendChild(main);
-        
-        const form = document.createElement('form-panel');
-        form.setAttribute('slot', 'form');
-        this.appendChild(form);
-      }
-    }
+    if (!container) return;
+    
+    // 레이아웃 템플릿 업데이트
+    container.innerHTML = `
+      <div class="team-distributor-layout">
+        <slot name="nav"></slot>
+        <slot name="main"></slot>
+        <slot name="form"></slot>
+      </div>
+    `;
+    
+    // 자식 컴포넌트가 없는 경우에만 생성
+    this.createChildComponentsIfNeeded();
     
     console.timeEnd("TeamDistributor Render");
+  }
+  
+  // 자식 컴포넌트 생성 메서드 분리 (관심사 분리)
+  createChildComponentsIfNeeded() {
+    if (!this.querySelector('[slot="nav"]')) {
+      // 컴포넌트 생성을 함수로 분리하여 가독성 향상
+      const createAndAppend = (tagName, slotName) => {
+        const element = document.createElement(tagName);
+        element.setAttribute('slot', slotName);
+        this.appendChild(element);
+        return element;
+      };
+      
+      createAndAppend('nav-component', 'nav');
+      createAndAppend('main-panel', 'main');
+      createAndAppend('form-panel', 'form');
+    }
   }
 } 
