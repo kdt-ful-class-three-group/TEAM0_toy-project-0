@@ -11,6 +11,9 @@ import { TeamResult } from './form/TeamResult.js';
 import { FormPanel } from './form/FormPanel.js';
 import { MainPanel } from './form/MainPanel.js';
 
+// 데모 컴포넌트 임포트
+import StoreDemo from './demo/StoreDemo.js';
+
 /**
  * @function registerComponents
  * @description 모든 Web Component를 등록합니다.
@@ -28,7 +31,8 @@ export function registerComponents() {
     { name: "member-input", constructor: MemberInput },
     { name: "team-result", constructor: TeamResult },
     { name: "form-panel", constructor: FormPanel },
-    { name: "main-panel", constructor: MainPanel }
+    { name: "main-panel", constructor: MainPanel },
+    { name: "store-demo", constructor: StoreDemo }
   ];
   
   // 컴포넌트 등록
