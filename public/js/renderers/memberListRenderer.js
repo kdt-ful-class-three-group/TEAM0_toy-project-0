@@ -73,12 +73,12 @@ const renderMemberItem = (member, index, editingIndex) => {
       <li class="member-item editing" data-index="${index}">
         <div class="edit-container">
           <span class="member-name">${memberName}-</span>
-          <input type="text" class="input suffix-input" value="${memberSuffix}" placeholder="특징 또는 숫자">
+          <input type="text" class="suffix-input" value="${memberSuffix}" placeholder="특징 또는 숫자">
           <div class="edit-actions">
             <button class="btn btn--small confirm-button">확인</button>
-            <button class="btn btn--small cancel-button">취소</button>
+            <button class="btn btn--small btn--secondary cancel-button">취소</button>
           </div>
-          <div class="suffix-help">숫자 또는 텍스트(예: 안경쓴, 키큰)를 입력하세요</div>
+          <div class="suffix-help">숫자 또는 특징(예: 안경쓴, 키큰)을 입력하세요</div>
         </div>
       </li>
     `;
@@ -96,7 +96,7 @@ const renderMemberItem = (member, index, editingIndex) => {
         <button class="btn btn--small edit-button" data-index="${index}">수정</button>
       </span>
       <div class="member-item__actions">
-        <button class="btn btn--secondary delete-button" data-index="${index}">삭제</button>
+        <button class="btn btn--small btn--danger delete-button" data-index="${index}">삭제</button>
       </div>
     </li>
   `;

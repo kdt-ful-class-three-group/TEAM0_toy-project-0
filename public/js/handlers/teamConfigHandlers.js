@@ -3,117 +3,168 @@
  * @description 팀 구성과 관련된 이벤트 핸들링 로직을 담당하는 모듈
  */
 
-import store, { actionCreators } from '../store/index.js';
-import { validateNumber, validateTeamCount, validateTeamRatio } from '../utils/validation.js';
-import { distributeTeamsWithStrategy } from '../utils/teamUtils.js';
-import { ValidationError, handleError, showUIError, createErrorLogger } from '../utils/errorHandler.js';
-
-const logger = createErrorLogger('teamConfigHandlers');
+import store from '../store/index.js';
+import { validateNumber } from '../utils/validation.js';
+import { showUIError } from '../utils/errorHandler.js';
+import { shuffleArray } from '../utils/shuffleArray.js';
+import { debounce } from '../utils/performance.js';
+import { setTeamCount, confirmTeamCount as confirmTeamCountAction, resetTeamCount } from '../store/actions.js';
 
 /**
- * 팀 수 입력을 처리하는 핸들러
+ * 팀 카운트 입력을 처리하는 핸들러
  * @param {Event} e - 입력 이벤트
  * @param {Function} showInvalidInput - 유효하지 않은 입력을 표시하는 함수
  */
-export const handleTeamCountInput = (e, showInvalidInput) => {
+export const handleTeamCountInput = debounce((e, showInvalidInput) => {
+  if (!e || !e.target) return;
+  
   const value = e.target.value;
-  if (!validateNumber(value)) {
-    e.target.value = value.replace(/[^\d]/g, "");
+  if (value === undefined || value === null || !validateNumber(value)) {
+    if (value !== undefined && value !== null) {
+      e.target.value = value.replace(/[^\d]/g, "");
+    }
     showUIError(e.target, '숫자만 입력할 수 있습니다.');
     return;
   }
 
-  const numValue = parseInt(value);
+  const numValue = parseInt(e.target.value);
   if (numValue < 1) {
     e.target.value = "";
     showUIError(e.target, '1 이상의 숫자를 입력하세요.');
-    store.dispatch(actionCreators.setTeamCount(0));
+    store.dispatch(setTeamCount(0));
+    return;
+  }
+
+  // 총원보다 많은 팀 개수를 입력할 수 없음
+  const state = store.getState();
+  if (state.isTotalConfirmed && numValue > state.totalMembers) {
+    showUIError(e.target, `총원(${state.totalMembers}명)보다 많은 팀을 구성할 수 없습니다.`);
     return;
   }
 
   e.target.classList.remove("invalid");
-  store.dispatch(actionCreators.setTeamCount(numValue));
-};
+  store.dispatch(setTeamCount(numValue));
+}, 100);
 
 /**
- * 팀 수 확정을 처리하는 핸들러
+ * 팀 카운트 확정을 처리하는 핸들러
  * @param {Function} showInvalidInput - 유효하지 않은 입력을 표시하는 함수
  * @param {Element} inputEl - 입력 요소
  */
 export const confirmTeamCount = (showInvalidInput, inputEl) => {
+  if (!showInvalidInput || typeof showInvalidInput !== 'function') {
+    console.error('유효하지 않은 showInvalidInput 함수입니다.');
+    return;
+  }
+  
   const state = store.getState();
   const value = state.teamCount;
 
-  if (!validateTeamCount(value)) {
+  if (!validateTeamCount(value, state)) {
     if (inputEl) {
-      const error = new ValidationError('유효한 팀 수를 입력하세요.', { value });
-      handleError(error, () => showUIError(inputEl, '유효한 팀 수를 입력하세요.'));
-    }
-    return;
-  }
-  
-  // 팀 수와 총원 비율 확인
-  if (!validateTeamRatio(value, state.totalMembers)) {
-    if (inputEl) {
-      const error = new ValidationError('팀 수는 총원 수보다 클 수 없습니다.', { 
-        teamCount: value, 
-        totalMembers: state.totalMembers 
-      });
-      handleError(error, () => 
-        showUIError(inputEl, '팀 수는 총원 수보다 클 수 없습니다.')
-      );
+      showUIError(inputEl, '유효한 팀 개수를 입력하세요.');
     }
     return;
   }
 
-  store.dispatch(actionCreators.confirmTeamCount());
-  logger.info('팀 수 확정됨', { teamCount: value });
+  store.dispatch(confirmTeamCountAction());
 };
 
 /**
- * 팀 수 수정을 처리하는 핸들러
+ * 팀 카운트 유효성 검증
+ * @param {number} teamCount - 팀 개수
+ * @param {Object} state - 현재 상태
+ * @returns {boolean} 유효한지 여부
+ */
+function validateTeamCount(teamCount, state) {
+  if (!Number.isInteger(teamCount) || teamCount < 1) {
+    return false;
+  }
+
+  // 현재 등록된 멤버 수보다 많은 팀을 생성할 수 없음
+  if (state.isTotalConfirmed && teamCount > state.totalMembers) {
+    return false;
+  }
+
+  return true;
+}
+
+/**
+ * 팀 카운트 수정을 처리하는 핸들러
  */
 export const editTeamCount = () => {
-  try {
-    store.dispatch(actionCreators.setTeamCount(0));
-    store.dispatch(actionCreators.confirmTeamCount());
-    logger.info('팀 수 초기화됨');
-  } catch (error) {
-    handleError(error);
-  }
+  store.dispatch(resetTeamCount());
 };
 
 /**
- * 팀 배분을 실행하는 핸들러
- * @param {string} strategy - 배분 전략 ('random', 'balanced', 'sequential')
- * @returns {Array<Array<string>>|null} 팀 배열 또는 실패 시 null
+ * 팀 구성하기 - 멤버 배분 알고리즘
+ * @returns {Array<Array<string>>} 팀별 멤버 배열
  */
-export const distributeTeams = (strategy = 'random') => {
+export const distributeTeams = () => {
   const state = store.getState();
+  const { members, teamCount } = state;
   
-  // 팀 수와 멤버가 모두 준비되었는지 확인
-  if (!state.isTeamCountConfirmed || state.teamCount <= 0 || 
-      !state.isTotalConfirmed || state.members.length === 0) {
-    logger.warn('팀 배분 조건이 충족되지 않음', { 
-      isTeamCountConfirmed: state.isTeamCountConfirmed,
-      teamCount: state.teamCount,
-      isTotalConfirmed: state.isTotalConfirmed,
-      membersCount: state.members.length
-    });
-    return null;
+  console.log('팀 분배 시작:', { members, teamCount });
+  
+  if (!members.length || teamCount <= 0) {
+    console.warn('팀 분배 불가: 멤버가 없거나 팀 개수가 0 이하');
+    return [];
   }
   
   try {
-    // 팀 배분 실행
-    const teams = distributeTeamsWithStrategy(state.members, state.teamCount, strategy);
-    logger.info('팀 배분 완료', { 
-      strategy, 
-      teamCount: teams.length, 
-      teams: teams.map(team => team.length) 
+    // 멤버 목록 복사 및 섞기
+    const shuffledMembers = shuffleArray([...members]);
+    console.log('섞인 멤버 목록:', shuffledMembers);
+    
+    // 팀 구성 (균등 분배)
+    const teams = Array.from({ length: teamCount }, () => []);
+    const membersPerTeam = Math.floor(members.length / teamCount);
+    const remainingMembers = members.length % teamCount;
+    
+    console.log('팀 분배 정보:', { 
+      총멤버수: members.length, 
+      팀개수: teamCount, 
+      팀당멤버수: membersPerTeam, 
+      나머지멤버: remainingMembers 
     });
+    
+    let memberIndex = 0;
+    
+    // 기본 배분 (균등하게)
+    for (let i = 0; i < teamCount; i++) {
+      for (let j = 0; j < membersPerTeam; j++) {
+        if (memberIndex < shuffledMembers.length) {
+          teams[i].push(shuffledMembers[memberIndex++]);
+        }
+      }
+    }
+    
+    // 남은 멤버들 분배 (앞쪽 팀부터 한 명씩)
+    for (let i = 0; i < remainingMembers; i++) {
+      if (memberIndex < shuffledMembers.length) {
+        teams[i].push(shuffledMembers[memberIndex++]);
+      }
+    }
+    
+    console.log('팀 구성 결과:', teams);
     return teams;
   } catch (error) {
-    handleError(error);
-    return null;
+    console.error('팀 분배 중 오류 발생:', error);
+    // 오류 발생 시 안전한 대체 로직
+    const shuffled = shuffleArray([...members]);
+    const teams = [];
+    
+    // 간단한 분배 로직 (오류 복구용)
+    for (let i = 0; i < teamCount; i++) {
+      teams.push([]);
+    }
+    
+    shuffled.forEach((member, index) => {
+      const teamIndex = index % teamCount;
+      teams[teamIndex].push(member);
+    });
+    
+    console.log('오류 복구 팀 구성 결과:', teams);
+    return teams;
   }
 }; 

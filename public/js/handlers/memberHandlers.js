@@ -3,11 +3,13 @@
  * @description 멤버 관리와 관련된 이벤트 핸들링 로직을 담당하는 모듈
  */
 
-import store, { actionCreators } from '../store/index.js';
+import store from '../store/index.js';
 import { validateNumber, validateTotalMembers } from '../utils/validation.js';
 import { canAddMore, generateMemberName } from '../utils/memberUtils.js';
 import { ValidationError, handleError, showUIError } from '../utils/errorHandler.js';
 import { createErrorLogger } from '../utils/errorHandler.js';
+import { debounce } from '../utils/performance.js';
+import { addMember as addMemberAction, setTotalMembers, confirmTotalMembers as confirmTotalMembersAction, resetTotalMembers, editMember as editMemberAction, deleteMember as deleteMemberAction } from '../store/actions.js';
 
 const logger = createErrorLogger('memberHandlers');
 
@@ -16,10 +18,14 @@ const logger = createErrorLogger('memberHandlers');
  * @param {Event} e - 입력 이벤트
  * @param {Function} showInvalidInput - 유효하지 않은 입력을 표시하는 함수
  */
-export const handleTotalInput = (e, showInvalidInput) => {
+export const handleTotalInput = debounce((e, showInvalidInput) => {
+  if (!e || !e.target) return;
+  
   const value = e.target.value;
-  if (!validateNumber(value)) {
-    e.target.value = value.replace(/[^\d]/g, "");
+  if (value === undefined || value === null || !validateNumber(value)) {
+    if (value !== undefined && value !== null) {
+      e.target.value = value.replace(/[^\d]/g, "");
+    }
     showUIError(e.target, '숫자만 입력할 수 있습니다.');
     return;
   }
@@ -28,13 +34,13 @@ export const handleTotalInput = (e, showInvalidInput) => {
   if (numValue < 1) {
     e.target.value = "";
     showUIError(e.target, '1 이상의 숫자를 입력하세요.');
-    store.dispatch(actionCreators.setTotalMembers(0));
+    store.dispatch(setTotalMembers(0));
     return;
   }
 
   e.target.classList.remove("invalid");
-  store.dispatch(actionCreators.setTotalMembers(numValue));
-};
+  store.dispatch(setTotalMembers(numValue));
+}, 100);
 
 /**
  * 총원 수 확정을 처리하는 핸들러
@@ -42,6 +48,11 @@ export const handleTotalInput = (e, showInvalidInput) => {
  * @param {Element} inputEl - 입력 요소
  */
 export const confirmTotalMembers = (showInvalidInput, inputEl) => {
+  if (!showInvalidInput || typeof showInvalidInput !== 'function') {
+    console.error('유효하지 않은 showInvalidInput 함수입니다.');
+    return;
+  }
+  
   const state = store.getState();
   const value = state.totalMembers;
 
@@ -53,7 +64,7 @@ export const confirmTotalMembers = (showInvalidInput, inputEl) => {
     return;
   }
 
-  store.dispatch(actionCreators.confirmTotalMembers());
+  store.dispatch(confirmTotalMembersAction());
 };
 
 /**
@@ -68,7 +79,7 @@ export const editTotalMembers = () => {
     }
   }
   
-  store.dispatch(actionCreators.resetTotalMembers());
+  store.dispatch(resetTotalMembers());
   
   return true;
 };
@@ -109,7 +120,7 @@ export const addMember = (memberInput, showInvalidInput) => {
   try {
     console.log('멤버 추가 시작:', name);
     
-    store.dispatch(actionCreators.addMember(name));
+    store.dispatch(addMemberAction(name));
     console.log('멤버 추가됨:', name, '현재 멤버:', store.getState().members);
     logger.info('멤버 추가됨', { name });
     
@@ -142,7 +153,7 @@ export const addMember = (memberInput, showInvalidInput) => {
 export const deleteMember = (index) => {
   // 비동기로 처리하여 DOM 업데이트 보장
   setTimeout(() => {
-    store.dispatch(actionCreators.deleteMember(index));
+    store.dispatch(deleteMemberAction(index));
     logger.info('멤버 삭제됨', { index });
   }, 0);
 };
@@ -161,7 +172,7 @@ export const editMemberName = (index, newName) => {
   
   // 액션 디스패치
   try {
-    store.dispatch(actionCreators.editMember(index, newName.trim()));
+    store.dispatch(editMemberAction(index, newName.trim()));
     logger.info('멤버 이름 수정됨', { index, newName });
     return true;
   } catch (error) {
