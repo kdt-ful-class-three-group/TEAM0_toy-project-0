@@ -39,6 +39,7 @@ export const rootReducer = (state = initialState, action) => {
       
     case ACTION_TYPES.SET_TEAM_COUNT:
     case ACTION_TYPES.CONFIRM_TEAM_COUNT:
+    case ACTION_TYPES.RESET_TEAM_COUNT:
       return teamCountReducer(state, action);
       
     case ACTION_TYPES.RESET_STATE:
@@ -60,58 +61,88 @@ const memberReducer = (state, action) => {
     case ACTION_TYPES.ADD_MEMBER: {
       const { memberName } = action.payload;
       
+      console.log('멤버 추가 요청:', memberName);
+      
       if (!memberName || memberName.trim() === '') {
+        console.warn('빈 멤버 이름 추가 시도');
         return state;
       }
       
       // 총원 초과 체크
-      if (state.members.length >= state.totalMembers) {
+      if (state.isTotalConfirmed && state.members.length >= state.totalMembers) {
+        console.warn('총원 초과 멤버 추가 시도:', state.members.length, '>=', state.totalMembers);
         return state;
       }
       
       const trimmedName = memberName.trim();
       const members = [...state.members];
       
-      // 중복 이름이 있는지 확인
-      const exactMatches = members.filter(name => {
-        // 정확히 일치하거나, 접미사가 있는 경우 기본 이름이 일치하는지 확인
-        return name === trimmedName || 
-               (name.includes('-') && name.split('-')[0] === trimmedName);
-      });
+      console.log('------------ 멤버 추가 로직 시작 ------------');
+      console.log('추가할 이름:', trimmedName);
+      console.log('현재 멤버 목록:', members);
       
-      let newMembers = [...members];
+      // 완전히 동일한 이름이 있는지 확인
+      const exactDuplicate = members.some(name => name === trimmedName);
       
-      // 동일한 이름이 있는 경우 (첫 번째 중복)
-      if (exactMatches.length === 1 && exactMatches[0] === trimmedName) {
-        // 기존 동일 이름의 인덱스 찾기
-        const existingIndex = members.findIndex(name => name === trimmedName);
+      if (exactDuplicate) {
+        console.log('동일한 이름 존재, 접미사 처리 시작:', trimmedName);
         
-        // 기존 이름에 -1 접미사 추가
-        if (existingIndex !== -1) {
-          newMembers[existingIndex] = `${trimmedName}-1`;
+        // 동일한 기본 이름을 가진 멤버들 찾기
+        const exactMatches = members.filter(name => {
+          return name === trimmedName || 
+                 (name.includes('-') && name.split('-')[0] === trimmedName);
+        });
+        
+        console.log('동일 이름 또는 접미사 포함 멤버:', exactMatches);
+        
+        let newMembers = [...members];
+        
+        // 접미사가 없는 원본 이름이 있는 경우
+        const originalNameIndex = newMembers.findIndex(name => name === trimmedName);
+        if (originalNameIndex !== -1) {
+          // 기존 이름에 -1 접미사 추가
+          newMembers[originalNameIndex] = `${trimmedName}-1`;
+          console.log('원본 이름에 접미사 추가:', newMembers[originalNameIndex]);
         }
         
-        // 새로운 이름에는 -2 접미사 추가
-        return {
+        // 새 멤버에 접미사 부여 (가장 큰 숫자 + 1)
+        let maxSuffix = 1; // 기본값
+        exactMatches.forEach(name => {
+          if (name.includes('-')) {
+            const parts = name.split('-');
+            const suffix = parts[1];
+            if (!isNaN(parseInt(suffix))) {
+              maxSuffix = Math.max(maxSuffix, parseInt(suffix));
+            }
+          }
+        });
+        
+        // 새 멤버 이름
+        const newMemberName = `${trimmedName}-${maxSuffix + 1}`;
+        console.log('새 멤버에 부여된 이름:', newMemberName);
+        
+        const result = {
           ...state,
-          members: [...newMembers, `${trimmedName}-2`]
+          members: [...newMembers, newMemberName]
         };
+        
+        console.log('멤버 추가 후 상태:', result.members);
+        console.log('------------ 멤버 추가 로직 완료 ------------');
+        
+        return result;
       } 
-      // 이미 접미사가 있는 이름들이 존재하는 경우
-      else if (exactMatches.length > 0) {
-        // 새 이름 생성 (기존 방식 사용)
-        const newName = utils.generateMemberName(trimmedName, members);
-        return {
-          ...state,
-          members: [...members, newName]
-        };
-      }
-      // 중복 없는 완전히 새로운 이름
+      // 중복이 없는 완전히 새로운 이름
       else {
-        return {
+        console.log('새 멤버 추가 (중복 없음):', trimmedName);
+        const result = {
           ...state,
           members: [...members, trimmedName]
         };
+        
+        console.log('멤버 추가 후 상태:', result.members);
+        console.log('------------ 멤버 추가 로직 완료 ------------');
+        
+        return result;
       }
     }
     
@@ -172,53 +203,57 @@ const memberReducer = (state, action) => {
     case ACTION_TYPES.EDIT_MEMBER: {
       const { index, newName } = action.payload;
       
+      console.log('멤버 수정 요청:', index, newName);
+      console.log('수정 전 멤버 목록:', state.members);
+      
       if (index < 0 || index >= state.members.length || !newName || newName.trim() === '') {
+        console.warn('유효하지 않은 수정 요청:', index, newName);
         return state;
       }
       
       const trimmedNewName = newName.trim();
       const oldName = state.members[index];
       
+      console.log('멤버 이름 수정:', oldName, '→', trimmedNewName);
+      
       // 변경 사항이 없는 경우 무시
       if (oldName === trimmedNewName) {
+        console.warn('변경 사항 없음:', oldName, '===', trimmedNewName);
         return state;
       }
       
       // 문자열 접미사(-xxx)가 있는지 확인
-      const hasCustomSuffix = trimmedNewName.includes('-') && 
-                              isNaN(trimmedNewName.split('-')[1]);
+      const hasCustomSuffix = trimmedNewName.includes('-');
       
       // 기본 이름 추출 (접미사가 있다면 제외)
       let baseName = trimmedNewName;
-      if (trimmedNewName.includes('-')) {
-        baseName = trimmedNewName.split('-')[0];
+      let suffix = '';
+      
+      if (hasCustomSuffix) {
+        const parts = trimmedNewName.split('-');
+        baseName = parts[0];
+        suffix = parts.slice(1).join('-'); // 하이픈이 여러 개일 경우 모두 포함
       }
       
-      // 중복 검사 (사용자 정의 접미사는 중복 검사에서 예외)
+      // 중복 검사
       const isDuplicate = state.members.some((m, i) => {
         // 자기 자신은 제외
         if (i === index) return false;
         
         // 정확히 일치하는 경우
-        if (m === trimmedNewName) return true;
-        
-        // 사용자 정의 접미사가 있는 경우는 정확히 일치하는 경우만 체크
-        if (hasCustomSuffix) return m === trimmedNewName;
-        
-        // 숫자 접미사 또는 접미사 없는 이름의 경우 기본 이름이 같은지 확인
-        return m === baseName || 
-               (m.includes('-') && 
-                !isNaN(m.split('-')[1]) && 
-                m.split('-')[0] === baseName);
+        return m === trimmedNewName;
       });
 
       if (isDuplicate) {
-        console.error("이미 사용 중인 이름입니다.");
+        console.warn("이미 사용 중인 이름입니다:", trimmedNewName);
         return state;
       }
 
       const newMembers = [...state.members];
       newMembers[index] = trimmedNewName;
+      
+      console.log('멤버 이름 수정 완료:', oldName, '→', trimmedNewName);
+      console.log('수정 후 멤버 목록:', newMembers);
       
       return {
         ...state,
@@ -308,6 +343,14 @@ const teamCountReducer = (state, action) => {
       return {
         ...state,
         isTeamCountConfirmed: true
+      };
+    }
+    
+    case ACTION_TYPES.RESET_TEAM_COUNT: {
+      return {
+        ...state,
+        teamCount: 0,
+        isTeamCountConfirmed: false
       };
     }
     

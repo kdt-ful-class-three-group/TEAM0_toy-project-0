@@ -3,6 +3,11 @@
  * @description 애플리케이션의 액션 타입과 액션 생성자 함수를 정의합니다.
  */
 
+/**
+ * @file actions.js
+ * @description 애플리케이션의 액션 타입과 액션 생성자 함수를 정의합니다.
+ */
+
 // 액션 타입 상수
 export const ACTION_TYPES = {
   // 멤버 관련 액션
@@ -18,9 +23,13 @@ export const ACTION_TYPES = {
   // 팀 설정 관련 액션
   SET_TEAM_COUNT: 'SET_TEAM_COUNT',
   CONFIRM_TEAM_COUNT: 'CONFIRM_TEAM_COUNT',
+  RESET_TEAM_COUNT: 'RESET_TEAM_COUNT',
   
   // 기타 액션
-  RESET_STATE: 'RESET_STATE'
+  RESET_STATE: 'RESET_STATE',
+  SET_MEMBERS: 'SET_MEMBERS',
+  DISTRIBUTE_TEAMS: 'DISTRIBUTE_TEAMS',
+  RESET: 'RESET'
 };
 
 // 액션 생성자 함수
@@ -32,7 +41,9 @@ export const ACTION_TYPES = {
  */
 export const addMember = (memberName) => ({
   type: ACTION_TYPES.ADD_MEMBER,
-  payload: { memberName }
+  payload: { 
+    memberName
+  }
 });
 
 /**
@@ -101,9 +112,31 @@ export const confirmTeamCount = () => ({
 });
 
 /**
+ * 팀 개수 리셋 액션 생성자
+ * @returns {Object} 액션 객체
+ */
+export const resetTeamCount = () => ({
+  type: ACTION_TYPES.RESET_TEAM_COUNT
+});
+
+/**
  * 전체 상태 리셋 액션 생성자
  * @returns {Object} 액션 객체
  */
 export const resetState = () => ({
   type: ACTION_TYPES.RESET_STATE
+});
+
+/**
+ * 팀 분배 액션
+ */
+export const distributeTeams = () => ({
+  type: ACTION_TYPES.DISTRIBUTE_TEAMS
+});
+
+/**
+ * 초기화
+ */
+export const reset = () => ({
+  type: ACTION_TYPES.RESET
 }); 
