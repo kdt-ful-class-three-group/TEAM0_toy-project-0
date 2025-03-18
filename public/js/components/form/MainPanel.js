@@ -3,43 +3,39 @@
  * @description 메인 패널 영역을 담당하는 컴포넌트
  */
 
+import { BaseComponent } from '../BaseComponent.js';
 import store from '../../store/index.js';
 
 /**
  * 메인 패널 컴포넌트
  * 멤버 목록과 팀 결과를 표시하는 중앙 영역
+ * @extends BaseComponent
  */
-export class MainPanel extends HTMLElement {
+export class MainPanel extends BaseComponent {
   constructor() {
-    super();
-    this.attachShadow({ mode: "open" });
+    super({
+      useShadow: true,
+      useCommonStyles: true,
+      useUtilityStyles: true
+    });
     this.unsubscribe = null;
   }
 
-  connectedCallback() {
-    // 스타일시트 로드
-    const styleSheet = document.createElement('link');
-    styleSheet.setAttribute('rel', 'stylesheet');
-    styleSheet.setAttribute('href', './css/styles.css');
-    this.shadowRoot.appendChild(styleSheet);
-    
-    // 렌더링
-    this.render();
-    
+  initialize() {
     // 상태 변경 구독
     this.unsubscribe = store.subscribe((state) => {
       this.updateCompletionMessage(state);
     });
+    
+    // 초기 상태로 메시지 업데이트
+    this.updateCompletionMessage(store.getState());
+    
+    // 이벤트 구독 해제 함수 등록
+    this.addUnsubscriber(this.unsubscribe);
   }
   
-  disconnectedCallback() {
-    if (this.unsubscribe) {
-      this.unsubscribe();
-    }
-  }
-
   render() {
-    this.shadowRoot.innerHTML = `
+    return `
       <style>
         :host {
           display: block;
@@ -93,9 +89,6 @@ export class MainPanel extends HTMLElement {
         </div>
       </div>
     `;
-    
-    // 초기 상태로 메시지 업데이트
-    this.updateCompletionMessage(store.getState());
   }
   
   updateCompletionMessage(state) {
