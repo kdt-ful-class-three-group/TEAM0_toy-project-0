@@ -1,30 +1,25 @@
+import { BaseComponent } from './BaseComponent.js';
 import store from '../store/index.js';
 
 /**
  * 메인 컴포넌트
  * 애플리케이션의 루트 컴포넌트입니다.
+ * @extends BaseComponent
  */
-export class TeamDistributor extends HTMLElement {
+export class TeamDistributor extends BaseComponent {
   constructor() {
-    super();
-    this.attachShadow({ mode: "open" });
+    super({
+      useShadow: true
+    });
     this.unsubscribe = null;
   }
 
-  connectedCallback() {
-    // 외부 스타일시트를 document.head에 추가
-    if (!document.querySelector('link[href="./css/styles.css"]')) {
-      const linkElem = document.createElement('link');
-      linkElem.setAttribute('rel', 'stylesheet');
-      linkElem.setAttribute('href', './css/styles.css');
-      document.head.appendChild(linkElem);
-    }
-    
-    // 최초 렌더링
-    this.render();
+  initialize() {
+    // 스토어 구독 설정이 필요한 경우 여기에 추가
   }
   
-  disconnectedCallback() {
+  cleanup() {
+    // BaseComponent의 disconnectedCallback에서 자동으로 호출됨
     if (this.unsubscribe) {
       this.unsubscribe();
     }
