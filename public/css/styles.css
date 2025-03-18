@@ -141,4 +141,198 @@ body {
   top: 100%;
   left: 0;
   white-space: nowrap;
+}
+
+/* 멤버 목록 스타일 */
+.member-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.member-list-wrapper {
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: var(--color-background, #2d2d2d);
+}
+
+.member-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border, #333);
+  transition: background-color 0.2s ease;
+}
+
+.member-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.member-item:last-child {
+  border-bottom: none;
+}
+
+.member-item__name {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--color-text, #fff);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.member-name {
+  font-weight: 500;
+}
+
+.member-suffix-numeric {
+  color: var(--color-accent, #4f46e5);
+  font-weight: 400;
+}
+
+.member-suffix-text {
+  color: var(--color-text-secondary, #a1a1aa);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.member-item__actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* 편집 모드 */
+.member-item.editing {
+  background-color: rgba(79, 70, 229, 0.1);
+  padding: 16px;
+}
+
+.edit-container {
+  width: 100%;
+}
+
+.suffix-input {
+  margin: 0 8px;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border, #333);
+  border-radius: 4px;
+  background-color: var(--color-background-light, #3a3a3a);
+  color: var(--color-text, #fff);
+  font-size: 0.9rem;
+}
+
+.suffix-input:focus {
+  outline: none;
+  border-color: var(--color-accent, #4f46e5);
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.25);
+}
+
+.edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.confirm-button {
+  background-color: var(--color-accent, #4f46e5);
+  color: white;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cancel-button {
+  background-color: transparent;
+  color: var(--color-text-secondary, #a1a1aa);
+  border: 1px solid var(--color-border, #333);
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.suffix-help {
+  font-size: 0.8rem;
+  color: var(--color-text-tertiary, #71717a);
+  margin-top: 6px;
+}
+
+/* 빈 상태 메시지 */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.empty-state__icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.empty-state__title {
+  font-size: 1.25rem;
+  color: var(--color-text, #fff);
+  margin: 0 0 8px 0;
+}
+
+.empty-state__description {
+  color: var(--color-text-secondary, #a1a1aa);
+  margin: 0;
+}
+
+.error-message {
+  color: #ff5555;
+  padding: 1rem;
+  background-color: rgba(255, 85, 85, 0.1);
+  border-radius: 4px;
+  border-left: 3px solid #ff5555;
+  margin: 1rem 0;
+}
+
+/* 버튼 공통 스타일 */
+.btn {
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.btn--small {
+  padding: 2px 8px;
+  font-size: 0.75rem;
+}
+
+.btn--secondary {
+  background-color: #3a3a3a;
+  color: var(--color-text-secondary, #a1a1aa);
+}
+
+.btn--secondary:hover {
+  background-color: #444444;
+}
+
+.edit-button, .delete-button {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-button {
+  color: var(--color-accent, #4f46e5);
+  background-color: rgba(79, 70, 229, 0.1);
+}
+
+.edit-button:hover {
+  background-color: rgba(79, 70, 229, 0.2);
+}
+
+.delete-button {
+  color: #ff5555;
+  background-color: rgba(255, 85, 85, 0.1);
+}
+
+.delete-button:hover {
+  background-color: rgba(255, 85, 85, 0.2);
 } 
