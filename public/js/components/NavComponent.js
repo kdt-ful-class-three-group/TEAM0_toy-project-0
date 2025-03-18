@@ -1,5 +1,6 @@
 import { BaseComponent } from './BaseComponent.js';
 import { renderNavigator } from '../renderers/index.js';
+import { navStyles } from '../styles/componentStyles.js';
 
 /**
  * 네비게이터 컴포넌트
@@ -14,7 +15,10 @@ export class NavComponent extends BaseComponent {
   constructor() {
     super({
       useShadow: true,
-      styleSheet: './css/styles.css'
+      // 스타일 모듈 사용
+      styles: navStyles,
+      useCommonStyles: true,
+      useUtilityStyles: true
     });
     this._container = null;
   }
