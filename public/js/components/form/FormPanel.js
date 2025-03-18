@@ -3,24 +3,22 @@
  * @description 모든 폼 컴포넌트를 통합하는 패널 컴포넌트
  */
 
+import { BaseComponent } from '../BaseComponent.js';
+
 /**
  * 폼 요소들을 한 패널에 통합하는 컴포넌트
+ * @extends BaseComponent
  */
-export class FormPanel extends HTMLElement {
+export class FormPanel extends BaseComponent {
   constructor() {
-    super();
-    this.attachShadow({ mode: "open" });
+    super({
+      useShadow: true,
+      styleSheet: './css/styles.css'
+    });
   }
 
-  connectedCallback() {
-    // 스타일시트 로드
-    const styleSheet = document.createElement('link');
-    styleSheet.setAttribute('rel', 'stylesheet');
-    styleSheet.setAttribute('href', './css/styles.css');
-    this.shadowRoot.appendChild(styleSheet);
-    
-    // 렌더링
-    this.render();
+  initialize() {
+    // 초기화 코드가 필요한 경우 여기에 추가
   }
 
   render() {
