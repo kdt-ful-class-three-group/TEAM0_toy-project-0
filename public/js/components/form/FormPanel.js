@@ -31,7 +31,6 @@ export class FormPanel extends BaseComponent {
       <div class="form-panel">
         <team-config></team-config>
         <total-members-config></total-members-config>
-        <member-input></member-input>
       </div>
     `;
   }

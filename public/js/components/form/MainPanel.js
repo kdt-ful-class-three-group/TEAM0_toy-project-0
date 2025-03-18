@@ -52,7 +52,14 @@ export class MainPanel extends BaseComponent {
           height: calc(100vh - var(--section-padding) * 2);
         }
         
-        .left-panel, .right-panel {
+        .left-panel {
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-4);
+          overflow-y: auto;
+        }
+        
+        .right-panel {
           display: flex;
           flex-direction: column;
           gap: var(--space-4);

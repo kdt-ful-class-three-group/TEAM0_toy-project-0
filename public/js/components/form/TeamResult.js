@@ -12,94 +12,354 @@ import { distributeTeams } from '../../handlers/teamConfigHandlers.js';
 export class TeamResult extends HTMLElement {
   constructor() {
     super();
-    this.attachShadow({ mode: "open" });
-    this.unsubscribe = null;
-    this.initialized = false;
-    this.eventsRegistered = false;
+    this.attachShadow({ mode: 'open' });
+    this._isFirstRender = true;
     this.teams = [];
+    this.unsubscribe = null;
+    this._state = {
+      teamCount: 0,
+      totalMembers: 0,
+      members: [],
+      isTeamCountConfirmed: false,
+      isTotalConfirmed: false
+    };
   }
 
   connectedCallback() {
-    if (!this.initialized) {
-      // 스타일시트 로드
-      const styleSheet = document.createElement('link');
-      styleSheet.setAttribute('rel', 'stylesheet');
-      styleSheet.setAttribute('href', './css/styles.css');
-      this.shadowRoot.appendChild(styleSheet);
-      
-      // 초기 렌더링
-      this.render();
-      this.initialized = true;
-    }
-    
-    // 상태 구독 설정
+    // 스토어 상태 구독 설정
     this.unsubscribe = store.subscribe((state) => {
-      // 변경: 여기서 자동으로 팀을 배분하지 않고 조건 확인만 수행
-      // 항상 뷰를 업데이트
+      // 상태 업데이트
+      this._state.members = [...state.members];
+      this._state.totalMembers = state.totalMembers;
+      this._state.isTotalConfirmed = state.isTotalConfirmed;
+      this._state.teamCount = state.teamCount;
+      this._state.isTeamCountConfirmed = state.isTeamCountConfirmed;
+      
+      console.log('TeamResult 상태 업데이트:', {
+        members: this._state.members.length,
+        totalMembers: this._state.totalMembers,
+        isTotalConfirmed: this._state.isTotalConfirmed,
+        teamCount: this._state.teamCount,
+        isTeamCountConfirmed: this._state.isTeamCountConfirmed
+      });
+      
+      // UI 업데이트
       this.updateView();
     });
     
-    // 이벤트 리스너 등록 (한 번만)
-    if (!this.eventsRegistered) {
-      this.addEventListeners();
-      this.eventsRegistered = true;
-    }
+    this.initializeComponent();
   }
-
+  
   disconnectedCallback() {
     if (this.unsubscribe) {
       this.unsubscribe();
     }
   }
 
-  shouldDistributeTeams(state) {
-    return state.isTeamCountConfirmed && 
-           state.teamCount > 0 && 
-           state.isTotalConfirmed && 
-           state.members.length === state.totalMembers &&
-           state.members.length > 0;
+  initializeComponent() {
+    this.shadowRoot.innerHTML = `
+      <style>
+        :host {
+          display: block;
+          width: 100%;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+        
+        .team-result-container {
+          padding: 0;
+          margin-bottom: 16px;
+        }
+        
+        .card {
+          background-color: #121212;
+          border-radius: 8px;
+          overflow: hidden;
+        }
+        
+        .card.animate {
+          animation: fadeIn 0.3s ease;
+        }
+        
+        .card.inactive {
+          opacity: 0.5;
+          pointer-events: none;
+        }
+        
+        .card__content {
+          padding: 16px;
+        }
+        
+        .card__title {
+          font-size: 18px;
+          font-weight: 600;
+          color: #ffffff;
+          margin: 0 0 16px 0;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+        
+        .team-info {
+          font-size: 14px;
+          color: rgba(255, 255, 255, 0.7);
+          font-weight: normal;
+        }
+        
+        .status-message {
+          font-size: 14px;
+          color: rgba(255, 255, 255, 0.6);
+          text-align: center;
+          padding: 16px 0;
+          margin-bottom: 16px;
+        }
+        
+        .status-message.success {
+          color: #10b981;
+        }
+        
+        .team-placeholder {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 150px;
+          background-color: rgba(255, 255, 255, 0.03);
+          border-radius: 6px;
+          padding: 24px;
+          margin-top: 16px;
+        }
+        
+        .placeholder-item {
+          color: rgba(255, 255, 255, 0.4);
+          font-size: 14px;
+          text-align: center;
+        }
+        
+        .team-list {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 16px;
+          margin-top: 16px;
+        }
+        
+        .team-item {
+          background-color: rgba(255, 255, 255, 0.03);
+          border-radius: 6px;
+          padding: 16px;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .team-item__title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #ffffff;
+          margin: 0 0 12px 0;
+          padding-bottom: 8px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+        
+        .team-size {
+          font-size: 13px;
+          color: rgba(255, 255, 255, 0.6);
+          font-weight: normal;
+        }
+        
+        .team-item__members {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        
+        .team-item__member {
+          font-size: 14px;
+          color: rgba(255, 255, 255, 0.8);
+          padding: 6px 8px;
+          background-color: rgba(255, 255, 255, 0.04);
+          border-radius: 4px;
+          transition: background-color 0.2s ease;
+        }
+        
+        .team-item__member:hover {
+          background-color: rgba(255, 255, 255, 0.08);
+        }
+        
+        .button-group {
+          display: flex;
+          gap: 8px;
+          margin-top: 16px;
+        }
+        
+        .btn {
+          display: inline-block;
+          padding: 12px 16px;
+          background-color: #4f46e5;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          width: 100%;
+        }
+        
+        .btn:hover {
+          background-color: #4338ca;
+        }
+        
+        .btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          background-color: rgba(255, 255, 255, 0.1);
+          color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .btn--secondary {
+          background-color: rgba(255, 255, 255, 0.06);
+          color: rgba(255, 255, 255, 0.8);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .btn--secondary:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .mt-4 {
+          margin-top: 16px;
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      </style>
+      <div class="team-result-container"></div>
+    `;
+    
+    this.addEventListeners();
+    
+    // 초기 상태로 UI 업데이트
+    this.updateFromStore(store.getState());
+    this.updateView();
   }
 
-  render() {
-    const state = store.getState();
+  addEventListeners() {
+    this.shadowRoot.addEventListener('click', (e) => {
+      if (e.target.matches('.shuffle-teams')) {
+        this.shuffleTeams();
+      } else if (e.target.matches('.decide-teams')) {
+        this.decideTeams();
+      }
+    });
+  }
+  
+  updateFromStore(state) {
+    // 상태 업데이트
+    this._state.members = [...state.members];
+    this._state.totalMembers = state.totalMembers;
+    this._state.isTotalConfirmed = state.isTotalConfirmed;
+    this._state.teamCount = state.teamCount;
+    this._state.isTeamCountConfirmed = state.isTeamCountConfirmed;
+  }
+
+  shuffleTeams() {
+    if (!this._state.members.length) {
+      console.warn('멤버가 없어 팀 구성 불가');
+      return;
+    }
     
-    const container = document.createElement('div');
-    container.className = 'team-result-container';
+    try {
+      // distributeTeams 함수를 사용하여 팀 구성
+      console.log('팀 분배 함수 호출 전 상태:', {
+        members: this._state.members,
+        teamCount: this._state.teamCount,
+        totalMembers: this._state.totalMembers
+      });
+      
+      const distributedTeams = distributeTeams();
+      
+      if (distributedTeams && distributedTeams.length > 0) {
+        this.teams = distributedTeams;
+        console.log('팀 분배 성공:', this.teams);
+      } else {
+        // 직접 팀 분배 로직 구현 (문제가 있는 경우 대비)
+        console.warn('기본 팀 분배 함수 실패, 대체 로직 사용');
+        
+        const shuffled = [...this._state.members].sort(() => Math.random() - 0.5);
+        const teamSize = Math.ceil(shuffled.length / this._state.teamCount);
+        this.teams = Array.from({ length: this._state.teamCount }, (_, i) => 
+          shuffled.slice(i * teamSize, (i + 1) * teamSize)
+        );
+      }
+      
+      this.updateView();
+    } catch (error) {
+      console.error('팀 섞기 중 오류 발생:', error);
+    }
+  }
+
+  decideTeams() {
+    console.log('팀 결정하기 버튼 클릭');
     
-    // 초기에는 빈 컨테이너만 추가
-    this.shadowRoot.appendChild(container);
+    if (!this._state.members.length) {
+      console.warn('멤버가 없어 팀 결정 불가');
+      return;
+    }
     
-    // 초기 상태 업데이트 실행
-    this.updateView();
+    if (this._state.members.length !== this._state.totalMembers) {
+      console.warn('총원과 멤버 수가 일치하지 않음:', 
+        this._state.members.length, '!=', this._state.totalMembers);
+      return;
+    }
+    
+    this.shuffleTeams();
   }
 
   updateView() {
     const container = this.shadowRoot.querySelector('.team-result-container');
     if (!container) return;
     
-    const state = store.getState();
-    
     // 팀 배분 결과가 없는 경우
     if (!this.teams.length) {
       let message = "팀 구성 결과가 여기에 표시됩니다.";
       let statusClass = "info";
       let showDecideButton = false;
+      let buttonDisabled = true;
+      
+      console.log('TeamResult 상태 확인:', {
+        totalMembers: this._state.totalMembers,
+        membersLength: this._state.members.length,
+        isTotalConfirmed: this._state.isTotalConfirmed,
+        isTeamCountConfirmed: this._state.isTeamCountConfirmed
+      });
       
       // 더 구체적인 안내 메시지 생성
-      if (!state.isTeamCountConfirmed) {
-        message = "팀 개수를 설정해주세요.";
-      } else if (!state.isTotalConfirmed) {
+      if (!this._state.isTotalConfirmed) {
         message = "총원을 설정해주세요.";
-      } else if (state.members.length < state.totalMembers) {
-        message = `아직 ${state.totalMembers - state.members.length}명의 멤버가 더 필요합니다.`;
-      } else if (state.members.length === state.totalMembers) {
+      } else if (!this._state.isTeamCountConfirmed) {
+        message = "팀 개수를 설정해주세요.";
+      } else if (this._state.members.length < this._state.totalMembers) {
+        message = `아직 ${this._state.totalMembers - this._state.members.length}명의 멤버가 더 필요합니다.`;
+      } else if (this._state.members.length === this._state.totalMembers) {
         message = "작성 완료! 모든 멤버가 등록되었습니다.";
         statusClass = "success";
         showDecideButton = true;
+        buttonDisabled = false; // 버튼 활성화
       }
       
+      // 카드 활성화 상태는 팀 구성이 가능한지 여부에 따라 결정
+      const isTeamReady = this._state.isTotalConfirmed && 
+                          this._state.isTeamCountConfirmed && 
+                          this._state.members.length === this._state.totalMembers;
+                          
+      const cardClass = isTeamReady ? 
+        `card ${this._isFirstRender ? 'animate' : ''}` : 
+        `card ${this._isFirstRender ? 'animate' : ''} inactive`;
+      
       container.innerHTML = `
-        <div class="card">
+        <div class="${cardClass}">
           <div class="card__content">
             <h3 class="card__title">팀 구성 결과</h3>
             <div class="status-message ${statusClass}">
@@ -135,9 +395,9 @@ export class TeamResult extends HTMLElement {
     `).join('');
     
     container.innerHTML = `
-      <div class="card">
+      <div class="card ${this._isFirstRender ? 'animate' : ''}">
         <div class="card__content">
-          <h3 class="card__title">팀 구성 결과 <span class="team-info">(${state.teamCount}팀, 총 ${totalMembers}명)</span></h3>
+          <h3 class="card__title">팀 구성 결과 <span class="team-info">(${this._state.teamCount}팀, 총 ${totalMembers}명)</span></h3>
           <div class="team-list">
             ${teamsHtml}
           </div>
@@ -147,30 +407,9 @@ export class TeamResult extends HTMLElement {
         </div>
       </div>
     `;
-  }
-
-  addEventListeners() {
-    const shadow = this.shadowRoot;
     
-    // 이벤트 위임을 사용하여 동적으로 생성되는 버튼에 이벤트 등록
-    shadow.addEventListener('click', (e) => {
-      if (e.target.classList.contains('shuffle-teams')) {
-        this.handleShuffleTeams();
-      } else if (e.target.classList.contains('decide-teams')) {
-        this.handleDecideTeams();
-      }
-    });
+    this._isFirstRender = false;
   }
+}
 
-  handleShuffleTeams() {
-    // 팀 재구성
-    this.teams = distributeTeams() || [];
-    this.updateView();
-  }
-  
-  handleDecideTeams() {
-    // 팀 결정 버튼 클릭 시 팀 배분 실행
-    this.teams = distributeTeams() || [];
-    this.updateView();
-  }
-} 
+customElements.define('team-result', TeamResult); 
