@@ -34,12 +34,7 @@ export class TeamResult extends HTMLElement {
     
     // 상태 구독 설정
     this.unsubscribe = store.subscribe((state) => {
-      // 팀 배분 조건 확인
-      if (this.shouldDistributeTeams(state)) {
-        this.teams = distributeTeams() || [];
-      } else {
-        this.teams = [];
-      }
+      // 변경: 여기서 자동으로 팀을 배분하지 않고 조건 확인만 수행
       // 항상 뷰를 업데이트
       this.updateView();
     });
@@ -74,12 +69,7 @@ export class TeamResult extends HTMLElement {
     // 초기에는 빈 컨테이너만 추가
     this.shadowRoot.appendChild(container);
     
-    // 초기 상태에서 조건이 충족되면 팀 배분
-    if (this.shouldDistributeTeams(state)) {
-      this.teams = distributeTeams() || [];
-    }
-    
-    // 항상 뷰 업데이트 실행
+    // 초기 상태 업데이트 실행
     this.updateView();
   }
 
@@ -89,10 +79,11 @@ export class TeamResult extends HTMLElement {
     
     const state = store.getState();
     
-    // 팀 배분 결과가 없는 경우 안내 메시지 표시
+    // 팀 배분 결과가 없는 경우
     if (!this.teams.length) {
       let message = "팀 구성 결과가 여기에 표시됩니다.";
       let statusClass = "info";
+      let showDecideButton = false;
       
       // 더 구체적인 안내 메시지 생성
       if (!state.isTeamCountConfirmed) {
@@ -101,6 +92,10 @@ export class TeamResult extends HTMLElement {
         message = "총원을 설정해주세요.";
       } else if (state.members.length < state.totalMembers) {
         message = `아직 ${state.totalMembers - state.members.length}명의 멤버가 더 필요합니다.`;
+      } else if (state.members.length === state.totalMembers) {
+        message = "작성 완료! 모든 멤버가 등록되었습니다.";
+        statusClass = "success";
+        showDecideButton = true;
       }
       
       container.innerHTML = `
@@ -110,6 +105,10 @@ export class TeamResult extends HTMLElement {
             <div class="status-message ${statusClass}">
               ${message}
             </div>
+            ${showDecideButton ? 
+              `<div class="button-group mt-4">
+                <button class="btn btn--primary decide-teams">팀 결정하기!</button>
+              </div>` : ''}
             <div class="team-placeholder">
               <div class="placeholder-item">팀이 구성되면 여기에 표시됩니다.</div>
             </div>
@@ -157,12 +156,20 @@ export class TeamResult extends HTMLElement {
     shadow.addEventListener('click', (e) => {
       if (e.target.classList.contains('shuffle-teams')) {
         this.handleShuffleTeams();
+      } else if (e.target.classList.contains('decide-teams')) {
+        this.handleDecideTeams();
       }
     });
   }
 
   handleShuffleTeams() {
     // 팀 재구성
+    this.teams = distributeTeams() || [];
+    this.updateView();
+  }
+  
+  handleDecideTeams() {
+    // 팀 결정 버튼 클릭 시 팀 배분 실행
     this.teams = distributeTeams() || [];
     this.updateView();
   }
