@@ -69,13 +69,39 @@ export const memoize = (fn, options = {}) => {
     let foundKey = null;
     let foundValue = null;
     
-    for (const key of keys) {
-      const cachedArgs = JSON.parse(key);
-      if (deepEqual(cachedArgs, args)) {
-        foundKey = key;
-        foundValue = cache.get(key);
-        break;
+    try {
+      // 배열이나 객체를 포함한 인자는 깊은 비교 필요
+      const needsDeepComparison = args.some(arg => 
+        arg !== null && typeof arg === 'object'
+      );
+      
+      if (needsDeepComparison) {
+        for (const key of keys) {
+          try {
+            const cachedArgs = JSON.parse(key);
+            if (deepEqual(cachedArgs, args)) {
+              foundKey = key;
+              foundValue = cache.get(key);
+              break;
+            }
+          } catch (e) {
+            // JSON 파싱 에러는 무시하고 계속 진행
+            continue;
+          }
+        }
+      } else {
+        // 원시 타입만 있는 경우 - 단순 문자열 비교
+        const argsKey = JSON.stringify(args);
+        if (cache.has(argsKey)) {
+          foundKey = argsKey;
+          foundValue = cache.get(argsKey);
+        }
       }
+    } catch (e) {
+      console.error('메모이제이션 키 검색 중 오류:', e);
+      
+      // 에러가 발생한 경우 캐싱하지 않고 원본 함수 실행
+      return fn.apply(this, args);
     }
     
     // 캐시에서 찾은 경우
@@ -96,7 +122,15 @@ export const memoize = (fn, options = {}) => {
     if (debug) console.log('메모이즈 캐시 미스!', args);
     
     const result = fn.apply(this, args);
-    const newKey = JSON.stringify(args);
+    let newKey;
+    
+    try {
+      newKey = JSON.stringify(args);
+    } catch (e) {
+      console.error('인자 직렬화 중 오류:', e);
+      // 직렬화할 수 없는 경우 캐싱하지 않고 결과만 반환
+      return result;
+    }
     
     // 캐시 저장
     cache.set(newKey, result);
