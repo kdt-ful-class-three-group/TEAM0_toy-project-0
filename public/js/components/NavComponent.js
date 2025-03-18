@@ -1,6 +1,4 @@
 import { renderNavigator } from '../renderers/index.js';
-import { themeManager } from '../utils/themeManager.js';
-import { debounce } from '../utils/performance.js';
 
 /**
  * 네비게이터 컴포넌트
@@ -14,9 +12,6 @@ export class NavComponent extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this._container = null;
     this._initialized = false;
-    
-    // 이벤트 핸들러 바인딩
-    this.handleThemeToggle = this.handleThemeToggle.bind(this);
   }
 
   /**
@@ -35,7 +30,7 @@ export class NavComponent extends HTMLElement {
    * 컴포넌트가 DOM에서 제거될 때 호출됩니다.
    */
   disconnectedCallback() {
-    this.removeEventListeners();
+    // 이벤트 리스너 제거가 필요한 경우 여기에 추가
   }
   
   /**
@@ -53,18 +48,9 @@ export class NavComponent extends HTMLElement {
     // 그림자 DOM에 추가
     this.shadowRoot.appendChild(this._container);
     
-    // 내용 렌더링 (성능 최적화를 위해 requestAnimationFrame 사용)
+    // 내용 렌더링
     window.requestAnimationFrame(() => {
       this.render();
-      this.addEventListeners();
-      
-      // 테마 관리자 초기화
-      themeManager.initialize();
-      
-      // 테마 변경 시 UI 업데이트 (디바운스 적용)
-      document.addEventListener('themechange', debounce(() => {
-        this.updateThemeButton();
-      }, 100));
     });
   }
   
@@ -84,56 +70,14 @@ export class NavComponent extends HTMLElement {
    * @private
    */
   render() {
-    this._container.innerHTML = renderNavigator();
-  }
-  
-  /**
-   * 이벤트 리스너를 등록합니다.
-   * @private
-   */
-  addEventListeners() {
-    const themeButton = this.shadowRoot.querySelector('.theme-toggle');
-    if (themeButton) {
-      themeButton.addEventListener('click', this.handleThemeToggle);
-    }
-  }
-  
-  /**
-   * 등록된 이벤트 리스너를 제거합니다.
-   * @private
-   */
-  removeEventListeners() {
-    const themeButton = this.shadowRoot.querySelector('.theme-toggle');
-    if (themeButton) {
-      themeButton.removeEventListener('click', this.handleThemeToggle);
-    }
-  }
-  
-  /**
-   * 테마 토글 버튼 클릭 이벤트 핸들러
-   * @private
-   */
-  handleThemeToggle() {
-    themeManager.toggleTheme();
-    this.updateThemeButton();
-  }
-  
-  /**
-   * 테마 버튼 UI를 현재 테마에 맞게 업데이트합니다.
-   * @private
-   */
-  updateThemeButton() {
-    const themeButton = this.shadowRoot.querySelector('.theme-toggle');
-    if (!themeButton) return;
-    
-    const isDarkTheme = document.documentElement.classList.contains('theme-dark');
-    
-    // 아이콘 및 텍스트 업데이트
-    themeButton.innerHTML = isDarkTheme
-      ? '<span>☀️ 라이트 모드</span>'
-      : '<span>🌙 다크 모드</span>';
-      
-    // 접근성을 위한 설명 업데이트
-    themeButton.setAttribute('aria-label', isDarkTheme ? '라이트 모드로 전환' : '다크 모드로 전환');
+    this._container.innerHTML = `
+      <div class="nav">
+        <div class="nav__section nav__section--bottom">
+          <div class="nav__version">
+            <small>버전 1.0.1</small>
+          </div>
+        </div>
+      </div>
+    `;
   }
 } 
