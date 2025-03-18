@@ -214,40 +214,99 @@ export class BaseComponent extends HTMLElement {
    * @private
    */
   _render() {
-    // 성능 최적화: 속성 변경이 없는 경우 리렌더링 건너뛰기
-    if (this.options.optimizeUpdates && this._prevProps && this.props) {
-      if (this._shallowEqual(this._prevProps, this.props)) {
-        return; // 속성이 변경되지 않은 경우 렌더링 스킵
-      }
-    }
-    
-    // 성능 측정 시작
+    // 렌더링 통계 측정 시작
     const startTime = performance.now();
     
     try {
-      // 사용자 정의 렌더 함수 호출
-      this.render();
+      // this.render()가 있는지 확인
+      if (typeof this.render !== 'function') {
+        console.warn(`${this.constructor.name}: render 메소드가 구현되지 않았습니다.`);
+        return;
+      }
       
-      // 현재 props 저장 (최적화용)
-      if (this.props) {
-        this._prevProps = { ...this.props };
+      // 현재 innerHTML 저장 (변경 감지용)
+      const oldInnerHTML = this.shadowRoot ? this.shadowRoot.innerHTML : '';
+      
+      // 사용자 정의 렌더 함수 호출하여 렌더링할 HTML 가져오기
+      const html = this.render();
+
+      // 렌더 결과가 문자열인 경우에만 DOM 업데이트
+      if (typeof html === 'string') {
+        // 최적화: 내용이 변경된 경우에만 DOM 업데이트
+        if (this.options.optimizeUpdates) {
+          // 가상 DOM 스타일 차이 감지
+          if (this.shadowRoot) {
+            // 이전 내용과 다른 경우만 업데이트
+            if (oldInnerHTML !== html) {
+              // 이전 DOM 요소 참조 저장
+              const focusedElement = this.shadowRoot.activeElement;
+              const focusElementId = focusedElement ? focusedElement.id : null;
+              
+              // DOM 업데이트
+              this.shadowRoot.innerHTML = html;
+              
+              // 필요시 포커스 복원
+              if (focusElementId) {
+                const newFocusElement = this.shadowRoot.getElementById(focusElementId);
+                if (newFocusElement) newFocusElement.focus();
+              }
+              
+              // 렌더링 이후 콜백 호출
+              this._callAfterRender();
+            }
+          } else {
+            this.innerHTML = html;
+            this._callAfterRender();
+          }
+        } else {
+          // 최적화 비활성화 상태
+          if (this.shadowRoot) {
+            this.shadowRoot.innerHTML = html;
+          } else {
+            this.innerHTML = html;
+          }
+          this._callAfterRender();
+        }
       }
     } catch (error) {
-      console.error(`${this._componentName} 렌더링 중 오류:`, error);
+      console.error(`${this.constructor.name} 렌더링 중 오류 발생:`, error);
     }
     
-    // 성능 측정 종료
+    // 렌더링 통계 측정 종료
     const endTime = performance.now();
-    const renderTime = endTime - startTime;
-    
-    // 성능 통계 업데이트
     this._renderCount++;
-    this._lastRenderTime = renderTime;
-    this._totalRenderTime += renderTime;
+    this._lastRenderTime = endTime - startTime;
+    this._totalRenderTime += this._lastRenderTime;
     
-    // 렌더링 시간이 너무 긴 경우 경고
-    if (renderTime > 16.67) { // 60fps = 16.67ms/프레임
-      console.warn(`${this._componentName} 렌더링 지연 감지: ${renderTime.toFixed(2)}ms`);
+    if (this._lastRenderTime > 16.7) { // 60fps 기준 임계값
+      console.warn(
+        `${this.constructor.name} 컴포넌트의 렌더링이 느립니다: ${this._lastRenderTime.toFixed(2)}ms`
+      );
+    }
+  }
+  
+  /**
+   * 렌더링 이후 콜백 호출
+   * 두 가지 방식 모두 지원: this._afterRender 함수와 this.afterRender 메소드
+   * @private
+   */
+  _callAfterRender() {
+    // 1. 이전 방식: _afterRender 함수가 있는 경우 호출
+    if (typeof this._afterRender === 'function') {
+      try {
+        this._afterRender();
+      } catch (error) {
+        console.error(`${this.constructor.name} _afterRender 콜백 실행 중 오류:`, error);
+      }
+    }
+    
+    // 2. 새 방식: afterRender 메소드가 있는 경우 호출
+    if (typeof this.afterRender === 'function') {
+      try {
+        this.afterRender();
+      } catch (error) {
+        console.error(`${this.constructor.name} afterRender 메소드 실행 중 오류:`, error);
+      }
     }
   }
   
@@ -341,34 +400,53 @@ export class BaseComponent extends HTMLElement {
   }
   
   /**
-   * 비동기적으로 상태를 업데이트하고 렌더링합니다.
-   * 여러 업데이트를 배치 처리합니다.
-   * @param {Function|Object} updater - 업데이트 함수 또는 객체
-   * @protected
+   * 상태 업데이트 및 재렌더링
+   * @param {Object|Function} updater - 상태 업데이트 객체 또는 함수
    */
   updateState(updater) {
-    // 업데이트 함수가 없으면 무시
-    if (!updater) return;
+    // 이전 상태 저장
+    const prevState = { ...this.state };
     
-    // 업데이트가 이미 큐에 있으면 중복 실행 방지
-    if (this._updateQueued) return;
-    this._updateQueued = true;
+    // 업데이터가 함수인 경우, 함수를 실행하여 새 상태 가져오기
+    if (typeof updater === 'function') {
+      const newState = updater(prevState);
+      this.state = { ...this.state, ...newState };
+    } else if (typeof updater === 'object') {
+      // 업데이터가 객체인 경우, 직접 상태 병합
+      this.state = { ...this.state, ...updater };
+    } else {
+      console.error('updateState에는 객체 또는 함수가 필요합니다.');
+      return;
+    }
     
-    // 배치 업데이트 큐에 등록
-    batchUpdater.enqueue(() => {
-      // 상태 업데이트
-      if (typeof updater === 'function') {
-        this.state = updater(this.state || {});
-      } else {
-        this.state = { ...(this.state || {}), ...updater };
+    // 바뀐 상태가 있는지 확인
+    const stateChanged = !this._shallowEqual(prevState, this.state);
+    
+    // 상태가 변경된 경우에만 렌더링
+    if (stateChanged) {
+      // 상태 변경 이벤트 발생
+      const stateChangeEvent = new CustomEvent('state-change', {
+        detail: { 
+          previousState: prevState,
+          currentState: this.state,
+          changedKeys: Object.keys(this.state).filter(key => prevState[key] !== this.state[key])
+        },
+        bubbles: false
+      });
+      this.dispatchEvent(stateChangeEvent);
+      
+      // 상태 변경에 따른 렌더링 요청
+      // requestAnimationFrame을 사용하여 여러 상태 변경을 일괄 처리
+      if (!this._scheduledRender) {
+        this._scheduledRender = true;
+        requestAnimationFrame(() => {
+          this._render();
+          this._scheduledRender = false;
+        });
       }
-      
-      // 플래그 초기화
-      this._updateQueued = false;
-      
-      // 렌더링
-      this._optimizedRender();
-    });
+    }
+    
+    return stateChanged;
   }
   
   /**
