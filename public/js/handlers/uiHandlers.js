@@ -3,7 +3,7 @@
  * @description UI 요소 관련 공통 핸들러 함수들을 제공하는 모듈
  */
 
-import { createErrorLogger, showUIError as showError, UIError } from '../utils/errorHandler.js';
+import { createErrorLogger, showUIError as showError, showToastMessage, UIError } from '../utils/errorHandler.js';
 
 const logger = createErrorLogger('uiHandlers');
 
@@ -30,15 +30,24 @@ export const showInvalidInput = (element, message) => {
 };
 
 /**
- * UI 요소에 오류 메시지를 표시합니다.
- * 기존 코드와의 호환성을 위해 errorHandler의 showUIError 함수를 래핑합니다.
+ * UI에 오류 메시지를 표시합니다.
+ * 문자열만 전달하면 토스트 메시지로 표시됩니다.
  * 
- * @param {HTMLElement} element - 오류를 표시할 요소
- * @param {string} message - 오류 메시지
- * @param {string} [className='error'] - 추가할 CSS 클래스
+ * @param {HTMLElement|string} elementOrMessage - 오류를 표시할 요소 또는 메시지 문자열
+ * @param {string} [message] - 오류 메시지 (첫 번째 인자가 요소인 경우)
+ * @param {string} [type='error'] - 메시지 유형 ('error', 'info', 'success')
  */
-export const showUIError = (element, message, className = 'error') => {
-  showError(element, message, className);
+export const showUIError = (elementOrMessage, message, type = 'error') => {
+  showError(elementOrMessage, message, type);
+};
+
+/**
+ * 토스트 형태의 알림 메시지를 표시합니다.
+ * @param {string} message - 표시할 메시지
+ * @param {string} [type='info'] - 메시지 유형 ('error', 'info', 'success')
+ */
+export const showToast = (message, type = 'info') => {
+  showToastMessage(message, type);
 };
 
 /**
@@ -50,6 +59,8 @@ export const showUIError = (element, message, className = 'error') => {
 export const updateStatusMessage = (element, message, type = 'info') => {
   if (!element) {
     logger.warn('유효하지 않은 요소에 상태 메시지 업데이트 시도', { message, type });
+    // 토스트로 대체
+    showToastMessage(message, type);
     return;
   }
   
@@ -57,10 +68,10 @@ export const updateStatusMessage = (element, message, type = 'info') => {
     element.textContent = message;
     
     // 이전 상태 클래스 제거
-    element.classList.remove('status-message--success', 'status-message--error', 'status-message--info');
+    element.classList.remove('success', 'error', 'info');
     
     // 새로운 상태 클래스 추가
-    element.classList.add(`status-message--${type}`);
+    element.classList.add(type);
     
     // 접근성을 위한 속성 추가
     if (type === 'error') {
@@ -72,6 +83,7 @@ export const updateStatusMessage = (element, message, type = 'info') => {
     logger.info('상태 메시지 업데이트됨', { type, message: message.substring(0, 30) });
   } catch (error) {
     logger.error('상태 메시지 업데이트 중 오류 발생', { error });
+    showToastMessage(message, type);
   }
 };
 
