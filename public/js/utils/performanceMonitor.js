@@ -16,6 +16,9 @@ const layoutMonitor = new LayoutThrashingMonitor();
 export class PerformanceMonitor {
   constructor(options = {}) {
     this.options = {
+      fpsCheckInterval: 5000, // 5초마다 FPS 체크 (기본값보다 더 긴 간격)
+      fpsWarningThreshold: 30, // 30 FPS 이하일 때 경고
+      logLevel: 'warn',       // 경고 수준만 로그
       monitorFPS: true,            // FPS 모니터링 여부
       monitorMemory: true,         // 메모리 사용량 모니터링 여부
       monitorResources: true,      // 리소스 로딩 모니터링 여부
@@ -29,6 +32,16 @@ export class PerformanceMonitor {
       },
       ...options
     };
+    
+    this.isActive = false;
+    this.fpsHistory = [];
+    this.frameCount = 0;
+    this.lastFrameTime = 0;
+    this.fpsCheckTimer = null;
+    this.rafId = null;
+    
+    // 비동기 리스너 관련 에러 방지
+    this._setupErrorHandling();
     
     // 서브 모니터 초기화
     this.fpsMonitor = this.options.monitorFPS ? new FPSMeter({
@@ -59,11 +72,46 @@ export class PerformanceMonitor {
     this._setupLongTaskObserver();
   }
   
+  _setupErrorHandling() {
+    // 비동기 응답 관련 에러 무시 - 브라우저 확장 프로그램 관련 문제 
+    const originalOnError = window.onerror;
+    window.onerror = (message, source, lineno, colno, error) => {
+      if (message.includes('message channel closed') || 
+          message.includes('asynchronous response') ||
+          source.includes('injected.js') ||
+          source.includes('content.js')) {
+        return true; // 이벤트 처리됨으로 표시하여 에러 전파 중단
+      }
+      
+      // 기존 에러 처리기 호출
+      return originalOnError ? originalOnError(message, source, lineno, colno, error) : false;
+    };
+    
+    // 처리되지 않은 거부 처리
+    window.addEventListener('unhandledrejection', (event) => {
+      if (event.reason && (
+          String(event.reason).includes('message channel closed') ||
+          String(event.reason).includes('asynchronous response') ||
+          String(event.reason).includes('listener'))) {
+        event.preventDefault();
+      }
+    });
+  }
+  
   /**
    * 모니터링 시작
    */
   start() {
-    if (this.isMonitoring) return;
+    if (this.isActive) return;
+    
+    this.isActive = true;
+    this.fpsHistory = [];
+    this.frameCount = 0;
+    this.lastFrameTime = performance.now();
+    
+    // 낮은 우선순위로 요청하여 성능 영향 최소화
+    this._scheduleFpsCheck();
+    this._startFrameCounter();
     
     this.isMonitoring = true;
     this.startTime = performance.now();
@@ -94,14 +142,21 @@ export class PerformanceMonitor {
       layoutMonitor.startMonitoring();
     }
     
-    console.info('성능 모니터링 시작됨');
+    console.log('성능 모니터링 시작됨');
+    return this;
   }
   
   /**
    * 모니터링 중지
    */
   stop() {
-    if (!this.isMonitoring) return;
+    if (!this.isActive) return;
+    
+    this.isActive = false;
+    clearTimeout(this.fpsCheckTimer);
+    cancelAnimationFrame(this.rafId);
+    
+    this.isMonitoring = false;
     
     // FPS 모니터링 중지
     if (this.fpsMonitor) {
@@ -113,13 +168,26 @@ export class PerformanceMonitor {
       this.memoryMonitor.stop();
     }
     
-    // 모니터링 상태 업데이트
-    this.isMonitoring = false;
+    // 리소스 로딩 모니터링 중지
+    if (this.options.monitorResources) {
+      this._stopResourceMonitoring();
+    }
+    
+    // 컴포넌트 성능 모니터링 중지
+    if (this.options.monitorComponents) {
+      this._stopComponentMonitoring();
+    }
+    
+    // 레이아웃 스래싱 감지 중지
+    if (this.options.detectLayoutThrashing) {
+      layoutMonitor.stopMonitoring();
+    }
     
     // 최종 보고서 생성
     this._generateFinalReport();
     
-    console.info('성능 모니터링 중지됨');
+    console.log('성능 모니터링 중지됨');
+    return this;
   }
   
   /**
@@ -189,7 +257,7 @@ export class PerformanceMonitor {
    * @private
    */
   _handleFPSUpdate(fps) {
-    if (fps < this.options.warningThresholds.fps) {
+    if (fps < this.options.fpsWarningThreshold) {
       const issue = {
         type: 'low-fps',
         fps,
@@ -459,6 +527,81 @@ export class PerformanceMonitor {
    */
   getSlowComponents() {
     return [...this.slowComponents];
+  }
+  
+  _startFrameCounter() {
+    const countFrame = () => {
+      if (!this.isActive) return;
+      
+      this.frameCount++;
+      this.rafId = requestAnimationFrame(countFrame);
+    };
+    
+    this.rafId = requestAnimationFrame(countFrame);
+  }
+  
+  _scheduleFpsCheck() {
+    this.fpsCheckTimer = setTimeout(() => {
+      if (!this.isActive) return;
+      
+      const now = performance.now();
+      const elapsed = now - this.lastFrameTime;
+      
+      if (elapsed > 0) {
+        const currentFps = Math.round(this.frameCount * 1000 / elapsed);
+        
+        // 낮은 FPS만 기록
+        if (currentFps < this.options.fpsWarningThreshold) {
+          this.fpsHistory.push({ 
+            timestamp: now, 
+            fps: currentFps 
+          });
+          
+          // 낮은 FPS 경고
+          console.warn(`낮은 FPS 감지됨: ${currentFps} FPS`);
+          
+          // 사용자 정의 이벤트 발생 (디버깅용)
+          const fpsDrop = new CustomEvent('fps-drop', { 
+            detail: { fps: currentFps, timestamp: now }
+          });
+          document.dispatchEvent(fpsDrop);
+        }
+      }
+      
+      // 카운터 재설정
+      this.frameCount = 0;
+      this.lastFrameTime = now;
+      
+      // 다음 체크 스케줄링 (낮은 우선순위로)
+      this._scheduleFpsCheck();
+    }, this.options.fpsCheckInterval);
+  }
+  
+  getFpsData() {
+    return {
+      current: this.getCurrentFps(),
+      history: [...this.fpsHistory],
+      average: this.getAverageFps()
+    };
+  }
+  
+  getCurrentFps() {
+    if (!this.isActive || this.fpsHistory.length === 0) return 60;
+    return this.fpsHistory[this.fpsHistory.length - 1].fps;
+  }
+  
+  getAverageFps() {
+    if (!this.isActive || this.fpsHistory.length === 0) return 60;
+    
+    const total = this.fpsHistory.reduce((sum, entry) => sum + entry.fps, 0);
+    return Math.round(total / this.fpsHistory.length);
+  }
+  
+  // 높은 CPU/메모리 사용 컴포넌트 감지 (축소된 버전)
+  detectPerformanceIssues() {
+    // 성능 영향 때문에 필요할 때만 사용하도록 축소된 구현
+    console.warn('현재 detectPerformanceIssues 호출은 비활성화된 상태입니다.');
+    return [];
   }
 }
 
