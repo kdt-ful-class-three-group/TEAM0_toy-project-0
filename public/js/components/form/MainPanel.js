@@ -16,64 +16,55 @@ export class MainPanel extends BaseComponent {
     super({
       useShadow: true,
       useCommonStyles: true,
-      useUtilityStyles: true
+      useUtilityStyles: true,
+      deferRender: false // 초기 렌더링을 지연하지 않음
     });
     this.unsubscribe = null;
   }
 
   initialize() {
-    // 상태 변경 구독
-    this.unsubscribe = store.subscribe((state) => {
-      this.updateCompletionMessage(state);
-    });
+    console.log('MainPanel: 초기화 시작');
     
-    // 초기 상태로 메시지 업데이트
-    this.updateCompletionMessage(store.getState());
-    
-    // 이벤트 구독 해제 함수 등록
-    this.addUnsubscriber(this.unsubscribe);
-  }
-  
-  render() {
-    return `
+    // Shadow DOM에 초기 컨테이너 추가
+    this.shadowRoot.innerHTML = `
       <style>
         :host {
-          display: block;
-          padding: var(--section-padding);
-          color: var(--color-light);
+          display: block !important;
+          padding: var(--section-padding, 16px);
+          color: var(--color-light, #ffffff);
           overflow-y: auto;
           height: 100vh;
+          width: 100%;
+          box-sizing: border-box;
         }
         
         .main-panel {
           display: grid;
           grid-template-columns: 1fr 1fr; /* 좌우 균등 분할 */
-          gap: var(--space-5);
-          height: calc(100vh - var(--section-padding) * 2);
+          gap: var(--space-5, 20px);
+          height: calc(100vh - var(--section-padding, 16px) * 2);
+          width: 100%;
         }
         
-        .left-panel {
+        .left-panel, .right-panel {
           display: flex;
           flex-direction: column;
-          gap: var(--space-4);
+          gap: var(--space-4, 16px);
+          background-color: rgba(0, 0, 0, 0.2);
+          border-radius: 8px;
+          padding: 16px;
           overflow-y: auto;
-        }
-        
-        .right-panel {
-          display: flex;
-          flex-direction: column;
-          gap: var(--space-4);
-          overflow-y: auto;
+          min-height: 300px;
         }
         
         .completion-message {
-          background-color: var(--color-primary);
-          color: var(--color-white);
-          padding: var(--space-4);
-          border-radius: var(--radius-md);
+          background-color: var(--color-primary, #4f46e5);
+          color: var(--color-white, #ffffff);
+          padding: var(--space-4, 16px);
+          border-radius: var(--radius-md, 6px);
           text-align: center;
           font-weight: 500;
-          margin-top: var(--space-3);
+          margin-top: var(--space-3, 12px);
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           display: none;
           grid-column: span 2; /* 메시지는 전체 너비 사용 */
@@ -84,7 +75,7 @@ export class MainPanel extends BaseComponent {
         }
       </style>
       
-      <div class="main-panel">
+      <div class="main-panel" id="main-panel-container">
         <div class="left-panel">
           <team-result></team-result>
         </div>
@@ -96,6 +87,57 @@ export class MainPanel extends BaseComponent {
         </div>
       </div>
     `;
+    
+    // 상태 변경 구독
+    this.unsubscribe = store.subscribe((state) => {
+      this.updateCompletionMessage(state);
+    });
+    
+    // 초기 상태로 메시지 업데이트
+    setTimeout(() => {
+      this.updateCompletionMessage(store.getState());
+    }, 100);
+    
+    // 이벤트 구독 해제 함수 등록
+    this.addUnsubscriber(this.unsubscribe);
+    
+    console.log('MainPanel: 초기화 완료');
+    
+    // 자식 컴포넌트 생성 확인
+    this.ensureChildComponents();
+  }
+  
+  /**
+   * 자식 컴포넌트들이 생성되었는지 확인하고 필요시 생성
+   */
+  ensureChildComponents() {
+    setTimeout(() => {
+      const mainPanel = this.shadowRoot.getElementById('main-panel-container');
+      
+      if (mainPanel) {
+        // team-result 컴포넌트 확인 및 생성
+        const leftPanel = mainPanel.querySelector('.left-panel');
+        if (leftPanel && !leftPanel.querySelector('team-result')) {
+          const teamResult = document.createElement('team-result');
+          leftPanel.appendChild(teamResult);
+          console.log('MainPanel: team-result 컴포넌트 생성됨');
+        }
+        
+        // member-list 컴포넌트 확인 및 생성
+        const rightPanel = mainPanel.querySelector('.right-panel');
+        if (rightPanel && !rightPanel.querySelector('member-list')) {
+          const memberList = document.createElement('member-list');
+          rightPanel.appendChild(memberList);
+          console.log('MainPanel: member-list 컴포넌트 생성됨');
+        }
+      }
+    }, 200);
+  }
+  
+  render() {
+    // 이미 초기화 과정에서 내용을 추가했으므로 빈 렌더링 수행
+    // 새로운 렌더링 필요 시 여기서 수행
+    return this.shadowRoot.innerHTML;
   }
   
   updateCompletionMessage(state) {
