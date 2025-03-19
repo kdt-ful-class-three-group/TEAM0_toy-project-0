@@ -1,12 +1,13 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { SERVER_CONFIG } from '../config/server.js';
 
 /**
  * 팀 분배 결과를 JSON 파일로 저장하는 서비스 클래스
  * @class
  * @description
  * 이 클래스는 팀 분배 결과를 JSON 파일로 저장하는 기능을 제공합니다.
- * 파일은 'data/teams/current' 디렉토리에 저장되며, 
+ * 파일은 설정에 정의된 경로에 저장되며, 
  * 파일명은 'team-distribute-{timestamp}.json' 형식을 따릅니다.
  * 
  * @example
@@ -35,17 +36,16 @@ class TeamDecisionSaver {
    * @constructor
    * 
    * @description
-   * 생성자는 다음과 같은 작업을 수행합니다:
-   * 1. process.cwd()를 사용하여 현재 작업 디렉토리를 가져옵니다.
-   * 2. path.join()을 사용하여 저장 디렉토리 경로를 생성합니다.
-   * 
-   * @note
-   * - 실제 디렉토리는 initializeDirectory() 메서드 호출 시 생성됩니다.
-   * - 디렉토리 경로: {프로젝트_루트}/data/teams/current
+   * 생성자는 SERVER_CONFIG에서 정의된 경로 설정을 사용하여 저장 디렉토리를 설정합니다.
    */
   constructor() {
     // 저장될 디렉토리 경로 설정
-    this.saveDir = path.join(process.cwd(), 'data', 'teams', 'current');
+    this.saveDir = path.join(
+      process.cwd(), 
+      SERVER_CONFIG.DATA.ROOT_DIR, 
+      SERVER_CONFIG.DATA.TEAMS_DIR, 
+      SERVER_CONFIG.DATA.CURRENT_DIR
+    );
   }
 
   /**
