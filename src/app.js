@@ -1,93 +1,88 @@
 // Start Generation Here
-import express from 'express';
+import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { StaticFileController } from './controllers/StaticFileController.js';
+import { SERVER_CONFIG } from './config/server.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
-const PORT = 3030;
+const PUBLIC_DIR = path.join(process.cwd(), SERVER_CONFIG.PUBLIC_DIR);
 
-// 정적 파일 제공을 위한 미들웨어 설정
-app.use(express.static(path.join(process.cwd(), 'public'), {
-  setHeaders: (res, filePath) => {
-    // CSS 파일에 대한 헤더 설정
-    if (filePath.endsWith('.css')) {
-      res.setHeader('Content-Type', 'text/css');
-      // 개발 환경에서는 캐시를 비활성화
-      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-    }
-    // JavaScript 파일에 대한 헤더 설정
-    if (filePath.endsWith('.js')) {
-      res.setHeader('Content-Type', 'application/javascript');
-      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-    }
-  },
-  extensions: ['html', 'css', 'js'], // 확장자 없는 요청에 대한 처리
-  index: false // index.html 자동 제공 비활성화
-}));
+// MIME 타입 매핑
+const MIME_TYPES = {
+  '.html': 'text/html',
+  '.css': 'text/css',
+  '.js': 'application/javascript',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.txt': 'text/plain',
+  '.pdf': 'application/pdf',
+  'default': 'application/octet-stream'
+};
 
-// CORS 설정 (개발 환경을 위한 설정)
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
+// 정적 파일 제공 함수
+const serveStaticFile = (filePath, res) => {
+  const extname = path.extname(filePath).toLowerCase();
+  const contentType = MIME_TYPES[extname] || MIME_TYPES['default'];
+  
+  // CSS와 JS 파일에 대한 캐시 설정
+  if (extname === '.css' || extname === '.js') {
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // 1일 캐시
   }
-  next();
-});
-
-// CSS 파일 요청 처리
-app.get('/**/*.css', (req, res, next) => {
-  const cssPath = path.join(process.cwd(), 'public', req.path);
-  res.type('text/css');
-  res.sendFile(cssPath, (err) => {
+  
+  fs.readFile(filePath, (err, content) => {
     if (err) {
-      console.error(`CSS 파일 로드 실패: ${req.path}`, err);
-      next();
+      if (err.code === 'ENOENT') {
+        // 파일을 찾을 수 없는 경우
+        if (extname === '.css' || extname === '.js') {
+          console.error(`파일을 찾을 수 없음: ${filePath}`);
+          res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+          res.end(`파일을 찾을 수 없습니다: ${filePath}`);
+        } else {
+          // HTML 파일이 아닌 경우 index.html로 대체
+          fs.readFile(path.join(PUBLIC_DIR, 'index.html'), (err, content) => {
+            if (err) {
+              res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+              res.end('서버 에러가 발생했습니다.');
+              return;
+            }
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+            res.end(content);
+          });
+        }
+      } else {
+        // 서버 에러
+        console.error('서버 에러:', err);
+        res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
+        res.end('서버 에러가 발생했습니다.');
+      }
+      return;
     }
+    
+    // 파일 존재하는 경우 성공적으로 제공
+    res.writeHead(200, { 'Content-Type': `${contentType}; charset=utf-8` });
+    res.end(content);
   });
+};
+
+// 컨트롤러 초기화
+const controller = new StaticFileController(PUBLIC_DIR);
+
+// 서버 생성
+const server = http.createServer((req, res) => {
+  controller.handleRequest(req, res);
 });
 
-// JavaScript 파일 요청 처리
-app.get('/**/*.js', (req, res, next) => {
-  const jsPath = path.join(process.cwd(), 'public', req.path);
-  res.type('application/javascript');
-  res.sendFile(jsPath, (err) => {
-    if (err) {
-      console.error(`JavaScript 파일 로드 실패: ${req.path}`, err);
-      next();
-    }
-  });
-});
-
-// 메인 라우트
-app.get('/', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
-});
-
-// 404 에러 처리
-app.use((req, res, next) => {
-  if (req.path.match(/\.(css|js)$/)) {
-    console.error(`파일을 찾을 수 없음: ${req.path}`);
-    res.status(404).send(`파일을 찾을 수 없습니다: ${req.path}`);
-  } else {
-    res.sendFile(path.join(process.cwd(), 'public', 'index.html'));
-  }
-});
-
-// 에러 처리 미들웨어
-app.use((err, req, res, next) => {
-  console.error('서버 에러:', err.stack);
-  res.status(500).send('서버 에러가 발생했습니다.');
-});
-
-app.listen(PORT, () => {
-  console.log(`서버가 http://localhost:${PORT}/ 에서 실행 중입니다.`);
-  console.log(`정적 파일 제공 경로: ${path.join(process.cwd(), 'public')}`);
-  console.log('캐시 비활성화 모드로 실행 중');
+// 서버 시작
+server.listen(SERVER_CONFIG.PORT, () => {
+  console.log(`서버가 http://localhost:${SERVER_CONFIG.PORT}/ 에서 실행 중입니다.`);
+  console.log(`정적 파일 제공 경로: ${PUBLIC_DIR}`);
+  console.log(`캐시 활성화 모드로 실행 중 (${SERVER_CONFIG.CACHE_DURATION}초 기간)`);
 });
