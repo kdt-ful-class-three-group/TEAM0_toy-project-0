@@ -686,6 +686,19 @@ export class LayoutThrashingMonitor {
   startMonitoring() {
     // 실제 환경에서는 DOM API를 패치하여 모니터링
     // 이 예제에서는 직접 API를 호출하여 사용
+    console.log('Layout thrashing monitoring started');
+    
+    // 모니터링 시작 상태로 설정
+    this.isMonitoring = true;
+    
+    // 매 5초마다 통계 기록
+    this.monitoringInterval = setInterval(() => {
+      if (this.thrashingEvents.length > 0) {
+        console.warn(`${this.thrashingEvents.length}개의 레이아웃 스래싱 이벤트가 감지되었습니다.`);
+      }
+    }, 5000);
+    
+    return this;
   }
   
   /**
