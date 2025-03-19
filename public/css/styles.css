@@ -254,4 +254,109 @@ body {
 
 .delete-button:hover {
   background-color: rgba(255, 85, 85, 0.2);
+}
+
+/* 메시지 컨테이너 스타일 */
+.message-container {
+  margin-top: 8px;
+  font-size: 14px;
+  min-height: 20px;
+  transition: all 0.3s ease;
+}
+
+/* 에러 메시지 */
+.error-message {
+  color: #ff5555;
+  padding: 6px 12px;
+  background-color: rgba(255, 85, 85, 0.1);
+  border-radius: 4px;
+  border-left: 3px solid #ff5555;
+  margin: 6px 0;
+  animation: fadeIn 0.3s ease;
+}
+
+/* 성공 메시지 */
+.success-message {
+  color: #4ade80;
+  padding: 6px 12px;
+  background-color: rgba(74, 222, 128, 0.1);
+  border-radius: 4px;
+  border-left: 3px solid #4ade80;
+  margin: 6px 0;
+  animation: fadeIn 0.3s ease;
+}
+
+/* 경고 메시지 */
+.warning-message {
+  color: #f59e0b;
+  padding: 6px 12px;
+  background-color: rgba(245, 158, 11, 0.1);
+  border-radius: 4px;
+  border-left: 3px solid #f59e0b;
+  margin: 6px 0;
+  animation: fadeIn 0.3s ease;
+}
+
+/* 정보 메시지 */
+.info-message {
+  color: #38bdf8;
+  padding: 6px 12px;
+  background-color: rgba(56, 189, 248, 0.1);
+  border-radius: 4px;
+  border-left: 3px solid #38bdf8;
+  margin: 6px 0;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* 셰이크 애니메이션 */
+.shake {
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+  
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+/* 로딩 인디케이터 스타일 */
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 16px;
+  position: relative;
+  padding-left: 30px;
+}
+
+.loading-indicator::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #4f46e5;
+  animation: spinner 0.8s linear infinite;
+}
+
+@keyframes spinner {
+  to { transform: rotate(360deg); }
+}
+
+.member-list-container-wrapper {
+  background-color: #121212;
+  border-radius: 8px;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
 } 
