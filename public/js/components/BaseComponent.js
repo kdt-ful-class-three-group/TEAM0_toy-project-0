@@ -46,8 +46,8 @@ export class BaseComponent extends HTMLElement {
     // 기본 테마 변수 설정
     this._setupBaseThemeVariables();
     
-    // Shadow DOM 설정
-    if (this.options.useShadow) {
+    // Shadow DOM 설정 (중복 생성 방지)
+    if (this.options.useShadow && !this.shadowRoot) {
       this.attachShadow({ mode: 'open' });
     }
     
@@ -73,6 +73,18 @@ export class BaseComponent extends HTMLElement {
     this._renderCount = 0;
     this._lastRenderTime = 0;
     this._totalRenderTime = 0;
+    
+    // 렌더링 타이머 초기화
+    this._renderTimer = null;
+    
+    // 디버깅 메타데이터
+    this._meta = {
+      componentName: this._componentName,
+      instanceId: this._componentName + '-' + Date.now(),
+      renderCount: 0,
+      updateCount: 0,
+      lastRenderTime: 0
+    };
   }
   
   /**
