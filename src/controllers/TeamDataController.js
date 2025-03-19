@@ -1,14 +1,15 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { SERVER_CONFIG } from '../config/server.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DATA_DIR = path.join(process.cwd(), 'data');
-const CURRENT_DIR = path.join(DATA_DIR, 'current');
-const ARCHIVING_DIR = path.join(DATA_DIR, 'archiving');
-const HISTORY_DIR = path.join(DATA_DIR, 'history');
+const DATA_DIR = path.join(process.cwd(), SERVER_CONFIG.DATA.ROOT_DIR);
+const CURRENT_DIR = path.join(DATA_DIR, SERVER_CONFIG.DATA.CURRENT_DIR);
+const ARCHIVING_DIR = path.join(DATA_DIR, SERVER_CONFIG.DATA.ARCHIVING_DIR);
+const HISTORY_DIR = path.join(DATA_DIR, SERVER_CONFIG.DATA.HISTORY_DIR);
 
 export class TeamDataController {
   constructor() {
