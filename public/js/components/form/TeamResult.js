@@ -5,49 +5,45 @@
 
 import store from '../../store/index.js';
 import { distributeTeams } from '../../handlers/teamConfigHandlers.js';
+import { BaseComponent } from '../BaseComponent.js';
+import { saveTeamData } from '../../utils/api.js';
+import { showUIError } from '../../handlers/uiHandlers.js';
 
 /**
  * 팀 배분 결과 컴포넌트
  */
-export class TeamResult extends HTMLElement {
+export class TeamResult extends BaseComponent {
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
+    
+    // Shadow DOM이 이미 존재하는지 확인
+    if (!this.shadowRoot) {
+      this.attachShadow({ mode: 'open' });
+    }
+    
     this._isFirstRender = true;
-    this.teams = [];
-    this.unsubscribe = null;
     this._state = {
       teamCount: 0,
       totalMembers: 0,
       members: [],
+      teams: [],
       isTeamCountConfirmed: false,
-      isTotalConfirmed: false
+      isTotalConfirmed: false,
+      isDistributed: false
     };
+
+    // 스토어 구독 설정
+    this.unsubscribe = store.subscribe((state) => {
+      this.updateFromStore(state);
+      this.updateView();
+    });
   }
 
   connectedCallback() {
-    // 스토어 상태 구독 설정
-    this.unsubscribe = store.subscribe((state) => {
-      // 상태 업데이트
-      this._state.members = [...state.members];
-      this._state.totalMembers = state.totalMembers;
-      this._state.isTotalConfirmed = state.isTotalConfirmed;
-      this._state.teamCount = state.teamCount;
-      this._state.isTeamCountConfirmed = state.isTeamCountConfirmed;
-      
-      console.log('TeamResult 상태 업데이트:', {
-        members: this._state.members.length,
-        totalMembers: this._state.totalMembers,
-        isTotalConfirmed: this._state.isTotalConfirmed,
-        teamCount: this._state.teamCount,
-        isTeamCountConfirmed: this._state.isTeamCountConfirmed
-      });
-      
-      // UI 업데이트
-      this.updateView();
-    });
-    
     this.initializeComponent();
+    // 초기 상태로 UI 업데이트
+    this.updateFromStore(store.getState());
+    this.updateView();
   }
   
   disconnectedCallback() {
@@ -239,10 +235,6 @@ export class TeamResult extends HTMLElement {
     `;
     
     this.addEventListeners();
-    
-    // 초기 상태로 UI 업데이트
-    this.updateFromStore(store.getState());
-    this.updateView();
   }
 
   addEventListeners() {
@@ -251,17 +243,23 @@ export class TeamResult extends HTMLElement {
         this.shuffleTeams();
       } else if (e.target.matches('.decide-teams')) {
         this.decideTeams();
+      } else if (e.target.matches('.save-teams')) {
+        this.handleSaveTeams();
       }
     });
   }
   
   updateFromStore(state) {
-    // 상태 업데이트
-    this._state.members = [...state.members];
-    this._state.totalMembers = state.totalMembers;
-    this._state.isTotalConfirmed = state.isTotalConfirmed;
-    this._state.teamCount = state.teamCount;
-    this._state.isTeamCountConfirmed = state.isTeamCountConfirmed;
+    this._state = {
+      ...this._state,
+      totalMembers: state.totalMembers,
+      isTotalConfirmed: state.isTotalConfirmed,
+      teamCount: state.teamCount,
+      isTeamCountConfirmed: state.isTeamCountConfirmed,
+      teams: state.teams || [],
+      isDistributed: state.isDistributed,
+      members: state.members || []
+    };
   }
 
   shuffleTeams() {
@@ -271,7 +269,6 @@ export class TeamResult extends HTMLElement {
     }
     
     try {
-      // distributeTeams 함수를 사용하여 팀 구성
       console.log('팀 분배 함수 호출 전 상태:', {
         members: this._state.members,
         teamCount: this._state.teamCount,
@@ -281,20 +278,33 @@ export class TeamResult extends HTMLElement {
       const distributedTeams = distributeTeams();
       
       if (distributedTeams && distributedTeams.length > 0) {
-        this.teams = distributedTeams;
-        console.log('팀 분배 성공:', this.teams);
+        // store 상태 업데이트
+        store.dispatch({
+          type: 'SET_TEAMS',
+          payload: {
+            teams: distributedTeams,
+            isDistributed: true
+          }
+        });
+        console.log('팀 분배 성공:', distributedTeams);
       } else {
-        // 직접 팀 분배 로직 구현 (문제가 있는 경우 대비)
         console.warn('기본 팀 분배 함수 실패, 대체 로직 사용');
         
         const shuffled = [...this._state.members].sort(() => Math.random() - 0.5);
         const teamSize = Math.ceil(shuffled.length / this._state.teamCount);
-        this.teams = Array.from({ length: this._state.teamCount }, (_, i) => 
+        const teams = Array.from({ length: this._state.teamCount }, (_, i) => 
           shuffled.slice(i * teamSize, (i + 1) * teamSize)
         );
+
+        // store 상태 업데이트
+        store.dispatch({
+          type: 'SET_TEAMS',
+          payload: {
+            teams,
+            isDistributed: true
+          }
+        });
       }
-      
-      this.updateView();
     } catch (error) {
       console.error('팀 섞기 중 오류 발생:', error);
     }
@@ -322,7 +332,7 @@ export class TeamResult extends HTMLElement {
     if (!container) return;
     
     // 팀 배분 결과가 없는 경우
-    if (!this.teams.length) {
+    if (!this._state.teams.length) {
       let message = "팀 구성 결과가 여기에 표시됩니다.";
       let statusClass = "info";
       let showDecideButton = false;
@@ -379,11 +389,11 @@ export class TeamResult extends HTMLElement {
     }
     
     // 팀별 인원 수 계산
-    const teamSizes = this.teams.map(team => team.length);
+    const teamSizes = this._state.teams.map(team => team.length);
     const totalMembers = teamSizes.reduce((sum, size) => sum + size, 0);
     
     // 팀 구성 결과 표시
-    const teamsHtml = this.teams.map((team, index) => `
+    const teamsHtml = this._state.teams.map((team, index) => `
       <div class="team-item">
         <h3 class="team-item__title">Team ${index + 1} <span class="team-size">(${team.length}명)</span></h3>
         <div class="team-item__members">
@@ -403,12 +413,28 @@ export class TeamResult extends HTMLElement {
           </div>
           <div class="button-group mt-4">
             <button class="btn btn--secondary shuffle-teams">팀 재구성</button>
+            <button class="btn save-teams">저장하기</button>
           </div>
         </div>
       </div>
     `;
     
     this._isFirstRender = false;
+  }
+
+  // 팀 데이터 저장 처리
+  async handleSaveTeams() {
+    try {
+      const result = await saveTeamData({ teams: this._state.teams });
+      if (result.success) {
+        alert('팀 구성 정보가 성공적으로 저장되었습니다.');
+      } else {
+        showUIError('팀 구성 정보 저장에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('팀 저장 중 오류 발생:', error);
+      showUIError('팀 구성 정보 저장 중 오류가 발생했습니다.');
+    }
   }
 }
 
