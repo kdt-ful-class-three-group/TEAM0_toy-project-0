@@ -20,6 +20,7 @@ export class MainPanel extends BaseComponent {
       deferRender: false // 초기 렌더링을 지연하지 않음
     });
     this.unsubscribe = null;
+    this._componentsInitialized = false;
   }
 
   initialize() {
@@ -76,11 +77,11 @@ export class MainPanel extends BaseComponent {
       </style>
       
       <div class="main-panel" id="main-panel-container">
-        <div class="left-panel">
-          <team-result></team-result>
+        <div class="left-panel" id="left-panel-container">
+          <!-- team-result 컴포넌트가 여기에 프로그래매틱하게 추가됩니다 -->
         </div>
-        <div class="right-panel">
-          <member-list></member-list>
+        <div class="right-panel" id="right-panel-container">
+          <!-- member-list 컴포넌트가 여기에 프로그래매틱하게 추가됩니다 -->
         </div>
         <div class="completion-message">
           작성 완료! 모든 멤버가 등록되었습니다.
@@ -101,37 +102,39 @@ export class MainPanel extends BaseComponent {
     // 이벤트 구독 해제 함수 등록
     this.addUnsubscriber(this.unsubscribe);
     
-    console.log('MainPanel: 초기화 완료');
-    
     // 자식 컴포넌트 생성 확인
     this.ensureChildComponents();
+    
+    console.log('MainPanel: 초기화 완료');
   }
   
   /**
    * 자식 컴포넌트들이 생성되었는지 확인하고 필요시 생성
    */
   ensureChildComponents() {
-    setTimeout(() => {
-      const mainPanel = this.shadowRoot.getElementById('main-panel-container');
+    // 중복 호출 방지
+    if (this._componentsInitialized) {
+      return;
+    }
+    
+    const leftPanel = this.shadowRoot.getElementById('left-panel-container');
+    const rightPanel = this.shadowRoot.getElementById('right-panel-container');
+    
+    if (leftPanel && rightPanel) {
+      // team-result 컴포넌트 생성 및 추가
+      const teamResult = document.createElement('team-result');
+      leftPanel.appendChild(teamResult);
+      console.log('MainPanel: team-result 컴포넌트 생성됨');
       
-      if (mainPanel) {
-        // team-result 컴포넌트 확인 및 생성
-        const leftPanel = mainPanel.querySelector('.left-panel');
-        if (leftPanel && !leftPanel.querySelector('team-result')) {
-          const teamResult = document.createElement('team-result');
-          leftPanel.appendChild(teamResult);
-          console.log('MainPanel: team-result 컴포넌트 생성됨');
-        }
-        
-        // member-list 컴포넌트 확인 및 생성
-        const rightPanel = mainPanel.querySelector('.right-panel');
-        if (rightPanel && !rightPanel.querySelector('member-list')) {
-          const memberList = document.createElement('member-list');
-          rightPanel.appendChild(memberList);
-          console.log('MainPanel: member-list 컴포넌트 생성됨');
-        }
-      }
-    }, 200);
+      // member-list 컴포넌트 생성 및 추가
+      const memberList = document.createElement('member-list');
+      rightPanel.appendChild(memberList);
+      console.log('MainPanel: member-list 컴포넌트 생성됨');
+      
+      this._componentsInitialized = true;
+    } else {
+      console.warn('MainPanel: 패널 컨테이너를 찾을 수 없습니다');
+    }
   }
   
   render() {
