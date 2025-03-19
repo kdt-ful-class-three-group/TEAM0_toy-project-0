@@ -10,8 +10,9 @@ export class StaticFileService {
   }
 
   async serveFile(url, res) {
+    let filePath;
     try {
-      const filePath = this.model.getFilePath(url);
+      filePath = this.model.getFilePath(url);
       const content = await this.model.getFile(filePath);
       const contentType = getContentType(filePath);
       
