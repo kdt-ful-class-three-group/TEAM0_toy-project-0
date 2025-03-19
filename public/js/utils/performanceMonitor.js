@@ -25,6 +25,7 @@ export class PerformanceMonitor {
       monitorComponents: true,     // 컴포넌트 성능 모니터링 여부
       detectLayoutThrashing: true, // 레이아웃 스래싱 감지 여부
       logToConsole: true,          // 콘솔 출력 여부
+      ignoreInactiveTab: true,     // 비활성 탭에서 FPS 경고 무시
       warningThresholds: {
         fps: 30,                   // FPS 경고 임계값
         memoryUsage: 0.8,          // 메모리 사용량 경고 임계값 (80%)
@@ -39,9 +40,13 @@ export class PerformanceMonitor {
     this.lastFrameTime = 0;
     this.fpsCheckTimer = null;
     this.rafId = null;
+    this.isTabActive = true; // 탭 활성화 상태 추적
     
     // 비동기 리스너 관련 에러 방지
     this._setupErrorHandling();
+    
+    // 탭 가시성 변경 감지
+    this._setupVisibilityChangeListener();
     
     // 서브 모니터 초기화
     this.fpsMonitor = this.options.monitorFPS ? new FPSMeter({
@@ -96,6 +101,43 @@ export class PerformanceMonitor {
         event.preventDefault();
       }
     });
+    
+    // Chrome 확장 프로그램 메시지 처리 - runtime.lastError 에러 억제
+    if (typeof chrome !== 'undefined' && chrome.runtime) {
+      const originalSendMessage = chrome.runtime.sendMessage;
+      
+      // 메시지 전송 래핑 - 에러 제어를 위해
+      chrome.runtime.sendMessage = function(...args) {
+        try {
+          const lastArg = args[args.length - 1];
+          const hasCallback = typeof lastArg === 'function';
+          
+          // 콜백이 있는 경우 래핑하여 lastError를 항상 처리
+          if (hasCallback) {
+            const originalCallback = args.pop();
+            const wrappedCallback = function(...callbackArgs) {
+              try {
+                // lastError가 있는지 확인하여 자동으로 소비
+                if (chrome.runtime.lastError) {
+                  console.debug('Chrome runtime.lastError detected and handled:', chrome.runtime.lastError.message);
+                }
+                return originalCallback.apply(this, callbackArgs);
+              } catch (err) {
+                console.debug('Error in message callback:', err);
+                return undefined;
+              }
+            };
+            args.push(wrappedCallback);
+          }
+          
+          // 원래 sendMessage 호출
+          return originalSendMessage.apply(chrome.runtime, args);
+        } catch (err) {
+          console.debug('Error wrapping chrome.runtime.sendMessage:', err);
+          return undefined;
+        }
+      };
+    }
   }
   
   /**
@@ -252,11 +294,40 @@ export class PerformanceMonitor {
   }
   
   /**
+   * 탭 가시성 변경 감지 리스너 설정
+   * @private
+   */
+  _setupVisibilityChangeListener() {
+    document.addEventListener('visibilitychange', () => {
+      this.isTabActive = document.visibilityState === 'visible';
+      
+      if (this.isTabActive) {
+        console.log('탭이 활성화되었습니다. 성능 모니터링 재개.');
+        // 탭이 다시 활성화되었을 때 카운터 재설정
+        this.frameCount = 0;
+        this.lastFrameTime = performance.now();
+      } else {
+        console.log('탭이 비활성화되었습니다. 성능 모니터링 일시 중지.');
+      }
+    });
+  }
+  
+  /**
    * FPS 업데이트 처리
    * @param {number} fps - 현재 FPS
    * @private
    */
   _handleFPSUpdate(fps) {
+    // 탭이 비활성화 상태이고 옵션에서 비활성 탭 무시가 활성화된 경우 경고 표시하지 않음
+    if (!this.isTabActive && this.options.ignoreInactiveTab) {
+      return;
+    }
+    
+    // 0 FPS는 탭이 백그라운드에 있을 가능성이 높음 - 경고로 처리하지 않음
+    if (fps === 0) {
+      return;
+    }
+    
     if (fps < this.options.fpsWarningThreshold) {
       const issue = {
         type: 'low-fps',
@@ -550,8 +621,13 @@ export class PerformanceMonitor {
       if (elapsed > 0) {
         const currentFps = Math.round(this.frameCount * 1000 / elapsed);
         
+        // 탭이 비활성화 상태이거나 FPS가 0인 경우는 무시
+        const shouldIgnore = 
+          (!this.isTabActive && this.options.ignoreInactiveTab) || 
+          currentFps === 0;
+        
         // 낮은 FPS만 기록
-        if (currentFps < this.options.fpsWarningThreshold) {
+        if (currentFps < this.options.fpsWarningThreshold && !shouldIgnore) {
           this.fpsHistory.push({ 
             timestamp: now, 
             fps: currentFps 
@@ -608,14 +684,24 @@ export class PerformanceMonitor {
 // 싱글톤 인스턴스
 const performanceMonitor = new PerformanceMonitor();
 
-// 개발 모드에서 자동 시작
-if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-  window.addEventListener('DOMContentLoaded', () => {
-    performanceMonitor.start();
-    
-    // 개발자 콘솔에서 접근할 수 있도록 전역 객체에 추가
-    window.__PERFORMANCE_MONITOR__ = performanceMonitor;
-  });
+// 이미 생성된 인스턴스가 있는지 확인하여 중복 인스턴스 방지
+if (!window.__PERFORMANCE_MONITOR_INITIALIZED__) {
+  // 개발 모드에서 자동 시작
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    window.addEventListener('DOMContentLoaded', () => {
+      // 성능 모니터 시작 전 초기화 여부 확인
+      if (!window.__PERFORMANCE_MONITOR_INITIALIZED__) {
+        performanceMonitor.start();
+        window.__PERFORMANCE_MONITOR_INITIALIZED__ = true;
+        
+        // 개발자 콘솔에서 접근할 수 있도록 전역 객체에 추가
+        window.__PERFORMANCE_MONITOR__ = performanceMonitor;
+        
+        console.log('성능 모니터링 시작됨 (싱글톤 인스턴스)');
+      }
+    });
+  }
 }
 
+export { PerformanceMonitor };
 export default performanceMonitor; 
