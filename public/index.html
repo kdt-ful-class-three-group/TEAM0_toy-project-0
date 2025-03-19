@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" class="theme-dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -13,21 +13,38 @@
     <script>
       // 외부 확장 프로그램 관련 오류 무시
       window.addEventListener('error', function(event) {
-        // Tronweb 등 타사 확장 프로그램 관련 오류 필터링
+        // Tronweb, injected.js 등 타사 확장 프로그램 관련 오류 필터링
         if (event.message && (
           event.message.includes('tronWeb') || 
           event.message.includes('contentScript') ||
-          event.message.includes('injected.js')
+          event.message.includes('injected.js') ||
+          event.message.includes('Provider initialised') ||
+          event.message.includes('TronLink') ||
+          event.message.includes('tabReply')
         )) {
           event.preventDefault();
           return true;
         }
+        
+        // 콘솔에 오류 표시
+        console.error('애플리케이션 오류 발생:', event.message);
       }, true);
       
       // process가 정의되지 않은 경우를 대비한 폴백
       if (typeof process === 'undefined') {
         window.process = { env: { NODE_ENV: 'production' } };
       }
+      
+      // 성능 모니터 관련 오류 방지
+      window.addEventListener('unhandledrejection', function(event) {
+        if (event.reason && (
+          String(event.reason).includes('performance') || 
+          String(event.reason).includes('monitor')
+        )) {
+          console.warn('성능 모니터링 관련 오류:', event.reason);
+          event.preventDefault();
+        }
+      });
     </script>
     
     <!-- 기본 스타일시트 -->
@@ -57,6 +74,6 @@
     <store-demo></store-demo>
 
     <!-- 앱 진입점 -->
-    <script type="module" src="js/app.js"></script>
+    <script type="module" src="js/main.js"></script>
   </body>
 </html>
