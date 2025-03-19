@@ -5,7 +5,7 @@
 
 import { BaseComponent } from '../BaseComponent.js';
 import { connect } from '../../store/connect.js';
-import { actionCreators } from '../../store/index.js';
+import store, { actionCreators } from '../../store/index.js';
 
 /**
  * 스토어 데모 컴포넌트
