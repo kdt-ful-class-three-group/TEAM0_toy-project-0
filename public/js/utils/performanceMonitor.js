@@ -3,8 +3,11 @@
  * @description 애플리케이션 전체의 성능을 모니터링하는 유틸리티
  */
 
-import { FPSMeter, MemoryMonitor, monitorResourceLoading } from './performance.js';
-import { layoutMonitor } from './performance.js';
+import { FPSMeter, MemoryMonitor, monitorResourceLoading, LayoutThrashingMonitor } from './performance.js';
+// import { layoutMonitor } from './performance.js';
+
+// layoutMonitor 인스턴스 생성
+const layoutMonitor = new LayoutThrashingMonitor();
 
 /**
  * 애플리케이션 성능 모니터링 도구
