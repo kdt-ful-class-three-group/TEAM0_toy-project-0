@@ -72,33 +72,42 @@ export const generateUniqueNameWithSuffix = (baseName, existingNames) => {
       return baseName;
     }
     
-    // 사용된 접미사 번호 추출
-    const usedSuffixes = sameBaseNames
-      .map(name => {
-        if (name === baseName) return 0;
-        
-        // "이름-접미사" 형태인 경우만 처리
-        if (name.includes('-')) {
-          const parts = name.split('-');
-          if (parts[0] === baseName && parts.length > 1) {
-            const suffix = parseInt(parts[1], 10);
-            return isNaN(suffix) ? 0 : suffix;
-          }
-        }
-        return 0;
-      })
-      .filter(n => n >= 0);
+    // 접미사가 없는 원본 이름이 있는지 확인
+    const hasOriginalWithoutSuffix = exactMatch;
     
-    // 다음 접미사 번호 결정 (최대값 + 1 또는 1)
-    let nextSuffix = 1;
-    if (usedSuffixes.length > 0) {
-      nextSuffix = Math.max(...usedSuffixes) + 1;
-    } else if (exactMatch) {
-      // 정확히 일치하는 이름이 있고, 접미사가 없는 경우 접미사 1 사용
-      nextSuffix = 1;
+    // 결과 배열 - 수정이 필요한 경우 여기에 저장 (실제 수정은 호출자가 수행)
+    let result = {
+      namesToUpdate: [], // {originalName, newName} 형태로 업데이트가 필요한 이름들
+      newName: '' // 새로 추가할 이름
+    };
+    
+    // 접미사가 있는 이름 중 가장 큰 접미사 번호 찾기
+    let maxSuffix = 0;
+    sameBaseNames.forEach(name => {
+      if (name.includes('-')) {
+        const parts = name.split('-');
+        const suffix = parseInt(parts[1], 10);
+        if (!isNaN(suffix) && suffix > maxSuffix) {
+          maxSuffix = suffix;
+        }
+      }
+    });
+    
+    // 원본 이름(접미사 없음)이 있는 경우, 이를 -1 접미사로 바꿔야 함
+    if (hasOriginalWithoutSuffix) {
+      result.namesToUpdate.push({
+        originalName: baseName,
+        newName: `${baseName}-1`
+      });
+      
+      if (maxSuffix < 1) maxSuffix = 1;
     }
     
-    return `${baseName}-${nextSuffix}`;
+    // 새 이름에는 다음 번호 부여 (최대값 + 1)
+    result.newName = `${baseName}-${maxSuffix + 1}`;
+    
+    // 결과 객체 반환 - 호출자가 이를 사용하여 적절한 업데이트 수행
+    return result.newName;
   } catch (error) {
     logger.error('이름 생성 중 오류 발생', { baseName, error });
     return `${baseName}-${Date.now().toString().slice(-4)}`;
