@@ -1,6 +1,6 @@
 import { BaseComponent } from './BaseComponent.js';
 import { renderMemberList } from '../renderers/index.js';
-import store from '../store/index.js';
+import store, { actionCreators } from '../store/index.js';
 import { memoize } from '../utils/performance.js';
 import { ACTION_TYPES } from '../store/actions.js';
 import { showUIError } from '../handlers/uiHandlers.js';
@@ -406,18 +406,11 @@ export class MemberList extends BaseComponent {
    */
   handleMemberDelete(index) {
     console.log(`MemberList: 멤버 삭제 (인덱스: ${index})`);
-    
-    try {
-      // 액션 디스패치
-      store.dispatch({
-        type: ACTION_TYPES.DELETE_MEMBER,
-        payload: { index }
-      });
-      
-      console.log('멤버 삭제 후 목록:', store.getState().members);
-    } catch (error) {
-      console.error('멤버 삭제 중 오류 발생:', error);
-    }
+    // 스토어 액션 디스패치 - 멤버 삭제
+    store.dispatch({
+      type: ACTION_TYPES.DELETE_MEMBER,
+      payload: { index }
+    });
   }
 
   /**
@@ -513,142 +506,85 @@ export class MemberList extends BaseComponent {
    * 멤버 이름 업데이트
    */
   updateMemberName(newSuffix, index) {
-    console.log(`MemberList: 멤버 이름 업데이트 (인덱스: ${index}, 새 접미사: ${newSuffix})`);
+    // 공백 제거 및 유효성 검사
+    const trimmedSuffix = newSuffix.trim();
     
-    try {
-      const members = [...store.getState().members];
-      const member = members[index];
-      
-      if (!member) {
-        console.error(`멤버를 찾을 수 없음: 인덱스 ${index}`);
-        return;
-      }
-      
-      // 멤버 이름 형태 확인 (문자열 또는 객체)
-      const isStringMember = typeof member === 'string';
-      
-      if (isStringMember) {
-        // 문자열 형태의 멤버
-        let baseName = member;
-        
-        // 기존에 '-' 있는지 확인 (접미사가 있는지)
-        if (member.includes('-')) {
-          baseName = member.split('-')[0];
-        }
-        
-        // 새 이름 생성
-        let updatedName = baseName;
-        if (newSuffix && newSuffix.trim() !== '') {
-          updatedName = `${baseName}-${newSuffix.trim()}`;
-        }
-        
-        console.log(`멤버 이름 변경: "${member}" -> "${updatedName}"`);
-        members[index] = updatedName;
-      } else {
-        // 객체 형태의 멤버
-        // 객체 형태는 멤버 목록 로직에 명시된 대로 처리
-        console.log('객체 형태의 멤버 업데이트는 아직 구현되지 않았습니다.');
-      }
-      
-      // 스토어 업데이트
-      store.dispatch({
-        type: ACTION_TYPES.EDIT_MEMBER,
-        payload: { index, newName: members[index] }
-      });
-      
-      // 편집 모드 종료
-      this.updateState({ editingIndex: -1 });
-    } catch (error) {
-      console.error('멤버 이름 업데이트 중 오류 발생:', error);
+    if (!trimmedSuffix) {
+      showUIError('멤버 이름을 입력해주세요.');
+      return false;
     }
+    
+    const memberName = `멤버 ${trimmedSuffix}`;
+    
+    // 기존 멤버 확인
+    const existingMemberIndex = this.state.members.findIndex((name, i) => 
+      i !== index && name === memberName
+    );
+    
+    if (existingMemberIndex !== -1) {
+      showUIError(`이미 같은 이름의 멤버가 있습니다: ${memberName}`);
+      return false;
+    }
+    
+    // 스토어 액션 디스패치 - 멤버 이름 변경
+    store.dispatch({
+      type: ACTION_TYPES.EDIT_MEMBER,
+      payload: {
+        index,
+        newName: memberName
+      }
+    });
+    
+    // 편집 모드 종료
+    this.cancelEdit();
+    return true;
   }
 
   /**
    * 멤버 추가 처리
    */
   handleAddMember(inputElement) {
-    if (!inputElement) {
-      console.error('MemberList: 입력 요소가 없습니다');
-      return;
-    }
+    // 입력값 가져오기
+    const memberName = inputElement.value.trim();
     
-    const name = inputElement.value.trim();
-    if (!name) {
-      this.shakeElement(inputElement);
-      showUIError(inputElement, '멤버 이름을 입력해주세요');
-      return;
-    }
-    
-    // 설정 완료 여부 확인
-    const { totalMembers, members, isTotalConfirmed, isTeamCountConfirmed } = this.state;
-    if (!isTotalConfirmed || !isTeamCountConfirmed) {
-      this.shakeElement(inputElement);
-      showUIError(inputElement, '총원 설정과 팀 구성을 먼저 완료해주세요');
-      return;
-    }
-    
-    // 총원 초과 검사
-    if (members.length >= totalMembers) {
-      this.shakeElement(inputElement);
-      showUIError(inputElement, '더 이상 멤버를 추가할 수 없습니다');
-      return;
-    }
-    
-    console.log(`멤버 추가 실행: "${name}"`);
-    
-    try {
-      // 메시지 상태 요소 찾기
-      const statusMessageElement = this.shadowRoot.querySelector('.member-status-message');
-      
-      // 멤버 추가 액션 디스패치
-      store.dispatch({
-        type: ACTION_TYPES.ADD_MEMBER,
-        payload: { memberName: name }
-      });
-      
-      // 추가 결과 확인
-      const afterState = store.getState();
-      const wasAdded = afterState.members.length > members.length;
-      
-      if (wasAdded) {
-        console.log('멤버가 성공적으로 추가되었습니다:', afterState.members);
-        
-        // 상태 업데이트하고 강제 렌더링
-        this.updateState({
-          members: [...afterState.members]
-        });
-        
-        // 명시적으로 UI를 강제 업데이트
-        this.forceUpdate();
-        
-        // 새로 추가된 멤버 이름 확인
-        const addedMember = afterState.members[afterState.members.length - 1];
-        
-        // 성공 메시지 표시
-        if (statusMessageElement) {
-          showUIError(statusMessageElement, `"${addedMember}" 멤버가 추가되었습니다!`, 'success');
-        }
-      } else {
-        console.warn('멤버 추가가 처리되지 않았습니다');
-        if (statusMessageElement) {
-          showUIError(statusMessageElement, '멤버 추가에 실패했습니다', 'error');
-        }
-      }
-    } catch (error) {
-      console.error('멤버 추가 중 오류 발생:', error);
-      const statusMessageElement = this.shadowRoot.querySelector('.member-status-message');
-      if (statusMessageElement) {
-        showUIError(statusMessageElement, '오류가 발생했습니다', 'error');
-      }
-    }
-    
-    // 입력창 초기화 및 포커스
-    inputElement.value = '';
-    
-    // 약간의 지연 후 포커스 (모바일 키보드 문제 방지)
-    setTimeout(() => {
+    // 유효성 검사
+    if (!memberName) {
       inputElement.focus();
-    }, 50);
+      this.shakeElement(inputElement);
+      showUIError('멤버 이름을 입력해주세요.');
+      return;
+    }
+    
+    // 멤버 이름 일관성 확인 - "멤버" 접두사 확인
+    const formattedName = memberName.startsWith('멤버 ') ? memberName : `멤버 ${memberName}`;
+    
+    // 중복 체크
+    if (this.state.members.includes(formattedName)) {
+      inputElement.focus();
+      this.shakeElement(inputElement);
+      showUIError(`이미 존재하는 멤버 이름입니다: ${formattedName}`);
+      return;
+    }
+    
+    // 총원 제한 체크
+    if (this.state.isTotalConfirmed && this.state.members.length >= this.state.totalMembers) {
+      inputElement.focus();
+      this.shakeElement(inputElement);
+      showUIError(`최대 ${this.state.totalMembers}명까지만 추가할 수 있습니다.`);
+      return;
+    }
+    
+    // 스토어 액션 디스패치 - 멤버 추가
+    store.dispatch({
+      type: ACTION_TYPES.ADD_MEMBER,
+      payload: {
+        memberName: formattedName
+      }
+    });
+    
+    // 입력 필드 초기화
+    inputElement.value = '';
+    inputElement.focus();
   }
 
   /**
