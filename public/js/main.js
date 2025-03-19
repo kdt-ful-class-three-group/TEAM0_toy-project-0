@@ -6,6 +6,7 @@
 import { registerComponents } from './components/index.js';
 import { initializeTheme } from './design/theme.js';
 import renderingMonitor from './utils/renderingMonitor.js';
+import store from './store/index.js';
 
 // 성능 모니터링 모듈 기본값 설정
 let performanceMonitor = {
@@ -54,6 +55,16 @@ const initializeApp = async () => {
     
     // 웹 컴포넌트 등록
     registerComponents();
+
+    // 전역 스토어 초기화 상태 확인
+    console.log('스토어 초기 상태:', store.getState());
+    
+    // 스토어 변경 로깅 (개발 모드에서만)
+    if (isDevelopment) {
+      store.subscribe((state) => {
+        console.log('스토어 상태 변경:', state);
+      });
+    }
     
     // 성능 모니터링 모듈 로드 시도 (개발 모드에서만)
     if (isDevelopment) {
