@@ -4,6 +4,7 @@
  */
 
 import { showUIError } from '../../handlers/uiHandlers.js';
+import { saveTeamData } from '../../utils/api.js';
 
 /**
  * 멤버 목록 컨트롤러 클래스
@@ -283,5 +284,31 @@ export class MemberListController {
     // 구독 해제
     this.model.off('change', this.handleModelChange);
     this.model.off('editingChange', this.handleEditingChange);
+  }
+
+  /**
+   * 팀 데이터 저장
+   * @param {Array} teams - 팀 구성 정보 배열
+   */
+  async handleSaveTeamData(teams) {
+    try {
+      const result = await saveTeamData({ teams });
+      if (result.success) {
+        console.log('팀 데이터가 성공적으로 저장되었습니다.');
+      } else {
+        console.warn('팀 데이터 저장에 실패했습니다:', result.message);
+      }
+    } catch (error) {
+      console.error('팀 데이터 저장 중 오류 발생:', error);
+      showUIError('팀 데이터 저장 중 오류가 발생했습니다.');
+    }
+  }
+
+  /**
+   * 팀 구성 완료 처리
+   */
+  handleTeamCompositionComplete(teams) {
+    console.log('팀 구성이 완료되었습니다:', teams);
+    this.handleSaveTeamData(teams);
   }
 } 
