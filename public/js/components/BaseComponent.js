@@ -236,52 +236,107 @@ export class BaseComponent extends HTMLElement {
         if (this.options.optimizeUpdates) {
           // 가상 DOM 스타일 차이 감지
           if (this.shadowRoot) {
-            // 이전 내용과 다른 경우만 업데이트
-            if (oldInnerHTML !== html) {
-              // 이전 DOM 요소 참조 저장
-              const focusedElement = this.shadowRoot.activeElement;
-              const focusElementId = focusedElement ? focusedElement.id : null;
-              
-              // DOM 업데이트
+            console.log(`${this._componentName}: 렌더링 수행 중`);
+            
+            // 효율적인 업데이트를 위해 HTML 파싱
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            
+            // 루트 컨테이너 확인
+            const newContainer = tempDiv.firstElementChild;
+            const currentContainer = this.shadowRoot.firstElementChild;
+            
+            // 컨테이너가 있고 클래스가 같은 경우 부분 업데이트 수행
+            if (currentContainer && newContainer && 
+                currentContainer.className === newContainer.className) {
+              console.log(`${this._componentName}: 부분 DOM 업데이트 수행`);
+              // 기존 컨테이너 요소 내용을 교체 (이벤트 리스너 보존)
+              this._updateContainer(currentContainer, newContainer);
+            } else {
+              // 완전히 다른 경우 전체 교체
+              console.log(`${this._componentName}: 전체 DOM 교체`);
               this.shadowRoot.innerHTML = html;
-              
-              // 필요시 포커스 복원
-              if (focusElementId) {
-                const newFocusElement = this.shadowRoot.getElementById(focusElementId);
-                if (newFocusElement) newFocusElement.focus();
-              }
-              
-              // 렌더링 이후 콜백 호출
-              this._callAfterRender();
             }
           } else {
             this.innerHTML = html;
-            this._callAfterRender();
           }
         } else {
-          // 최적화 비활성화 상태
+          // 최적화 없이 항상 전체 DOM 업데이트
           if (this.shadowRoot) {
             this.shadowRoot.innerHTML = html;
           } else {
             this.innerHTML = html;
           }
-          this._callAfterRender();
         }
       }
+      
+      // 렌더링 후 처리 호출
+      this._callAfterRender();
+      
+      // 렌더링 통계 업데이트
+      this._renderCount++;
+      const renderTime = performance.now() - startTime;
+      this._lastRenderTime = renderTime;
+      this._totalRenderTime += renderTime;
+      
+      if (renderTime > 50) {
+        console.warn(`${this._componentName}: 느린 렌더링 감지 (${renderTime.toFixed(2)}ms)`);
+      }
     } catch (error) {
-      console.error(`${this.constructor.name} 렌더링 중 오류 발생:`, error);
+      console.error(`${this._componentName}: 렌더링 오류`, error);
     }
-    
-    // 렌더링 통계 측정 종료
-    const endTime = performance.now();
-    this._renderCount++;
-    this._lastRenderTime = endTime - startTime;
-    this._totalRenderTime += this._lastRenderTime;
-    
-    if (this._lastRenderTime > 16.7) { // 60fps 기준 임계값
-      console.warn(
-        `${this.constructor.name} 컴포넌트의 렌더링이 느립니다: ${this._lastRenderTime.toFixed(2)}ms`
-      );
+  }
+  
+  /**
+   * 컨테이너 내용을 효율적으로 업데이트
+   * @private
+   */
+  _updateContainer(currentContainer, newContainer) {
+    try {
+      // 자식 노드 비교 및 업데이트
+      const currentChildren = Array.from(currentContainer.children);
+      const newChildren = Array.from(newContainer.children);
+      
+      // 1. 새로운 자식들에게 없는 기존 자식들 제거
+      for (let i = currentChildren.length - 1; i >= 0; i--) {
+        const child = currentChildren[i];
+        const id = child.id || child.className;
+        const exists = newChildren.some(newChild => 
+          (newChild.id && newChild.id === child.id) || 
+          (newChild.className && newChild.className === child.className)
+        );
+        if (!exists) {
+          child.remove();
+        }
+      }
+      
+      // 2. 새로운 자식들 추가 또는 업데이트
+      for (let i = 0; i < newChildren.length; i++) {
+        const newChild = newChildren[i];
+        const id = newChild.id || newChild.className;
+        
+        // 기존에 있는지 확인
+        const existingChild = currentContainer.querySelector(`#${newChild.id}`) || 
+                             Array.from(currentContainer.children)
+                               .find(c => c.className && c.className === newChild.className);
+        
+        if (existingChild) {
+          // 내용이 다른 경우 업데이트
+          if (existingChild.innerHTML !== newChild.innerHTML) {
+            existingChild.innerHTML = newChild.innerHTML;
+          }
+        } else {
+          // 없으면 새로 추가
+          currentContainer.appendChild(newChild.cloneNode(true));
+        }
+      }
+      
+      return true;
+    } catch (error) {
+      console.error(`${this._componentName}: 컨테이너 업데이트 오류`, error);
+      // 오류 발생 시 전체 내용 교체
+      currentContainer.innerHTML = newContainer.innerHTML;
+      return false;
     }
   }
   
