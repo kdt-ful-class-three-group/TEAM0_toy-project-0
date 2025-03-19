@@ -20,7 +20,8 @@ export class TeamDistributor extends BaseComponent {
     
     // 상태 구독 초기화
     this.state = {
-      isInitialized: false
+      isInitialized: false,
+      childComponentsCreated: false // 자식 컴포넌트 생성 상태 추적
     };
   }
 
@@ -168,45 +169,68 @@ export class TeamDistributor extends BaseComponent {
   
   // 자식 컴포넌트 생성 메서드
   createChildComponents() {
+    // 이미 생성한 경우 중복 생성 방지
+    if (this.state.childComponentsCreated) {
+      console.log('TeamDistributor: 자식 컴포넌트가 이미 생성되었습니다');
+      return;
+    }
+    
     // 컴포넌트 생성을 함수로 분리하여 가독성 향상
     const createAndAppend = (tagName, slotName) => {
       // 이미 존재하는지 확인
-      if (this.querySelector(`[slot="${slotName}"]`)) {
+      const existing = this.querySelector(`[slot="${slotName}"]`);
+      if (existing) {
         console.log(`TeamDistributor: ${tagName} 컴포넌트가 이미 존재함`);
-        return;
+        return existing;
       }
       
-      const element = document.createElement(tagName);
-      element.setAttribute('slot', slotName);
-      this.appendChild(element);
-      console.log(`TeamDistributor: ${tagName} 컴포넌트 생성됨`);
-      return element;
+      try {
+        const element = document.createElement(tagName);
+        element.setAttribute('slot', slotName);
+        this.appendChild(element);
+        console.log(`TeamDistributor: ${tagName} 컴포넌트 생성됨`);
+        return element;
+      } catch (error) {
+        console.error(`TeamDistributor: ${tagName} 컴포넌트 생성 중 오류 발생`, error);
+        return null;
+      }
     };
     
-    // 네비게이션 컴포넌트 제거 (새 레이아웃에서는 사용하지 않음)
-    // createAndAppend('nav-component', 'nav');
-    
     // 메인 패널과 폼 패널 생성
-    createAndAppend('main-panel', 'main');
-    createAndAppend('form-panel', 'form');
+    const mainPanel = createAndAppend('main-panel', 'main');
+    const formPanel = createAndAppend('form-panel', 'form');
+    
+    // 모든 자식 컴포넌트 생성 성공 여부 표시
+    this.state.childComponentsCreated = !!(mainPanel && formPanel);
+    
+    return this.state.childComponentsCreated;
   }
 
   // 자식 컴포넌트 존재 확인 및 생성
   ensureChildComponents() {
-    // 각 슬롯별로 컴포넌트 확인하여 누락된 것만 생성
-    const navComponent = this.querySelector('[slot="nav"]');
+    // 이미 모든 자식 컴포넌트가 생성된 경우 스킵
+    if (this.state.childComponentsCreated) {
+      return true;
+    }
+    
+    // 각 슬롯별로 컴포넌트 확인
     const mainPanel = this.querySelector('[slot="main"]');
     const formPanel = this.querySelector('[slot="form"]');
     
     console.log('TeamDistributor: 자식 컴포넌트 확인', {
-      navComponent: !!navComponent,
+      navComponent: false, // 더 이상 사용하지 않음
       mainPanel: !!mainPanel,
       formPanel: !!formPanel
     });
     
-    if (!navComponent || !mainPanel || !formPanel) {
+    // 누락된 컴포넌트가 있으면 생성
+    if (!mainPanel || !formPanel) {
       console.log('TeamDistributor: 누락된 자식 컴포넌트 생성');
-      this.createChildComponents();
+      return this.createChildComponents();
     }
+    
+    // 이미 모든 자식 컴포넌트가 존재하면 상태 업데이트
+    this.state.childComponentsCreated = true;
+    return true;
   }
 } 
