@@ -121,35 +121,82 @@ const logError = (error) => {
 };
 
 /**
- * UI 요소에 오류 메시지를 표시합니다.
- * @param {Element} element - 오류를 표시할 요소
- * @param {string} message - 오류 메시지
- * @param {string} className - 추가할 CSS 클래스
+ * UI 요소에 메시지를 표시합니다.
+ * @param {Element} element - 메시지를 표시할 요소
+ * @param {string} message - 표시할 메시지
+ * @param {string} className - 추가할 CSS 클래스 ('error', 'success', 'info', 'warning')
  */
 export const showUIError = (element, message, className = 'error') => {
   if (!element) return;
   
-  // 클래스 추가
+  // 이전 메시지 관련 클래스 제거
+  element.classList.remove('error', 'success', 'info', 'warning');
+  
+  // 새 클래스 추가
   element.classList.add(className);
   
-  // 오류 메시지 표시
+  // 메시지 표시
   if (element.tagName === 'INPUT' || element.tagName === 'SELECT' || element.tagName === 'TEXTAREA') {
-    element.setAttribute('aria-invalid', 'true');
-    element.setAttribute('title', message);
-    
-    // 인접한 오류 메시지 요소 찾거나 생성
-    let errorElement = element.nextElementSibling;
-    if (!errorElement || !errorElement.classList.contains('error-message')) {
-      errorElement = document.createElement('div');
-      errorElement.className = 'error-message';
-      element.parentNode.insertBefore(errorElement, element.nextSibling);
+    // 폼 요소인 경우
+    if (className === 'error') {
+      element.setAttribute('aria-invalid', 'true');
+    } else {
+      element.removeAttribute('aria-invalid');
     }
     
-    errorElement.textContent = message;
-    errorElement.setAttribute('role', 'alert');
+    element.setAttribute('title', message);
+    
+    // 인접한 메시지 요소 찾거나 생성
+    let messageElement = element.nextElementSibling;
+    if (!messageElement || !messageElement.classList.contains('message-container')) {
+      messageElement = document.createElement('div');
+      messageElement.className = 'message-container';
+      element.parentNode.insertBefore(messageElement, element.nextSibling);
+    }
+    
+    // 기존 클래스 제거
+    messageElement.classList.remove('error-message', 'success-message', 'info-message', 'warning-message');
+    // 새 클래스 추가
+    messageElement.classList.add(`${className}-message`);
+    
+    messageElement.textContent = message;
+    
+    if (className === 'error' || className === 'warning') {
+      messageElement.setAttribute('role', 'alert');
+    } else {
+      messageElement.setAttribute('role', 'status');
+    }
+    
+    // 2초 후 성공/정보 메시지 사라지게 처리
+    if (className === 'success' || className === 'info') {
+      setTimeout(() => {
+        if (messageElement.parentNode) {
+          messageElement.textContent = '';
+          messageElement.removeAttribute('role');
+          messageElement.classList.remove(`${className}-message`);
+        }
+      }, 2000);
+    }
   } else {
-    element.setAttribute('role', 'alert');
+    // 일반 요소인 경우
+    if (className === 'error' || className === 'warning') {
+      element.setAttribute('role', 'alert');
+    } else {
+      element.setAttribute('role', 'status');
+    }
+    
     element.textContent = message;
+    
+    // 2초 후 성공/정보 메시지 사라지게 처리
+    if (className === 'success' || className === 'info') {
+      setTimeout(() => {
+        if (element.textContent === message) {
+          element.textContent = '';
+          element.removeAttribute('role');
+          element.classList.remove(className);
+        }
+      }, 2000);
+    }
   }
 };
 
