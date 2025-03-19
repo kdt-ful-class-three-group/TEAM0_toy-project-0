@@ -21,13 +21,22 @@ let performanceMonitor = {
  */
 const loadPerformanceMonitor = async () => {
   try {
-    const { PerformanceMonitor } = await import('./utils/performanceMonitor.js');
-    performanceMonitor = new PerformanceMonitor();
+    const { PerformanceMonitor, default: performanceMonitor } = await import('./utils/performanceMonitor.js');
+    
+    // 이미 초기화된 경우 기존 인스턴스 사용
+    if (window.__PERFORMANCE_MONITOR_INITIALIZED__) {
+      console.log('성능 모니터링 모듈이 이미 초기화되어 있습니다.');
+      return performanceMonitor;
+    }
+    
+    // 새로운 인스턴스 생성 및 설정
+    window.__PERFORMANCE_MONITOR__ = performanceMonitor;
+    window.__PERFORMANCE_MONITOR_INITIALIZED__ = true;
     console.log('성능 모니터링 모듈이 성공적으로 로드되었습니다.');
-    return true;
+    return performanceMonitor;
   } catch (error) {
     console.warn('성능 모니터링 모듈을 로드하는 중 오류가 발생했습니다:', error);
-    return false;
+    return null;
   }
 };
 
@@ -68,32 +77,36 @@ const initializeApp = async () => {
     
     // 성능 모니터링 모듈 로드 시도 (개발 모드에서만)
     if (isDevelopment) {
-      await loadPerformanceMonitor();
+      const monitor = await loadPerformanceMonitor();
       
-      try {
-        // 성능 모니터 활성화
-        performanceMonitor.start();
-        
-        // 렌더링 상태 주기적 확인
-        setInterval(() => {
-          const activeRenderings = renderingMonitor.getActiveRenderings();
-          if (activeRenderings.length > 0) {
-            console.warn('미완료된 렌더링 작업 감지:', activeRenderings);
+      if (monitor) {
+        try {
+          // 추가 성능 모니터링 옵션 설정
+          if (!monitor.isActive) {
+            monitor.options.ignoreInactiveTab = true; // 비활성 탭에서 FPS 경고 무시
+            monitor.options.fpsWarningThreshold = 25; // FPS 경고 임계값 조정
+            monitor.start();
           }
-        }, 5000);
-        
-        // 렌더링 성능 문제 이벤트 리스너
-        document.addEventListener('rendering:slow-component', (e) => {
-          console.warn('느린 렌더링 감지:', e.detail);
-        });
-        
-        // 전역 객체에 모니터링 도구 추가 (개발자 콘솔에서 접근 가능)
-        window.__RENDERING_MONITOR__ = renderingMonitor;
-        window.__PERFORMANCE_MONITOR__ = performanceMonitor;
-        
-        console.info('개발 모드: 렌더링 및 성능 모니터링 활성화');
-      } catch (e) {
-        console.warn('성능 모니터링을 시작하는 중 오류가 발생했습니다:', e);
+          
+          // 렌더링 상태 주기적 확인
+          setInterval(() => {
+            if (document.visibilityState === 'visible') { // 탭이 활성화된 상태에서만 검사
+              const activeRenderings = renderingMonitor.getActiveRenderings();
+              if (activeRenderings.length > 0) {
+                console.warn('미완료된 렌더링 작업 감지:', activeRenderings);
+              }
+            }
+          }, 5000);
+          
+          // 렌더링 성능 문제 이벤트 리스너
+          document.addEventListener('rendering:slow-component', (e) => {
+            console.warn('느린 렌더링 감지:', e.detail);
+          });
+          
+          console.info('개발 모드: 렌더링 및 성능 모니터링 활성화');
+        } catch (e) {
+          console.warn('성능 모니터링을 시작하는 중 오류가 발생했습니다:', e);
+        }
       }
     }
     
