@@ -3,6 +3,7 @@ import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { StaticFileController } from './controllers/StaticFileController.js';
+import { TeamDataController } from './controllers/TeamDataController.js';
 import { SERVER_CONFIG } from './config/server.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -72,12 +73,59 @@ const serveStaticFile = (filePath, res) => {
   });
 };
 
+// API 요청 처리
+const handleApiRequest = async (req, res) => {
+  let body = '';
+  
+  req.on('data', chunk => {
+    body += chunk.toString();
+  });
+
+  req.on('end', async () => {
+    try {
+      let data = {};
+      if (req.method === 'POST') {
+        data = JSON.parse(body);
+      }
+      
+      switch (req.url) {
+        case '/api/teams':
+          if (req.method === 'POST') {
+            const result = await teamDataController.saveTeamData(data);
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify(result));
+          } else if (req.method === 'GET') {
+            const result = await teamDataController.getCurrentTeamData();
+            res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify(result));
+          } else {
+            res.writeHead(405, { 'Content-Type': 'application/json; charset=utf-8' });
+            res.end(JSON.stringify({ error: '지원하지 않는 HTTP 메서드입니다.' }));
+          }
+          break;
+        default:
+          res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ error: 'API 엔드포인트를 찾을 수 없습니다.' }));
+      }
+    } catch (error) {
+      console.error('API 요청 처리 중 오류 발생:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ error: '서버 내부 오류가 발생했습니다.' }));
+    }
+  });
+};
+
 // 컨트롤러 초기화
-const controller = new StaticFileController(PUBLIC_DIR);
+const staticController = new StaticFileController(PUBLIC_DIR);
+const teamDataController = new TeamDataController();
 
 // 서버 생성
 const server = http.createServer((req, res) => {
-  controller.handleRequest(req, res);
+  if (req.url.startsWith('/api/')) {
+    handleApiRequest(req, res);
+  } else {
+    staticController.handleRequest(req, res);
+  }
 });
 
 // 서버 시작
