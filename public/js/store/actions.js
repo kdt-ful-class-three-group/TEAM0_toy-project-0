@@ -29,7 +29,8 @@ export const ACTION_TYPES = {
   RESET_STATE: 'RESET_STATE',
   SET_MEMBERS: 'SET_MEMBERS',
   DISTRIBUTE_TEAMS: 'DISTRIBUTE_TEAMS',
-  RESET: 'RESET'
+  RESET: 'RESET',
+  SET_TEAMS: 'SET_TEAMS'
 };
 
 // 액션 생성자 함수
@@ -141,6 +142,16 @@ export const reset = () => ({
   type: ACTION_TYPES.RESET
 });
 
+/**
+ * 팀 설정 액션 생성
+ * @param {Array} teams - 팀 배열
+ * @param {boolean} isDistributed - 분배 완료 여부
+ */
+export const setTeams = (teams, isDistributed = true) => ({
+  type: ACTION_TYPES.SET_TEAMS,
+  payload: { teams, isDistributed }
+});
+
 // 액션 생성자 객체
 export const actionCreators = {
   setTeamCount,
@@ -154,5 +165,6 @@ export const actionCreators = {
   resetTeamCount,
   resetState,
   distributeTeams,
-  reset
+  reset,
+  setTeams
 }; 
