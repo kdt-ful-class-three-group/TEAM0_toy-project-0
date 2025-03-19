@@ -139,4 +139,20 @@ export const distributeTeams = () => ({
  */
 export const reset = () => ({
   type: ACTION_TYPES.RESET
-}); 
+});
+
+// 액션 생성자 객체
+export const actionCreators = {
+  setTeamCount,
+  confirmTeamCount,
+  setTotalMembers,
+  confirmTotalMembers,
+  addMember,
+  deleteMember,
+  editMember,
+  resetTotalMembers,
+  resetTeamCount,
+  resetState,
+  distributeTeams,
+  reset
+}; 
