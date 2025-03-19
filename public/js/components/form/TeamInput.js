@@ -4,7 +4,12 @@ import { ACTION_TYPES } from '../../store/actions.js';
 class TeamInput extends HTMLElement {
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
+    
+    // Shadow DOM 중복 생성 방지
+    if (!this.shadowRoot) {
+      this.attachShadow({ mode: 'open' });
+    }
+    
     this._state = {
       teamCount: 0,
       totalMembers: 0,
@@ -12,18 +17,6 @@ class TeamInput extends HTMLElement {
       isTotalConfirmed: false,
       members: []
     };
-
-    // 상태 변경 감지를 위한 프록시 설정
-    this._state = new Proxy(this._state, {
-      set: (target, property, value) => {
-        const oldValue = target[property];
-        target[property] = value;
-        if (oldValue !== value) {
-          this.updateView();
-        }
-        return true;
-      }
-    });
 
     this.initializeComponent();
     
@@ -60,7 +53,124 @@ class TeamInput extends HTMLElement {
   initializeComponent() {
     this.shadowRoot.innerHTML = `
       <style>
-        /* ... existing styles ... */
+        :host {
+          display: block;
+          width: 100%;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+        
+        .team-input-container {
+          padding: 0;
+          margin-bottom: 16px;
+        }
+        
+        .card {
+          background-color: #121212;
+          border-radius: 8px;
+          overflow: hidden;
+          margin-bottom: 16px;
+          will-change: opacity, transform;
+        }
+        
+        .card__content {
+          padding: 16px;
+        }
+        
+        .card__title {
+          font-size: 18px;
+          font-weight: 600;
+          color: #ffffff;
+          margin: 0 0 16px 0;
+        }
+        
+        .input-wrapper {
+          margin-bottom: 12px;
+        }
+        
+        .input {
+          width: 100%;
+          padding: 12px 14px;
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 6px;
+          background-color: rgba(255, 255, 255, 0.06);
+          color: #ffffff;
+          font-size: 14px;
+          transition: all 0.2s ease;
+          box-sizing: border-box;
+        }
+        
+        .input:focus {
+          outline: none;
+          border-color: #4f46e5;
+          box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.25);
+        }
+        
+        .input::placeholder {
+          color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .input:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+        
+        .button-group {
+          display: flex;
+          gap: 8px;
+        }
+        
+        .btn {
+          display: inline-block;
+          padding: 12px 16px;
+          background-color: #4f46e5;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          flex: 1;
+        }
+        
+        .btn:hover {
+          background-color: #4338ca;
+        }
+        
+        .btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          background-color: rgba(255, 255, 255, 0.1);
+          color: rgba(255, 255, 255, 0.4);
+        }
+        
+        .btn--secondary {
+          background-color: rgba(255, 255, 255, 0.06);
+          color: rgba(255, 255, 255, 0.8);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .btn--secondary:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .status-message {
+          font-size: 13px;
+          color: rgba(255, 255, 255, 0.6);
+          text-align: center;
+          padding: 8px 0;
+          margin-top: 8px;
+          min-height: 20px;
+        }
+        
+        .error {
+          color: #ef4444;
+        }
+        
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
       </style>
       <div class="team-input-container">
         <div class="card">
@@ -105,10 +215,26 @@ class TeamInput extends HTMLElement {
     const editTeamCount = shadow.querySelector('.edit-team-count');
     const editTotal = shadow.querySelector('.edit-total');
 
+    // 팀 개수 입력 엔터키 이벤트
+    teamCountInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        confirmTeamCount.click();
+      }
+    });
+
+    // 총원 입력 엔터키 이벤트
+    totalInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        confirmTotal.click();
+      }
+    });
+
+    // 팀 개수 확인 버튼
     confirmTeamCount.addEventListener('click', () => {
       const teamCount = parseInt(teamCountInput.value);
-      if (isNaN(teamCount) || teamCount < 1) {
-        this.showError('team-status-message', '유효한 팀 개수를 입력해주세요.');
+      if (!this.validateTeamCount(teamCount)) {
         return;
       }
 
@@ -116,19 +242,13 @@ class TeamInput extends HTMLElement {
       confirmTeamCount.style.display = 'none';
       editTeamCount.style.display = 'block';
 
-      store.dispatch({
-        type: ACTION_TYPES.SET_TEAM_COUNT,
-        payload: {
-          count: teamCount,
-          isConfirmed: true
-        }
-      });
+      store.dispatch(actionCreators.setTeamCount(teamCount, true));
     });
 
+    // 총원 확인 버튼
     confirmTotal.addEventListener('click', () => {
       const totalMembers = parseInt(totalInput.value);
-      if (isNaN(totalMembers) || totalMembers < 1) {
-        this.showError('total-status-message', '유효한 인원 수를 입력해주세요.');
+      if (!this.validateTotalMembers(totalMembers)) {
         return;
       }
 
@@ -136,41 +256,27 @@ class TeamInput extends HTMLElement {
       confirmTotal.style.display = 'none';
       editTotal.style.display = 'block';
 
-      store.dispatch({
-        type: ACTION_TYPES.SET_TOTAL_MEMBERS,
-        payload: {
-          count: totalMembers,
-          isConfirmed: true
-        }
-      });
+      store.dispatch(actionCreators.setTotalMembers(totalMembers, true));
     });
 
+    // 팀 개수 수정 버튼
     editTeamCount.addEventListener('click', () => {
       teamCountInput.disabled = false;
       confirmTeamCount.style.display = 'block';
       editTeamCount.style.display = 'none';
-
-      store.dispatch({
-        type: ACTION_TYPES.SET_TEAM_COUNT,
-        payload: {
-          count: parseInt(teamCountInput.value),
-          isConfirmed: false
-        }
-      });
+      teamCountInput.focus();
+      
+      store.dispatch(actionCreators.setTeamCount(this._state.teamCount, false));
     });
 
+    // 총원 수정 버튼
     editTotal.addEventListener('click', () => {
       totalInput.disabled = false;
       confirmTotal.style.display = 'block';
       editTotal.style.display = 'none';
-
-      store.dispatch({
-        type: ACTION_TYPES.SET_TOTAL_MEMBERS,
-        payload: {
-          count: parseInt(totalInput.value),
-          isConfirmed: false
-        }
-      });
+      totalInput.focus();
+      
+      store.dispatch(actionCreators.setTotalMembers(this._state.totalMembers, false));
     });
   }
 
@@ -202,12 +308,16 @@ class TeamInput extends HTMLElement {
 
   showError(messageClass, text) {
     const messageElement = this.shadowRoot.querySelector(`.${messageClass}`);
+    if (!messageElement) return;
+    
     messageElement.textContent = text;
     messageElement.classList.add('error');
   }
 
   clearError(messageClass) {
     const messageElement = this.shadowRoot.querySelector(`.${messageClass}`);
+    if (!messageElement) return;
+    
     messageElement.textContent = '';
     messageElement.classList.remove('error');
   }
@@ -220,17 +330,19 @@ class TeamInput extends HTMLElement {
     const confirmTotal = this.shadowRoot.querySelector('.confirm-total');
     const editTotal = this.shadowRoot.querySelector('.edit-total');
 
+    if (!teamCountInput || !totalInput) return;
+
     // 팀 개수 입력 상태 업데이트
     teamCountInput.value = this._state.teamCount || '';
     teamCountInput.disabled = this._state.isTeamCountConfirmed;
-    confirmTeamCount.style.display = this._state.isTeamCountConfirmed ? 'none' : '';
-    editTeamCount.style.display = this._state.isTeamCountConfirmed ? '' : 'none';
+    confirmTeamCount.style.display = this._state.isTeamCountConfirmed ? 'none' : 'block';
+    editTeamCount.style.display = this._state.isTeamCountConfirmed ? 'block' : 'none';
 
     // 총원 입력 상태 업데이트
     totalInput.value = this._state.totalMembers || '';
     totalInput.disabled = this._state.isTotalConfirmed;
-    confirmTotal.style.display = this._state.isTotalConfirmed ? 'none' : '';
-    editTotal.style.display = this._state.isTotalConfirmed ? '' : 'none';
+    confirmTotal.style.display = this._state.isTotalConfirmed ? 'none' : 'block';
+    editTotal.style.display = this._state.isTotalConfirmed ? 'block' : 'none';
   }
 }
 
