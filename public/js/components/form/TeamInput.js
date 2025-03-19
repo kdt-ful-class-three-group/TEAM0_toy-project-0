@@ -1,3 +1,6 @@
+import store, { actionCreators } from '../../store/index.js';
+import { ACTION_TYPES } from '../../store/actions.js';
+
 class TeamInput extends HTMLElement {
   constructor() {
     super();
@@ -23,6 +26,35 @@ class TeamInput extends HTMLElement {
     });
 
     this.initializeComponent();
+    
+    // 스토어 구독
+    this.unsubscribe = store.subscribe((state) => {
+      this._state.teamCount = state.teamCount;
+      this._state.totalMembers = state.totalMembers;
+      this._state.isTeamCountConfirmed = state.isTeamCountConfirmed;
+      this._state.isTotalConfirmed = state.isTotalConfirmed;
+      this._state.members = state.members;
+      this.updateView();
+    });
+    
+    // 초기 상태 설정
+    const initialState = store.getState();
+    this._state.teamCount = initialState.teamCount;
+    this._state.totalMembers = initialState.totalMembers;
+    this._state.isTeamCountConfirmed = initialState.isTeamCountConfirmed;
+    this._state.isTotalConfirmed = initialState.isTotalConfirmed;
+    this._state.members = initialState.members;
+  }
+  
+  connectedCallback() {
+    this.updateView();
+  }
+  
+  disconnectedCallback() {
+    // 구독 해제
+    if (this.unsubscribe) {
+      this.unsubscribe();
+    }
   }
 
   initializeComponent() {
@@ -66,73 +98,79 @@ class TeamInput extends HTMLElement {
 
   addEventListeners() {
     const shadow = this.shadowRoot;
-    
-    // 팀 개수 관련 이벤트
     const teamCountInput = shadow.querySelector('.team-count-input');
+    const totalInput = shadow.querySelector('.total-members-input');
     const confirmTeamCount = shadow.querySelector('.confirm-team-count');
+    const confirmTotal = shadow.querySelector('.confirm-total');
     const editTeamCount = shadow.querySelector('.edit-team-count');
+    const editTotal = shadow.querySelector('.edit-total');
 
     confirmTeamCount.addEventListener('click', () => {
-      const value = parseInt(teamCountInput.value);
-      if (this.validateTeamCount(value)) {
-        this._state.teamCount = value;
-        this._state.isTeamCountConfirmed = true;
-        this.dispatchEvent(new CustomEvent('teamCountChanged', {
-          bubbles: true,
-          composed: true,
-          detail: { 
-            teamCount: value,
-            isConfirmed: true
-          }
-        }));
+      const teamCount = parseInt(teamCountInput.value);
+      if (isNaN(teamCount) || teamCount < 1) {
+        this.showError('team-status-message', '유효한 팀 개수를 입력해주세요.');
+        return;
       }
+
+      teamCountInput.disabled = true;
+      confirmTeamCount.style.display = 'none';
+      editTeamCount.style.display = 'block';
+
+      store.dispatch({
+        type: ACTION_TYPES.SET_TEAM_COUNT,
+        payload: {
+          count: teamCount,
+          isConfirmed: true
+        }
+      });
+    });
+
+    confirmTotal.addEventListener('click', () => {
+      const totalMembers = parseInt(totalInput.value);
+      if (isNaN(totalMembers) || totalMembers < 1) {
+        this.showError('total-status-message', '유효한 인원 수를 입력해주세요.');
+        return;
+      }
+
+      totalInput.disabled = true;
+      confirmTotal.style.display = 'none';
+      editTotal.style.display = 'block';
+
+      store.dispatch({
+        type: ACTION_TYPES.SET_TOTAL_MEMBERS,
+        payload: {
+          count: totalMembers,
+          isConfirmed: true
+        }
+      });
     });
 
     editTeamCount.addEventListener('click', () => {
-      this._state.isTeamCountConfirmed = false;
       teamCountInput.disabled = false;
-      this.dispatchEvent(new CustomEvent('teamCountChanged', {
-        bubbles: true,
-        composed: true,
-        detail: { 
-          teamCount: this._state.teamCount,
+      confirmTeamCount.style.display = 'block';
+      editTeamCount.style.display = 'none';
+
+      store.dispatch({
+        type: ACTION_TYPES.SET_TEAM_COUNT,
+        payload: {
+          count: parseInt(teamCountInput.value),
           isConfirmed: false
         }
-      }));
-    });
-
-    // 총원 설정 관련 이벤트
-    const totalInput = shadow.querySelector('.total-members-input');
-    const confirmTotal = shadow.querySelector('.confirm-total');
-    const editTotal = shadow.querySelector('.edit-total');
-
-    confirmTotal.addEventListener('click', () => {
-      const value = parseInt(totalInput.value);
-      if (this.validateTotalMembers(value)) {
-        this._state.totalMembers = value;
-        this._state.isTotalConfirmed = true;
-        this.dispatchEvent(new CustomEvent('totalMembersChanged', {
-          bubbles: true,
-          composed: true,
-          detail: { 
-            totalMembers: value,
-            isConfirmed: true
-          }
-        }));
-      }
+      });
     });
 
     editTotal.addEventListener('click', () => {
-      this._state.isTotalConfirmed = false;
       totalInput.disabled = false;
-      this.dispatchEvent(new CustomEvent('totalMembersChanged', {
-        bubbles: true,
-        composed: true,
-        detail: { 
-          totalMembers: this._state.totalMembers,
+      confirmTotal.style.display = 'block';
+      editTotal.style.display = 'none';
+
+      store.dispatch({
+        type: ACTION_TYPES.SET_TOTAL_MEMBERS,
+        payload: {
+          count: parseInt(totalInput.value),
           isConfirmed: false
         }
-      }));
+      });
     });
   }
 
