@@ -121,83 +121,140 @@ const logError = (error) => {
 };
 
 /**
- * UI 요소에 메시지를 표시합니다.
- * @param {Element} element - 메시지를 표시할 요소
- * @param {string} message - 표시할 메시지
- * @param {string} className - 추가할 CSS 클래스 ('error', 'success', 'info', 'warning')
+ * UI에 오류 메시지를 표시
+ * @param {HTMLElement|string} elementOrMessage - 오류를 표시할 요소 또는 메시지 문자열
+ * @param {string} [message] - 오류 메시지 (첫 번째 인자가 요소인 경우)
+ * @param {string} [className='error'] - 추가할 CSS 클래스
  */
-export const showUIError = (element, message, className = 'error') => {
-  if (!element) return;
-  
-  // 이전 메시지 관련 클래스 제거
-  element.classList.remove('error', 'success', 'info', 'warning');
-  
-  // 새 클래스 추가
-  element.classList.add(className);
-  
-  // 메시지 표시
-  if (element.tagName === 'INPUT' || element.tagName === 'SELECT' || element.tagName === 'TEXTAREA') {
-    // 폼 요소인 경우
-    if (className === 'error') {
-      element.setAttribute('aria-invalid', 'true');
-    } else {
-      element.removeAttribute('aria-invalid');
+export const showUIError = (elementOrMessage, message, className = 'error') => {
+  try {
+    // 첫 번째 매개변수가 문자열인 경우, 토스트 알림으로 표시
+    if (typeof elementOrMessage === 'string') {
+      // 전역 알림 표시
+      showToastMessage(elementOrMessage, message || className);
+      return;
     }
     
-    element.setAttribute('title', message);
-    
-    // 인접한 메시지 요소 찾거나 생성
-    let messageElement = element.nextElementSibling;
-    if (!messageElement || !messageElement.classList.contains('message-container')) {
-      messageElement = document.createElement('div');
-      messageElement.className = 'message-container';
-      element.parentNode.insertBefore(messageElement, element.nextSibling);
+    // 요소가 아닌 경우 반환
+    const element = elementOrMessage;
+    if (!element || !element.classList) {
+      console.warn('showUIError: 유효하지 않은 요소', element);
+      // 전역 알림으로 대체
+      showToastMessage(message, className);
+      return;
     }
     
-    // 기존 클래스 제거
-    messageElement.classList.remove('error-message', 'success-message', 'info-message', 'warning-message');
-    // 새 클래스 추가
-    messageElement.classList.add(`${className}-message`);
+    // 기존 오류 메시지 요소가 있는지 확인
+    let errorElement = element.parentNode.querySelector('.error-message');
     
-    messageElement.textContent = message;
-    
-    if (className === 'error' || className === 'warning') {
-      messageElement.setAttribute('role', 'alert');
-    } else {
-      messageElement.setAttribute('role', 'status');
+    // 없으면 새로 생성
+    if (!errorElement) {
+      errorElement = document.createElement('div');
+      errorElement.className = `error-message ${className}`;
+      element.parentNode.insertBefore(errorElement, element.nextSibling);
     }
     
-    // 2초 후 성공/정보 메시지 사라지게 처리
-    if (className === 'success' || className === 'info') {
-      setTimeout(() => {
-        if (messageElement.parentNode) {
-          messageElement.textContent = '';
-          messageElement.removeAttribute('role');
-          messageElement.classList.remove(`${className}-message`);
+    // 메시지 설정
+    errorElement.textContent = message;
+    errorElement.classList.add(className);
+    
+    // 3초 후 자동 제거
+    setTimeout(() => {
+      if (errorElement && errorElement.parentNode) {
+        errorElement.classList.add('fade-out');
+        
+        // 페이드 아웃 애니메이션 후 제거
+        setTimeout(() => {
+          if (errorElement && errorElement.parentNode) {
+            errorElement.parentNode.removeChild(errorElement);
+          }
+        }, 300);
+      }
+    }, 3000);
+    
+  } catch (error) {
+    console.error('오류 메시지 표시 중 오류 발생:', error);
+  }
+};
+
+/**
+ * 토스트 메시지 표시
+ * @param {string} message - 표시할 메시지
+ * @param {string} [type='error'] - 메시지 유형 (error, info, success)
+ */
+export const showToastMessage = (message, type = 'error') => {
+  // 기존 토스트 컨테이너 확인
+  let toastContainer = document.getElementById('toast-container');
+  
+  // 없으면 새로 생성
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'toast-container';
+    toastContainer.style.cssText = `
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 9999;
+    `;
+    document.body.appendChild(toastContainer);
+    
+    // 전역 스타일 추가
+    if (!document.getElementById('toast-styles')) {
+      const styleEl = document.createElement('style');
+      styleEl.id = 'toast-styles';
+      styleEl.textContent = `
+        .toast {
+          padding: 12px 16px;
+          border-radius: 4px;
+          margin-bottom: 8px;
+          min-width: 250px;
+          max-width: 400px;
+          color: white;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          transform: translateX(0);
+          opacity: 1;
+          transition: transform 0.3s, opacity 0.3s;
         }
-      }, 2000);
-    }
-  } else {
-    // 일반 요소인 경우
-    if (className === 'error' || className === 'warning') {
-      element.setAttribute('role', 'alert');
-    } else {
-      element.setAttribute('role', 'status');
-    }
-    
-    element.textContent = message;
-    
-    // 2초 후 성공/정보 메시지 사라지게 처리
-    if (className === 'success' || className === 'info') {
-      setTimeout(() => {
-        if (element.textContent === message) {
-          element.textContent = '';
-          element.removeAttribute('role');
-          element.classList.remove(className);
+        .toast.fade-out {
+          transform: translateX(100%);
+          opacity: 0;
         }
-      }, 2000);
+        .toast.error {
+          background-color: #ef4444;
+        }
+        .toast.success {
+          background-color: #10b981;
+        }
+        .toast.info {
+          background-color: #3b82f6;
+        }
+      `;
+      document.head.appendChild(styleEl);
     }
   }
+  
+  // 토스트 요소 생성
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  
+  // 컨테이너에 추가
+  toastContainer.appendChild(toast);
+  
+  // 3초 후 자동 제거
+  setTimeout(() => {
+    toast.classList.add('fade-out');
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+      
+      // 컨테이너가 비어있으면 제거
+      if (toastContainer.children.length === 0) {
+        document.body.removeChild(toastContainer);
+      }
+    }, 300);
+  }, 3000);
 };
 
 /**
