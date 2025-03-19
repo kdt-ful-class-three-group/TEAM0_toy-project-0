@@ -4,6 +4,7 @@ import store from '../store/index.js';
 import { memoize } from '../utils/performance.js';
 import { ACTION_TYPES } from '../store/actions.js';
 import { showUIError } from '../handlers/uiHandlers.js';
+import { initMemberListMVC } from '../mvc/index.js';
 
 /**
  * 멤버 목록 컴포넌트
@@ -20,6 +21,9 @@ export class MemberList extends BaseComponent {
       renderThrottle: 16, // 60fps에 맞춘 렌더링 최적화
       optimizeUpdates: true // DOM 업데이트 최적화 활성화
     });
+    
+    // MVC 객체 참조 초기화
+    this._mvc = null;
     
     // 상태 초기화
     this.state = {
@@ -42,48 +46,84 @@ export class MemberList extends BaseComponent {
   }
 
   /**
-   * 컴포넌트 초기화 - BaseComponent 라이프사이클 메소드
+   * 컴포넌트 초기화
+   * @override
    */
   initialize() {
     console.time('memberlist-init');
+    console.log('MemberList: 초기화 시작');
     
-    // 스토어 구독 설정
-    const unsubscribe = store.subscribe((state) => {
-      console.log('MemberList: 상태 변경 감지', { 
-        members: state.members.length, 
-        totalMembers: state.totalMembers,
-        isTotalConfirmed: state.isTotalConfirmed,
-        isTeamCountConfirmed: state.isTeamCountConfirmed 
-      });
-
-      // 상태 변경 감지 로직 개선
-      const stateChanged = 
-        !this.state.members || 
-        !Array.isArray(this.state.members) || 
-        !Array.isArray(state.members) || 
-        this.state.members.length !== state.members.length || 
-        JSON.stringify(this.state.members) !== JSON.stringify(state.members) ||
-        this.state.totalMembers !== state.totalMembers ||
-        this.state.isTotalConfirmed !== state.isTotalConfirmed ||
-        this.state.isTeamCountConfirmed !== state.isTeamCountConfirmed;
-      
-      if (stateChanged) {
-        console.log('MemberList: 상태 업데이트 필요', { 
-          oldState: { 
-            members: this.state.members?.length, 
-            totalMembers: this.state.totalMembers,
-            isTotalConfirmed: this.state.isTotalConfirmed,
-            isTeamCountConfirmed: this.state.isTeamCountConfirmed
-          }, 
-          newState: { 
-            members: state.members.length, 
-            totalMembers: state.totalMembers,
-            isTotalConfirmed: state.isTotalConfirmed,
-            isTeamCountConfirmed: state.isTeamCountConfirmed
-          } 
-        });
+    // 초기 렌더링 - 스타일 추가 및 로딩 컨테이너 생성
+    this.shadowRoot.innerHTML = `
+      <style>
+        :host {
+          display: block;
+          width: 100%;
+          height: 100%;
+          color: #ffffff;
+        }
         
-        this.updateState({ 
+        .member-list-container-wrapper {
+          background-color: #121212;
+          border-radius: 8px;
+          overflow: hidden;
+          height: 100%;
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+        }
+        
+        .loading-indicator {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 200px;
+          color: rgba(255, 255, 255, 0.6);
+          font-size: 16px;
+          position: relative;
+          padding-left: 30px;
+          flex-grow: 1;
+        }
+        
+        .loading-indicator::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          width: 24px;
+          height: 24px;
+          border-radius: 50%;
+          border: 3px solid rgba(255, 255, 255, 0.1);
+          border-top-color: #4f46e5;
+          animation: spinner 0.8s linear infinite;
+        }
+        
+        @keyframes spinner {
+          to { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+          color: #ff5555;
+          padding: 12px;
+          background-color: rgba(255, 85, 85, 0.1);
+          border-radius: 4px;
+          border-left: 3px solid #ff5555;
+          margin: 12px;
+          font-size: 14px;
+        }
+      </style>
+      
+      <div id="member-list-container" class="member-list-container-wrapper">
+        <div class="loading-indicator">
+          멤버 목록을 불러오는 중...
+        </div>
+      </div>
+    `;
+    
+    // 스토어 구독 설정 - 초기화 단계에서 설정
+    const storeUnsubscribe = store.subscribe((state) => {
+      if (!this._mvc) {
+        // MVC가 초기화되기 전에도 상태 업데이트
+        this.updateState({
           members: [...state.members],
           totalMembers: state.totalMembers,
           isTotalConfirmed: state.isTotalConfirmed,
@@ -92,23 +132,147 @@ export class MemberList extends BaseComponent {
       }
     });
     
-    // 자동 구독 해제를 위해 구독 해제 함수 등록
-    this.addUnsubscriber(unsubscribe);
+    // 구독 해제 등록
+    this.addUnsubscriber(storeUnsubscribe);
     
-    // 초기 상태 설정
-    const state = store.getState();
-    this.updateState({ 
-      members: [...state.members],
-      totalMembers: state.totalMembers,
-      isTotalConfirmed: state.isTotalConfirmed,
-      isTeamCountConfirmed: state.isTeamCountConfirmed,
-      isComposing: false // 한글 입력 상태 추적
-    });
+    // 초기 스토어 상태 가져오기
+    const storeState = store.getState();
+    this.state = {
+      members: [...storeState.members],
+      totalMembers: storeState.totalMembers,
+      isTotalConfirmed: storeState.isTotalConfirmed,
+      isTeamCountConfirmed: storeState.isTeamCountConfirmed,
+      editingIndex: -1,
+      isComposing: false
+    };
     
-    // 이벤트 리스너 설정 (명시적 호출)
-    this.addEventListeners();
+    // DOM이 완전히 로드된 후 MVC 초기화 (약간 지연)
+    setTimeout(() => {
+      this._initMVC();
+    }, 100);
     
     console.timeEnd('memberlist-init');
+  }
+  
+  /**
+   * MVC 패턴 초기화
+   * @private
+   */
+  _initMVC() {
+    try {
+      console.log('MemberList: MVC 초기화 시작');
+      const container = this.shadowRoot.getElementById('member-list-container');
+      
+      if (!container) {
+        console.error('MemberList: 컨테이너 요소를 찾을 수 없습니다');
+        this.shadowRoot.innerHTML = `
+          <div class="error-message">
+            멤버 목록 컨테이너를 찾을 수 없습니다.
+          </div>
+        `;
+        return;
+      }
+      
+      // 로딩 인디케이터 표시
+      container.innerHTML = `
+        <div class="loading-indicator">
+          멤버 목록을 초기화하는 중...
+        </div>
+      `;
+      
+      // MVC 패턴으로 초기화 - 약간 지연
+      setTimeout(() => {
+        try {
+          this._mvc = initMemberListMVC(container);
+          console.log('MemberList: MVC 초기화 완료');
+        } catch (error) {
+          console.error('MemberList: MVC 객체 생성 중 오류 발생', error);
+          container.innerHTML = `
+            <div class="error-message">
+              멤버 목록을 초기화하는 중 오류가 발생했습니다.<br>
+              ${error.message || '알 수 없는 오류'}
+            </div>
+          `;
+        }
+      }, 100);
+    } catch (error) {
+      console.error('MemberList: MVC 초기화 중 오류 발생', error);
+      this.shadowRoot.innerHTML = `
+        <div class="error-message">
+          멤버 목록을 로드하는 중 오류가 발생했습니다.<br>
+          ${error.message || '알 수 없는 오류'}
+        </div>
+      `;
+    }
+  }
+  
+  /**
+   * 컴포넌트 정리 - 메모리 누수 방지
+   * @override
+   */
+  cleanup() {
+    if (this._mvc && typeof this._mvc.dispose === 'function') {
+      this._mvc.dispose();
+      this._mvc = null;
+    }
+  }
+  
+  /**
+   * 컴포넌트 렌더링 - MVC 패턴에서는 사용하지 않음
+   * @override
+   */
+  render() {
+    // 초기 렌더링만 수행하고, 그 이후는 MVC가 처리
+    if (!this._mvc) {
+      return `
+        <div id="member-list-container" class="member-list-container-wrapper">
+          <div class="loading-indicator">
+            멤버 목록을 불러오는 중...
+          </div>
+        </div>
+      `;
+    }
+    
+    // 이미 MVC가 초기화된 경우 현재 DOM 유지
+    return this.shadowRoot.innerHTML;
+  }
+
+  /**
+   * 강제 업데이트 메서드 (Shadow DOM 갱신)
+   */
+  forceUpdate() {
+    console.log('MemberList: 강제 업데이트 실행');
+    if (this.shadowRoot) {
+      const html = this.render();
+      const container = this.shadowRoot.querySelector('.member-list-container');
+      if (container) {
+        // 기존 컨테이너 내용을 새 HTML로 업데이트
+        container.innerHTML = '';
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        const newContainer = tempDiv.querySelector('.member-list-container');
+        if (newContainer) {
+          while (newContainer.firstChild) {
+            container.appendChild(newContainer.firstChild);
+          }
+        } else {
+          // 전체 shadow DOM 업데이트
+          this.shadowRoot.innerHTML = html;
+        }
+        // 이벤트 리스너 재설정
+        this.addEventListeners();
+        console.log('MemberList: 강제 업데이트 완료');
+      } else {
+        // 전체 shadow DOM 업데이트
+        this.shadowRoot.innerHTML = html;
+        console.log('MemberList: 전체 Shadow DOM 업데이트 완료');
+      }
+      
+      // afterRender 호출
+      if (typeof this.afterRender === 'function') {
+        this.afterRender();
+      }
+    }
   }
 
   /**
@@ -191,7 +355,8 @@ export class MemberList extends BaseComponent {
           this.addEventListenerWithCleanup(
             addButton,
             'click',
-            () => {
+            (e) => {
+              e.preventDefault(); // 폼 제출 방지
               console.log('추가 버튼 클릭됨, 조합 상태:', isComposing);
               if (!isComposing && memberInput.value.trim()) {
                 this.handleAddMember(memberInput);
@@ -202,6 +367,9 @@ export class MemberList extends BaseComponent {
           console.log('MemberList: 멤버 추가 이벤트 리스너 등록 완료');
         } else {
           console.warn('MemberList: 멤버 추가 버튼 또는 입력 필드를 찾을 수 없습니다');
+          console.log('버튼 찾기 결과:', addButton);
+          console.log('입력 필드 찾기 결과:', memberInput);
+          console.log('DOM 구조:', this.shadowRoot.innerHTML);
         }
       }, 200); // DOM이 완전히 로드될 때까지 충분한 시간 제공
     } else {
@@ -267,9 +435,19 @@ export class MemberList extends BaseComponent {
   }
 
   /**
-   * 렌더링 후 호출되는 콜백 - 편집 모드 설정
+   * 렌더링 후 호출되는 콜백
    */
   afterRender() {
+    console.log('MemberList: afterRender 실행');
+    
+    // 멤버 입력 필드와 버튼 확인
+    const addButton = this.shadowRoot.querySelector('.add-member-button');
+    const memberInput = this.shadowRoot.querySelector('.member-input');
+    
+    if (addButton && memberInput) {
+      console.log('MemberList: 멤버 추가 UI 요소 확인됨');
+    }
+    
     // 편집 모드가 활성화된 경우에만 처리
     if (this.state.editingIndex !== -1) {
       const editContainer = this.shadowRoot.querySelector('.edit-container');
@@ -418,20 +596,50 @@ export class MemberList extends BaseComponent {
     
     console.log(`멤버 추가 실행: "${name}"`);
     
-    // 멤버 추가 액션 디스패치
-    store.dispatch({
-      type: ACTION_TYPES.ADD_MEMBER,
-      payload: { memberName: name }
-    });
-    
-    // 추가 결과 확인
-    const afterState = store.getState();
-    const wasAdded = afterState.members.length > members.length;
-    
-    if (wasAdded) {
-      console.log('멤버가 성공적으로 추가되었습니다:', afterState.members);
-    } else {
-      console.warn('멤버 추가가 처리되지 않았습니다');
+    try {
+      // 메시지 상태 요소 찾기
+      const statusMessageElement = this.shadowRoot.querySelector('.member-status-message');
+      
+      // 멤버 추가 액션 디스패치
+      store.dispatch({
+        type: ACTION_TYPES.ADD_MEMBER,
+        payload: { memberName: name }
+      });
+      
+      // 추가 결과 확인
+      const afterState = store.getState();
+      const wasAdded = afterState.members.length > members.length;
+      
+      if (wasAdded) {
+        console.log('멤버가 성공적으로 추가되었습니다:', afterState.members);
+        
+        // 상태 업데이트하고 강제 렌더링
+        this.updateState({
+          members: [...afterState.members]
+        });
+        
+        // 명시적으로 UI를 강제 업데이트
+        this.forceUpdate();
+        
+        // 새로 추가된 멤버 이름 확인
+        const addedMember = afterState.members[afterState.members.length - 1];
+        
+        // 성공 메시지 표시
+        if (statusMessageElement) {
+          showUIError(statusMessageElement, `"${addedMember}" 멤버가 추가되었습니다!`, 'success');
+        }
+      } else {
+        console.warn('멤버 추가가 처리되지 않았습니다');
+        if (statusMessageElement) {
+          showUIError(statusMessageElement, '멤버 추가에 실패했습니다', 'error');
+        }
+      }
+    } catch (error) {
+      console.error('멤버 추가 중 오류 발생:', error);
+      const statusMessageElement = this.shadowRoot.querySelector('.member-status-message');
+      if (statusMessageElement) {
+        showUIError(statusMessageElement, '오류가 발생했습니다', 'error');
+      }
     }
     
     // 입력창 초기화 및 포커스
@@ -452,491 +660,5 @@ export class MemberList extends BaseComponent {
     element.classList.remove('shake');
     void element.offsetWidth; // 리플로우 트리거
     element.classList.add('shake');
-  }
-
-  /**
-   * 컴포넌트 렌더링
-   * @returns {string} 렌더링할 HTML
-   */
-  render() {
-    console.time('memberlist-render');
-    
-    const { members, editingIndex, totalMembers, isTotalConfirmed, isTeamCountConfirmed } = this.state;
-    
-    // 멤버 목록이 유효한지 확인
-    if (!members || !Array.isArray(members)) {
-      console.error('MemberList: 멤버 목록이 유효하지 않음', this.state);
-      return `<div class="error-message">멤버 목록 데이터가 유효하지 않습니다.</div>`;
-    }
-    
-    // 활성화 조건: 총원 설정 및 팀 구성이 모두 완료되었을 때
-    const isInputActive = isTotalConfirmed && isTeamCountConfirmed;
-    // 총원 초과 조건
-    const isMaxReached = totalMembers > 0 && members.length >= totalMembers;
-    
-    console.log('MemberList: 입력 필드 상태', { 
-      isInputActive, 
-      isMaxReached, 
-      isTotalConfirmed, 
-      isTeamCountConfirmed,
-      totalMembers,
-      membersCount: members.length
-    });
-
-    // 빈 멤버 목록 처리
-    let memberListHtml;
-    if (members.length === 0) {
-      memberListHtml = `
-        <div class="empty-state">
-          <div class="empty-state__icon">👥</div>
-          <div class="empty-state__title">등록된 멤버가 없습니다</div>
-          <div class="empty-state__description">
-            ${isInputActive ? 
-              '아래 입력란에서 멤버를 추가해주세요.' : 
-              '총원 설정과 팀 구성을 완료한 후 멤버를 추가할 수 있습니다.'}
-          </div>
-        </div>
-      `;
-    } else {
-      // 메모이제이션된 렌더링 함수 사용
-      try {
-        memberListHtml = this.memoizedRenderMemberList(
-          members, 
-          editingIndex
-        );
-        console.log('MemberList: 멤버 렌더링 성공', { memberCount: members.length, editingIndex });
-      } catch (error) {
-        console.error('MemberList: 멤버 렌더링 실패', error);
-        memberListHtml = `<div class="error-message">멤버 목록을 표시하는 중 오류가 발생했습니다.</div>`;
-      }
-    }
-    
-    const html = `
-      <style>
-        :host {
-          display: block;
-          width: 100%;
-          height: 100%;
-        }
-        
-        .member-list-container {
-          background-color: var(--color-background-secondary);
-          border-radius: var(--radius-lg);
-          overflow: hidden;
-          height: 100%;
-          display: flex;
-          flex-direction: column;
-        }
-        
-        .member-list-header {
-          padding: 16px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          background-color: var(--color-background-dark);
-          border-bottom: 1px solid var(--color-border);
-        }
-        
-        .member-list-title {
-          font-size: 18px;
-          font-weight: 600;
-          color: var(--color-light);
-          margin: 0;
-        }
-        
-        .member-count {
-          background-color: var(--color-primary);
-          color: white;
-          padding: 4px 10px;
-          border-radius: 50px;
-          font-size: 14px;
-          font-weight: 500;
-        }
-        
-        .member-list-content {
-          padding: 16px;
-          overflow-y: auto;
-          flex-grow: 1;
-        }
-        
-        /* 추가: 멤버 입력 부분 스타일 */
-        .member-input-container {
-          padding: 16px;
-          border-top: 1px solid var(--color-border);
-          background-color: var(--color-background-dark);
-        }
-        
-        .member-input-wrapper {
-          display: flex;
-          gap: 8px;
-        }
-        
-        .member-input {
-          flex-grow: 1;
-          padding: 10px 12px;
-          border-radius: var(--radius-md);
-          border: 1px solid var(--color-border);
-          background-color: var(--color-background-light);
-          color: var(--color-light);
-        }
-        
-        .member-input:focus {
-          outline: none;
-          border-color: var(--color-primary);
-          box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
-        }
-        
-        .add-member-button {
-          padding: 10px 16px;
-          background-color: var(--color-primary);
-          color: white;
-          border: none;
-          border-radius: var(--radius-md);
-          font-weight: 500;
-          cursor: pointer;
-          transition: background-color 0.2s;
-        }
-        
-        .add-member-button:hover {
-          background-color: var(--color-primary-dark);
-        }
-        
-        .add-member-button:disabled,
-        .member-input:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-        
-        .member-status-message {
-          font-size: 13px;
-          color: var(--color-text-secondary);
-          margin-top: 8px;
-          min-height: 18px;
-        }
-        
-        .shake {
-          animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-        }
-        
-        @keyframes shake {
-          10%, 90% { transform: translate3d(-1px, 0, 0); }
-          20%, 80% { transform: translate3d(2px, 0, 0); }
-          30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-          40%, 60% { transform: translate3d(4px, 0, 0); }
-        }
-        
-        /* 기존 스타일 계속 유지 */
-        :host {
-          display: block;
-          width: 100%;
-          background-color: #121212;
-          border-radius: 8px;
-          overflow: hidden;
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-        }
-        
-        .member-list-container {
-          padding: 16px;
-        }
-        
-        .member-list-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 16px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-          padding-bottom: 12px;
-        }
-        
-        .member-list-title {
-          font-size: 18px;
-          font-weight: 600;
-          color: #ffffff;
-          margin: 0;
-        }
-        
-        .member-count {
-          color: rgba(255, 255, 255, 0.7);
-          font-size: 14px;
-          background-color: rgba(255, 255, 255, 0.08);
-          padding: 4px 10px;
-          border-radius: 12px;
-          font-weight: 500;
-        }
-        
-        .member-list-content {
-          min-height: 200px;
-        }
-        
-        .error-message {
-          color: #ff5555;
-          padding: 12px;
-          background-color: rgba(255, 85, 85, 0.1);
-          border-radius: 4px;
-          border-left: 3px solid #ff5555;
-          margin: 12px 0;
-          font-size: 14px;
-        }
-
-        /* 멤버 목록 스타일 */
-        .member-list {
-          list-style: none;
-          padding: 0;
-          margin: 0;
-        }
-        
-        .member-list-wrapper {
-          border-radius: 8px;
-          overflow: hidden;
-          background-color: rgba(255, 255, 255, 0.03);
-          transition: all 0.2s ease;
-        }
-        
-        .member-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 14px 16px;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-          transition: background-color 0.2s ease;
-        }
-        
-        .member-item:hover {
-          background-color: rgba(255, 255, 255, 0.05);
-        }
-        
-        .member-item:last-child {
-          border-bottom: none;
-        }
-        
-        .member-item__name {
-          font-size: 15px;
-          font-weight: 500;
-          color: #ffffff;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        
-        .member-name {
-          font-weight: 500;
-        }
-        
-        .member-suffix-numeric {
-          color: #4f46e5;
-          font-weight: 400;
-          opacity: 0.9;
-        }
-        
-        .member-suffix-text {
-          color: rgba(255, 255, 255, 0.6);
-          font-weight: 400;
-          background-color: rgba(255, 255, 255, 0.08);
-          padding: 2px 6px;
-          border-radius: 4px;
-          font-size: 13px;
-        }
-        
-        .member-item__actions {
-          display: flex;
-          gap: 8px;
-        }
-        
-        /* 편집 모드 */
-        .member-item.editing {
-          background-color: rgba(79, 70, 229, 0.1);
-          padding: 18px 16px;
-        }
-        
-        .edit-container {
-          width: 100%;
-        }
-        
-        .suffix-input {
-          margin: 0 8px;
-          padding: 8px 12px;
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          border-radius: 4px;
-          background-color: rgba(255, 255, 255, 0.06);
-          color: #ffffff;
-          font-size: 14px;
-          transition: all 0.2s ease;
-        }
-        
-        .suffix-input:focus {
-          outline: none;
-          border-color: #4f46e5;
-          box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.25);
-        }
-        
-        .edit-actions {
-          display: flex;
-          gap: 10px;
-          margin-top: 12px;
-        }
-        
-        .confirm-button {
-          background-color: #4f46e5;
-          color: white;
-          border: none;
-          padding: 8px 16px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 13px;
-          font-weight: 500;
-          transition: all 0.2s ease;
-        }
-        
-        .confirm-button:hover {
-          background-color: #4338ca;
-        }
-        
-        .cancel-button {
-          background-color: rgba(255, 255, 255, 0.06);
-          color: rgba(255, 255, 255, 0.8);
-          border: 1px solid rgba(255, 255, 255, 0.1);
-          padding: 8px 16px;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 13px;
-          font-weight: 500;
-          transition: all 0.2s ease;
-        }
-        
-        .cancel-button:hover {
-          background-color: rgba(255, 255, 255, 0.1);
-        }
-        
-        .suffix-help {
-          font-size: 12px;
-          color: rgba(255, 255, 255, 0.5);
-          margin-top: 8px;
-        }
-        
-        /* 빈 상태 */
-        .empty-state {
-          text-align: center;
-          padding: 40px 20px;
-          color: rgba(255, 255, 255, 0.6);
-        }
-        
-        .empty-state__icon {
-          font-size: 32px;
-          margin-bottom: 16px;
-          opacity: 0.6;
-        }
-        
-        .empty-state__title {
-          font-size: 16px;
-          margin-bottom: 8px;
-          color: rgba(255, 255, 255, 0.9);
-          font-weight: 500;
-        }
-        
-        .empty-state__description {
-          color: rgba(255, 255, 255, 0.5);
-          font-size: 14px;
-        }
-        
-        /* 버튼 스타일 */
-        .btn {
-          border: none;
-          border-radius: 4px;
-          font-size: 13px;
-          padding: 8px 14px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          font-weight: 500;
-        }
-        
-        .btn--small {
-          font-size: 12px;
-          padding: 4px 10px;
-          border-radius: 4px;
-        }
-        
-        .edit-button, .delete-button {
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-        
-        .edit-button {
-          color: rgba(255, 255, 255, 0.7);
-          background-color: rgba(255, 255, 255, 0.06);
-          border: none;
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-        }
-        
-        .edit-button:hover {
-          background-color: rgba(255, 255, 255, 0.1);
-        }
-        
-        .delete-button {
-          color: #fff;
-          background-color: rgba(239, 68, 68, 0.2);
-          border: none;
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-        }
-        
-        .delete-button:hover {
-          background-color: rgba(239, 68, 68, 0.3);
-        }
-        
-        /* 애니메이션 효과 */
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        
-        .member-list-wrapper {
-          animation: fadeIn 0.3s ease;
-        }
-        
-        .member-item {
-          animation: fadeIn 0.2s ease;
-        }
-      </style>
-      
-      <div class="member-list-container">
-        <div class="member-list-header">
-          <h2 class="member-list-title">멤버 목록</h2>
-          <span class="member-count">${members.length}${totalMembers > 0 ? `/${totalMembers}` : ''}명</span>
-        </div>
-        
-        <div class="member-list-content">
-          ${memberListHtml}
-        </div>
-        
-        <div class="member-input-container">
-          <div class="member-input-wrapper">
-            <input 
-              type="text" 
-              class="member-input" 
-              placeholder="멤버 이름을 입력하세요" 
-              ${!isInputActive || isMaxReached ? 'disabled' : ''}
-            />
-            <button 
-              class="add-member-button" 
-              ${!isInputActive || isMaxReached ? 'disabled' : ''}
-            >
-              추가
-            </button>
-          </div>
-          <div class="member-status-message">
-            ${!isTotalConfirmed ? '총원 설정을 먼저 완료해주세요.' : 
-              !isTeamCountConfirmed ? '팀 구성을 먼저 완료해주세요.' :
-              isMaxReached ? '모든 멤버가 등록되었습니다.' : 
-              `${totalMembers - members.length}명의 멤버를 더 추가해주세요.`}
-          </div>
-        </div>
-      </div>
-    `;
-    
-    console.timeEnd('memberlist-render');
-    return html;
   }
 } 
