@@ -3,7 +3,7 @@
  * @description 멤버 추가를 담당하는 컴포넌트
  */
 
-import store from '../../store/index.js';
+import store, { actionCreators } from '../../store/index.js';
 import utils from '../../utils/index.js';
 import { showInvalidInput, updateStatusMessage } from '../../handlers/uiHandlers.js';
 import { addMember } from '../../handlers/memberHandlers.js';
@@ -16,20 +16,49 @@ import { ACTION_TYPES, editMember, deleteMember } from '../../store/actions.js';
 export class MemberInput extends HTMLElement {
   constructor() {
     super();
-    this.attachShadow({ mode: 'open' });
-    this.unsubscribe = null;
-    this.initialized = false;
-    this.eventsRegistered = false;
-    this._isFirstRender = true;
     
-    // 상태 초기화
+    // Shadow DOM 중복 생성 방지
+    if (!this.shadowRoot) {
+      this.attachShadow({ mode: 'open' });
+    }
+    
     this._state = {
       members: [],
       totalMembers: 0,
       isTotalConfirmed: false,
-      teamCount: 0,
-      isTeamCountConfirmed: false
+      isTeamCountConfirmed: false,
+      editingIndex: -1
     };
+
+    // 상태 변경 감지를 위한 프록시 설정
+    this._state = new Proxy(this._state, {
+      set: (target, property, value) => {
+        const oldValue = target[property];
+        target[property] = value;
+        if (oldValue !== value) {
+          this.updateView();
+        }
+        return true;
+      }
+    });
+
+    this.initializeComponent();
+    
+    // 스토어 구독 설정
+    this.unsubscribe = store.subscribe((state) => {
+      this._state.members = [...state.members];
+      this._state.totalMembers = state.totalMembers;
+      this._state.isTotalConfirmed = state.isTotalConfirmed;
+      this._state.isTeamCountConfirmed = state.isTeamCountConfirmed;
+      this.updateView();
+    });
+    
+    // 초기 상태 설정
+    const initialState = store.getState();
+    this._state.members = [...initialState.members];
+    this._state.totalMembers = initialState.totalMembers;
+    this._state.isTotalConfirmed = initialState.isTotalConfirmed;
+    this._state.isTeamCountConfirmed = initialState.isTeamCountConfirmed;
   }
 
   connectedCallback() {
@@ -71,7 +100,6 @@ export class MemberInput extends HTMLElement {
     this._state.members = [...state.members];
     this._state.totalMembers = state.totalMembers;
     this._state.isTotalConfirmed = state.isTotalConfirmed;
-    this._state.teamCount = state.teamCount;
     this._state.isTeamCountConfirmed = state.isTeamCountConfirmed;
     
     // UI 업데이트
