@@ -8,6 +8,7 @@ import { distributeTeams } from '../../handlers/teamConfigHandlers.js';
 import { BaseComponent } from '../BaseComponent.js';
 import { saveTeamData } from '../../utils/api.js';
 import { showUIError } from '../../handlers/uiHandlers.js';
+import { debounce } from '../../utils/performance.js';
 
 /**
  * 팀 배분 결과 컴포넌트
@@ -32,11 +33,34 @@ export class TeamResult extends BaseComponent {
       isDistributed: false
     };
 
+    // 디바운스된 업데이트 함수 생성
+    this.debouncedUpdateView = debounce(this.updateView.bind(this), 100);
+
     // 스토어 구독 설정
     this.unsubscribe = store.subscribe((state) => {
+      const prevState = {...this._state};
       this.updateFromStore(state);
-      this.updateView();
+      
+      // 실질적인 변경이 있는 경우에만 뷰 업데이트
+      if (this.hasSignificantChanges(prevState, this._state)) {
+        this.debouncedUpdateView();
+      }
     });
+  }
+
+  /**
+   * 두 상태 간에 중요한 변경이 있는지 확인
+   */
+  hasSignificantChanges(prevState, currentState) {
+    // 중요 속성의 변경 확인
+    return (
+      prevState.teamCount !== currentState.teamCount ||
+      prevState.isTeamCountConfirmed !== currentState.isTeamCountConfirmed ||
+      prevState.isTotalConfirmed !== currentState.isTotalConfirmed ||
+      prevState.isDistributed !== currentState.isDistributed ||
+      JSON.stringify(prevState.teams) !== JSON.stringify(currentState.teams) ||
+      prevState.members.length !== currentState.members.length
+    );
   }
 
   connectedCallback() {
@@ -238,43 +262,37 @@ export class TeamResult extends BaseComponent {
   }
 
   addEventListeners() {
+    // 이벤트 리스너 최적화: 이벤트 위임 사용
     this.shadowRoot.addEventListener('click', (e) => {
-      if (e.target.matches('.shuffle-teams')) {
+      const target = e.target;
+      
+      if (target.classList.contains('shuffle-teams')) {
         this.shuffleTeams();
-      } else if (e.target.matches('.decide-teams')) {
+      } else if (target.classList.contains('decide-teams')) {
         this.decideTeams();
-      } else if (e.target.matches('.save-teams')) {
+      } else if (target.classList.contains('save-teams')) {
         this.handleSaveTeams();
       }
     });
   }
   
   updateFromStore(state) {
-    this._state = {
-      ...this._state,
-      totalMembers: state.totalMembers,
-      isTotalConfirmed: state.isTotalConfirmed,
-      teamCount: state.teamCount,
-      isTeamCountConfirmed: state.isTeamCountConfirmed,
-      teams: state.teams || [],
-      isDistributed: state.isDistributed,
-      members: state.members || []
-    };
+    // 얕은 복사로 성능 최적화
+    this._state.totalMembers = state.totalMembers;
+    this._state.isTotalConfirmed = state.isTotalConfirmed;
+    this._state.teamCount = state.teamCount;
+    this._state.isTeamCountConfirmed = state.isTeamCountConfirmed;
+    this._state.teams = state.teams || [];
+    this._state.isDistributed = state.isDistributed;
+    this._state.members = state.members || [];
   }
 
   shuffleTeams() {
     if (!this._state.members.length) {
-      console.warn('멤버가 없어 팀 구성 불가');
       return;
     }
     
     try {
-      console.log('팀 분배 함수 호출 전 상태:', {
-        members: this._state.members,
-        teamCount: this._state.teamCount,
-        totalMembers: this._state.totalMembers
-      });
-      
       const distributedTeams = distributeTeams();
       
       if (distributedTeams && distributedTeams.length > 0) {
@@ -286,17 +304,14 @@ export class TeamResult extends BaseComponent {
             isDistributed: true
           }
         });
-        console.log('팀 분배 성공:', distributedTeams);
       } else {
-        console.warn('기본 팀 분배 함수 실패, 대체 로직 사용');
-        
+        // 대체 로직 - 멤버를 랜덤하게 팀에 분배
         const shuffled = [...this._state.members].sort(() => Math.random() - 0.5);
         const teamSize = Math.ceil(shuffled.length / this._state.teamCount);
         const teams = Array.from({ length: this._state.teamCount }, (_, i) => 
           shuffled.slice(i * teamSize, (i + 1) * teamSize)
         );
 
-        // store 상태 업데이트
         store.dispatch({
           type: 'SET_TEAMS',
           payload: {
@@ -311,16 +326,11 @@ export class TeamResult extends BaseComponent {
   }
 
   decideTeams() {
-    console.log('팀 결정하기 버튼 클릭');
-    
     if (!this._state.members.length) {
-      console.warn('멤버가 없어 팀 결정 불가');
       return;
     }
     
     if (this._state.members.length !== this._state.totalMembers) {
-      console.warn('총원과 멤버 수가 일치하지 않음:', 
-        this._state.members.length, '!=', this._state.totalMembers);
       return;
     }
     
@@ -328,8 +338,12 @@ export class TeamResult extends BaseComponent {
   }
 
   updateView() {
+    // 메모화와 가상 DOM 비교로 최적화
     const container = this.shadowRoot.querySelector('.team-result-container');
     if (!container) return;
+    
+    // 기존 상태 스냅샷 저장
+    const oldHTML = container.innerHTML;
     
     // 팀 배분 결과가 없는 경우
     if (!this._state.teams.length) {
@@ -337,13 +351,6 @@ export class TeamResult extends BaseComponent {
       let statusClass = "info";
       let showDecideButton = false;
       let buttonDisabled = true;
-      
-      console.log('TeamResult 상태 확인:', {
-        totalMembers: this._state.totalMembers,
-        membersLength: this._state.members.length,
-        isTotalConfirmed: this._state.isTotalConfirmed,
-        isTeamCountConfirmed: this._state.isTeamCountConfirmed
-      });
       
       // 더 구체적인 안내 메시지 생성
       if (!this._state.isTotalConfirmed) {
@@ -368,7 +375,7 @@ export class TeamResult extends BaseComponent {
         `card ${this._isFirstRender ? 'animate' : ''}` : 
         `card ${this._isFirstRender ? 'animate' : ''} inactive`;
       
-      container.innerHTML = `
+      const newHTML = `
         <div class="${cardClass}">
           <div class="card__content">
             <h3 class="card__title">팀 구성 결과</h3>
@@ -385,6 +392,12 @@ export class TeamResult extends BaseComponent {
           </div>
         </div>
       `;
+      
+      // 내용이 변경된 경우에만 DOM 업데이트
+      if (oldHTML !== newHTML) {
+        container.innerHTML = newHTML;
+      }
+      
       return;
     }
     
@@ -404,7 +417,7 @@ export class TeamResult extends BaseComponent {
       </div>
     `).join('');
     
-    container.innerHTML = `
+    const newHTML = `
       <div class="card ${this._isFirstRender ? 'animate' : ''}">
         <div class="card__content">
           <h3 class="card__title">팀 구성 결과 <span class="team-info">(${this._state.teamCount}팀, 총 ${totalMembers}명)</span></h3>
@@ -418,6 +431,11 @@ export class TeamResult extends BaseComponent {
         </div>
       </div>
     `;
+    
+    // 내용이 변경된 경우에만 DOM 업데이트
+    if (oldHTML !== newHTML) {
+      container.innerHTML = newHTML;
+    }
     
     this._isFirstRender = false;
   }
