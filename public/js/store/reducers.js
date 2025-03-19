@@ -85,9 +85,15 @@ const memberReducer = (state, action) => {
       const exactDuplicate = members.some(name => name === trimmedName);
       
       if (exactDuplicate) {
+        // -----------------------------------------------
+        // 중복 이름 처리 로직
+        // 1. 기존에 "공욱재"가 있을 경우, "공욱재"를 "공욱재-1"로 변경
+        // 2. 새로 추가되는 "공욱재"는 접미사 숫자를 1 증가시켜 "공욱재-2"로 추가
+        // 3. 이미 "공욱재-1", "공욱재-2"가 있을 경우 "공욱재-3"으로 추가
+        // -----------------------------------------------
         console.log('동일한 이름 존재, 접미사 처리 시작:', trimmedName);
         
-        // 동일한 기본 이름을 가진 멤버들 찾기
+        // 동일한 기본 이름을 가진 멤버들 찾기 (접미사가 있는 것과 없는 것 모두 포함)
         const exactMatches = members.filter(name => {
           return name === trimmedName || 
                  (name.includes('-') && name.split('-')[0] === trimmedName);
@@ -95,9 +101,10 @@ const memberReducer = (state, action) => {
         
         console.log('동일 이름 또는 접미사 포함 멤버:', exactMatches);
         
+        // 새 배열 생성 - 수정된 멤버 목록
         let newMembers = [...members];
         
-        // 접미사가 없는 원본 이름이 있는 경우
+        // 접미사가 없는 원본 이름이 있는 경우 -1 접미사를 추가
         const originalNameIndex = newMembers.findIndex(name => name === trimmedName);
         if (originalNameIndex !== -1) {
           // 기존 이름에 -1 접미사 추가
@@ -105,19 +112,19 @@ const memberReducer = (state, action) => {
           console.log('원본 이름에 접미사 추가:', newMembers[originalNameIndex]);
         }
         
-        // 새 멤버에 접미사 부여 (가장 큰 숫자 + 1)
-        let maxSuffix = 1; // 기본값
+        // 접미사가 있는 기존 멤버들 중 가장 큰 번호 찾기
+        let maxSuffix = 1; // 기본값 (원본 이름이 있어서 -1로 변경된 경우)
         exactMatches.forEach(name => {
           if (name.includes('-')) {
             const parts = name.split('-');
-            const suffix = parts[1];
-            if (!isNaN(parseInt(suffix))) {
-              maxSuffix = Math.max(maxSuffix, parseInt(suffix));
+            const suffix = parseInt(parts[1], 10);
+            if (!isNaN(suffix)) {
+              maxSuffix = Math.max(maxSuffix, suffix);
             }
           }
         });
         
-        // 새 멤버 이름
+        // 새 멤버에 다음 번호 부여하기 (최대값 + 1)
         const newMemberName = `${trimmedName}-${maxSuffix + 1}`;
         console.log('새 멤버에 부여된 이름:', newMemberName);
         
