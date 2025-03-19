@@ -20,7 +20,9 @@
           event.message.includes('injected.js') ||
           event.message.includes('Provider initialised') ||
           event.message.includes('TronLink') ||
-          event.message.includes('tabReply')
+          event.message.includes('tabReply') ||
+          event.message.includes('message channel closed') ||
+          event.message.includes('asynchronous response')
         )) {
           event.preventDefault();
           return true;
@@ -39,12 +41,68 @@
       window.addEventListener('unhandledrejection', function(event) {
         if (event.reason && (
           String(event.reason).includes('performance') || 
-          String(event.reason).includes('monitor')
+          String(event.reason).includes('monitor') ||
+          String(event.reason).includes('message channel closed') || 
+          String(event.reason).includes('asynchronous response')
         )) {
-          console.warn('성능 모니터링 관련 오류:', event.reason);
+          console.warn('처리된 오류:', event.reason);
           event.preventDefault();
         }
       });
+      
+      // Chrome 확장 프로그램 메시지 처리 지원
+      if (typeof chrome !== 'undefined' && chrome.runtime) {
+        // 확장 프로그램 메시지 콜백에서 항상 lastError를 확인하도록 함
+        const originalOnMessage = chrome.runtime.onMessage;
+        if (originalOnMessage && originalOnMessage.addListener) {
+          const originalAddListener = chrome.runtime.onMessage.addListener;
+          
+          chrome.runtime.onMessage.addListener = function(callback) {
+            // 리스너 래핑 - 비동기 응답 관련 문제 해결
+            const wrappedCallback = function(message, sender, sendResponse) {
+              try {
+                // 원래 콜백 호출
+                const result = callback(message, sender, sendResponse);
+                
+                // 비동기 응답을 반환했지만 처리하지 않은 경우
+                if (result === true) {
+                  // 비동기 응답이 필요한 경우 메시지 채널이 닫히기 전에 응답 보내기
+                  const timeoutId = setTimeout(function() {
+                    try {
+                      // 응답이 처리되지 않았다면 기본 응답
+                      sendResponse({ success: false, error: "No response sent in time" });
+                    } catch (err) {
+                      // 채널이 이미 닫혔거나 오류 발생
+                      console.debug('메시지 채널이 이미 닫힘');
+                    }
+                  }, 1000); // 1초 후 자동 응답
+                  
+                  // 원래 sendResponse 래핑
+                  const originalSendResponse = sendResponse;
+                  sendResponse = function(response) {
+                    clearTimeout(timeoutId); // 자동 응답 타이머 취소
+                    try {
+                      return originalSendResponse(response);
+                    } catch (err) {
+                      console.debug('응답 전송 중 오류:', err);
+                      return false;
+                    }
+                  };
+                }
+                
+                return result;
+              } catch (err) {
+                console.debug('메시지 리스너 오류:', err);
+                sendResponse({ success: false, error: err.message });
+                return false;
+              }
+            };
+            
+            // 래핑된 콜백으로 리스너 등록
+            return originalAddListener.call(this, wrappedCallback);
+          };
+        }
+      }
     </script>
     
     <!-- 기본 스타일시트 -->
@@ -60,6 +118,27 @@
         const endTime = Date.now();
         const pageLoadTime = endTime - startTime;
         console.info(`페이지 로딩 시간: ${pageLoadTime}ms`);
+      });
+      
+      // 페이지 가시성 변경 이벤트 처리
+      document.addEventListener('visibilitychange', () => {
+        const isVisible = document.visibilityState === 'visible';
+        
+        // 페이지가 다시 보이게 될 때 성능 측정 재설정
+        if (isVisible) {
+          // 애니메이션 프레임 동기화
+          window.requestAnimationFrame(() => {
+            console.info('페이지가 활성화되었습니다. 성능 측정 재개.');
+          });
+          
+          // 성능 관련 오류 메시지 초기화 (옵션)
+          if (window.console && console.clear) {
+            // 오래된 성능 경고 메시지 제거 (선택적)
+            // console.clear();
+          }
+        } else {
+          console.info('페이지가 비활성화되었습니다. 성능 측정 일시 중지.');
+        }
       });
     </script>
   </head>
