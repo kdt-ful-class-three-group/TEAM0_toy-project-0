@@ -84,22 +84,27 @@ const memberReducer = (state, action) => {
       // 완전히 동일한 이름이 있는지 확인
       const exactDuplicate = members.some(name => name === trimmedName);
       
-      if (exactDuplicate) {
+      // 같은 기본 이름을 가진 항목들 찾기 (접미사 유무 모두 고려)
+      const sameBaseNames = members.filter(name => {
+        if (name === trimmedName) return true;
+        if (name.includes('-')) {
+          const baseName = name.split('-')[0];
+          return baseName === trimmedName;
+        }
+        return false;
+      });
+      
+      const hasSameBaseName = sameBaseNames.length > 0;
+      
+      if (exactDuplicate || hasSameBaseName) {
         // -----------------------------------------------
         // 중복 이름 처리 로직
         // 1. 기존에 "공욱재"가 있을 경우, "공욱재"를 "공욱재-1"로 변경
         // 2. 새로 추가되는 "공욱재"는 접미사 숫자를 1 증가시켜 "공욱재-2"로 추가
         // 3. 이미 "공욱재-1", "공욱재-2"가 있을 경우 "공욱재-3"으로 추가
         // -----------------------------------------------
-        console.log('동일한 이름 존재, 접미사 처리 시작:', trimmedName);
-        
-        // 동일한 기본 이름을 가진 멤버들 찾기 (접미사가 있는 것과 없는 것 모두 포함)
-        const exactMatches = members.filter(name => {
-          return name === trimmedName || 
-                 (name.includes('-') && name.split('-')[0] === trimmedName);
-        });
-        
-        console.log('동일 이름 또는 접미사 포함 멤버:', exactMatches);
+        console.log('동일/유사한 이름 존재, 접미사 처리 시작:', trimmedName);
+        console.log('동일 기본 이름 항목들:', sameBaseNames);
         
         // 새 배열 생성 - 수정된 멤버 목록
         let newMembers = [...members];
@@ -114,7 +119,7 @@ const memberReducer = (state, action) => {
         
         // 접미사가 있는 기존 멤버들 중 가장 큰 번호 찾기
         let maxSuffix = 1; // 기본값 (원본 이름이 있어서 -1로 변경된 경우)
-        exactMatches.forEach(name => {
+        sameBaseNames.forEach(name => {
           if (name.includes('-')) {
             const parts = name.split('-');
             const suffix = parseInt(parts[1], 10);
