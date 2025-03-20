@@ -73,12 +73,12 @@ export class UtilsDemo extends BaseComponent {
         }
         
         .demo-item:hover {
-          background-color: var(--color-primary, #4f46e5);
+          background-color: var(--color-primary, #4a6e5a);
           color: white;
         }
         
         .demo-item.active {
-          background-color: var(--color-primary, #4f46e5);
+          background-color: var(--color-primary, #4a6e5a);
           color: white;
         }
         
@@ -86,7 +86,7 @@ export class UtilsDemo extends BaseComponent {
           padding: 0.5rem 1rem;
           border: none;
           border-radius: 0.25rem;
-          background-color: var(--color-primary, #4f46e5);
+          background-color: var(--color-primary, #4a6e5a);
           color: white;
           cursor: pointer;
           margin-right: 0.5rem;
@@ -187,7 +187,7 @@ export class UtilsDemo extends BaseComponent {
           style: {
             padding: '10px',
             margin: '10px 0',
-            backgroundColor: 'var(--color-primary, #4f46e5)',
+            backgroundColor: 'var(--color-primary, #4a6e5a)',
             color: 'white',
             borderRadius: '4px',
             boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
@@ -215,7 +215,7 @@ export class UtilsDemo extends BaseComponent {
           textContent: '애니메이션 효과',
           style: {
             padding: '10px',
-            backgroundColor: 'var(--color-primary, #4f46e5)',
+            backgroundColor: 'var(--color-primary, #4a6e5a)',
             color: 'white',
             borderRadius: '4px',
             opacity: '0'
