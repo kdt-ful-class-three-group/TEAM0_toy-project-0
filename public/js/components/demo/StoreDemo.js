@@ -57,7 +57,7 @@ class StoreDemo extends BaseComponent {
         }
         
         button {
-          background-color: var(--color-primary, #4f46e5);
+          background-color: var(--color-primary, #4a6e5a);
           color: white;
           border: none;
           border-radius: 0.25rem;
@@ -68,7 +68,7 @@ class StoreDemo extends BaseComponent {
         }
         
         button:hover {
-          background-color: #4338ca;
+          background-color: #3c5c4a;
         }
         
         button:disabled {
