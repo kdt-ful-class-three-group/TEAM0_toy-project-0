@@ -2,13 +2,17 @@
  * @file BaseComponent.js
  * @description 모든 웹 컴포넌트의 기본 클래스
  * 공통 기능을 제공하고 생명주기 메소드를 표준화합니다.
+ * @version 1.1.0
+ * @author Team0
  */
 import { createStyles } from '../utils/styleManager.js';
 import { debounce, throttle } from '../utils/performance.js';
 import { batchUpdater } from '../utils/domOptimizer.js';
+import eventBus from '../utils/EventBus.js';
 
 /**
  * 모든 컴포넌트의 기본 클래스
+ * 웹 컴포넌트 생명주기를 확장하고 이벤트, 스타일, 상태 관리 등의 기능을 제공합니다.
  * @class BaseComponent
  * @extends HTMLElement
  */
@@ -161,6 +165,13 @@ export class BaseComponent extends HTMLElement {
     if (!this._initialized) {
       console.time(`${this._componentName}-init`);
       
+      // 마운트 시작 이벤트 발생
+      eventBus.emit('component:beforeMount', {
+        componentName: this._componentName,
+        instanceId: this._meta.instanceId,
+        element: this
+      });
+      
       // 스타일시트 로드
       this.loadStyles();
       
@@ -176,6 +187,14 @@ export class BaseComponent extends HTMLElement {
       
       this._initialized = true;
       console.timeEnd(`${this._componentName}-init`);
+      
+      // 마운트 완료 이벤트 발생
+      eventBus.emit('component:mounted', {
+        componentName: this._componentName,
+        instanceId: this._meta.instanceId,
+        element: this,
+        renderTime: this._lastRenderTime
+      });
     }
   }
   
@@ -184,6 +203,13 @@ export class BaseComponent extends HTMLElement {
    * 이벤트 리스너 정리 등의 작업을 수행합니다.
    */
   disconnectedCallback() {
+    // 제거 시작 이벤트 발생
+    eventBus.emit('component:beforeDestroy', {
+      componentName: this._componentName,
+      instanceId: this._meta.instanceId,
+      element: this
+    });
+    
     // 구독 해제
     this._unsubscribers.forEach(unsubscribe => {
       if (typeof unsubscribe === 'function') {
@@ -203,6 +229,17 @@ export class BaseComponent extends HTMLElement {
         총_렌더링_시간: `${this._totalRenderTime.toFixed(2)}ms`
       });
     }
+    
+    // 제거 완료 이벤트 발생
+    eventBus.emit('component:destroyed', {
+      componentName: this._componentName,
+      instanceId: this._meta.instanceId,
+      renderStats: {
+        renderCount: this._renderCount,
+        avgRenderTime: this._renderCount > 0 ? this._totalRenderTime / this._renderCount : 0,
+        totalRenderTime: this._totalRenderTime
+      }
+    });
   }
   
   /**
@@ -226,6 +263,21 @@ export class BaseComponent extends HTMLElement {
    * @private
    */
   _render() {
+    // 이미 렌더링 중인 경우 중복 렌더링 방지
+    if (this._isRendering) {
+      console.warn(`${this._componentName}: 이미 렌더링 중입니다. 렌더링 요청 무시됨.`);
+      return;
+    }
+    
+    this._isRendering = true;
+    
+    // 렌더링 시작 이벤트 발생
+    eventBus.emit('component:beforeUpdate', {
+      componentName: this._componentName,
+      instanceId: this._meta.instanceId,
+      element: this
+    });
+    
     // 렌더링 통계 측정 시작
     const startTime = performance.now();
     
@@ -233,6 +285,7 @@ export class BaseComponent extends HTMLElement {
       // this.render()가 있는지 확인
       if (typeof this.render !== 'function') {
         console.warn(`${this.constructor.name}: render 메소드가 구현되지 않았습니다.`);
+        this._isRendering = false;
         return;
       }
       
@@ -246,10 +299,18 @@ export class BaseComponent extends HTMLElement {
       if (typeof html === 'string') {
         // 최적화: 내용이 변경된 경우에만 DOM 업데이트
         if (this.options.optimizeUpdates) {
+          // 실제 변경 사항이 있는지 확인
+          const hasChanged = this.shadowRoot ? 
+            (oldInnerHTML !== html) : (this.innerHTML !== html);
+          
+          if (!hasChanged) {
+            console.log(`${this._componentName}: 변경 사항 없음, 렌더링 스킵`);
+            this._isRendering = false;
+            return;
+          }
+          
           // 가상 DOM 스타일 차이 감지
           if (this.shadowRoot) {
-            console.log(`${this._componentName}: 렌더링 수행 중`);
-            
             // 효율적인 업데이트를 위해 HTML 파싱
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = html;
@@ -261,12 +322,10 @@ export class BaseComponent extends HTMLElement {
             // 컨테이너가 있고 클래스가 같은 경우 부분 업데이트 수행
             if (currentContainer && newContainer && 
                 currentContainer.className === newContainer.className) {
-              console.log(`${this._componentName}: 부분 DOM 업데이트 수행`);
               // 기존 컨테이너 요소 내용을 교체 (이벤트 리스너 보존)
               this._updateContainer(currentContainer, newContainer);
             } else {
               // 완전히 다른 경우 전체 교체
-              console.log(`${this._componentName}: 전체 DOM 교체`);
               this.shadowRoot.innerHTML = html;
             }
           } else {
@@ -291,11 +350,38 @@ export class BaseComponent extends HTMLElement {
       this._lastRenderTime = renderTime;
       this._totalRenderTime += renderTime;
       
+      // 느린 렌더링 감지 및 로깅
       if (renderTime > 50) {
         console.warn(`${this._componentName}: 느린 렌더링 감지 (${renderTime.toFixed(2)}ms)`);
+        
+        // 느린 렌더링 이벤트 발생
+        eventBus.emit('performance:slow-render', {
+          componentName: this._componentName,
+          instanceId: this._meta.instanceId,
+          renderTime: renderTime,
+          renderCount: this._renderCount
+        });
       }
+      
+      // 렌더링 완료 이벤트 발생
+      eventBus.emit('component:updated', {
+        componentName: this._componentName,
+        instanceId: this._meta.instanceId,
+        element: this,
+        renderTime: renderTime
+      });
     } catch (error) {
       console.error(`${this._componentName}: 렌더링 오류`, error);
+      
+      // 오류 이벤트 발생
+      eventBus.emit('component:renderError', {
+        componentName: this._componentName,
+        instanceId: this._meta.instanceId,
+        error: error.message,
+        stack: error.stack
+      });
+    } finally {
+      this._isRendering = false;
     }
   }
   
@@ -589,6 +675,15 @@ export class BaseComponent extends HTMLElement {
   attributeChangedCallback(name, oldValue, newValue) {
     if (oldValue === newValue) return;
     
+    // 속성 변경 이벤트 발생
+    eventBus.emit('component:attributeChanged', {
+      componentName: this._componentName,
+      instanceId: this._meta.instanceId,
+      attribute: name,
+      oldValue,
+      newValue
+    });
+    
     // 자식 클래스에서 정의한 attributeChanged 메소드 호출
     if (typeof this.attributeChanged === 'function') {
       this.attributeChanged(name, oldValue, newValue);
@@ -598,5 +693,44 @@ export class BaseComponent extends HTMLElement {
     if (this._initialized) {
       this._optimizedRender();
     }
+  }
+  
+  /**
+   * 글로벌 이벤트 버스에 이벤트를 발행합니다.
+   * @param {string} eventName - 이벤트 이름
+   * @param {*} data - 이벤트 데이터
+   */
+  emitEvent(eventName, data) {
+    eventBus.emit(eventName, {
+      source: this._componentName,
+      instanceId: this._meta.instanceId,
+      ...data
+    });
+  }
+  
+  /**
+   * 글로벌 이벤트 버스에서 이벤트를 구독합니다.
+   * 구독은 컴포넌트가 제거될 때 자동으로 해제됩니다.
+   * @param {string} eventName - 구독할 이벤트 이름
+   * @param {Function} handler - 이벤트 핸들러
+   * @returns {Function} 구독 해제 함수
+   */
+  onEvent(eventName, handler) {
+    const unsubscribe = eventBus.on(eventName, handler, this);
+    this.addUnsubscriber(unsubscribe);
+    return unsubscribe;
+  }
+  
+  /**
+   * 이벤트를 한 번만 수신합니다.
+   * @param {string} eventName - 구독할 이벤트 이름
+   * @param {Function} handler - 이벤트 핸들러
+   */
+  onEventOnce(eventName, handler) {
+    const wrappedHandler = (...args) => {
+      handler.apply(this, args);
+    };
+    
+    eventBus.once(eventName, wrappedHandler);
   }
 } 
