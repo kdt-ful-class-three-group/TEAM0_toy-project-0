@@ -59,7 +59,7 @@ export class MainPanel extends BaseComponent {
         }
         
         .completion-message {
-          background-color: var(--color-primary, #4f46e5);
+          background-color: var(--color-primary, #4a6e5a);
           color: var(--color-white, #ffffff);
           padding: var(--space-4, 16px);
           border-radius: var(--radius-md, 6px);
