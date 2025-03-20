@@ -102,8 +102,8 @@ export class TotalMembersConfig extends HTMLElement {
         
         .input:focus {
           outline: none;
-          border-color: #4f46e5;
-          box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.25);
+          border-color: #4a6e5a;
+          box-shadow: 0 0 0 2px rgba(74, 110, 90, 0.25);
         }
         
         .input::placeholder {
@@ -124,7 +124,7 @@ export class TotalMembersConfig extends HTMLElement {
         .btn {
           display: inline-block;
           padding: 12px 16px;
-          background-color: #4f46e5;
+          background-color: #4a6e5a;
           color: white;
           border: none;
           border-radius: 6px;
@@ -136,7 +136,7 @@ export class TotalMembersConfig extends HTMLElement {
         }
         
         .btn:hover {
-          background-color: #4338ca;
+          background-color: #3c5c4a;
         }
         
         .btn:disabled {
