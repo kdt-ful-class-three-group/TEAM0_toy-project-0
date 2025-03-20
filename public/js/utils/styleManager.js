@@ -105,7 +105,7 @@ export class StyleManager {
       
       /* 포커스 유틸리티 */
       .focus-visible {
-        outline: 2px solid var(--color-primary, #4f46e5);
+        outline: 2px solid var(--color-primary, #4a6e5a);
         outline-offset: 2px;
       }
     `;
