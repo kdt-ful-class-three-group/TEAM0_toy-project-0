@@ -93,7 +93,7 @@ export class MemberList extends BaseComponent {
           height: 24px;
           border-radius: 50%;
           border: 3px solid rgba(255, 255, 255, 0.1);
-          border-top-color: #4f46e5;
+          border-top-color: #4a6e5a;
           animation: spinner 0.8s linear infinite;
         }
         
