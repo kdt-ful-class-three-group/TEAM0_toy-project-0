@@ -293,14 +293,14 @@ export const teamConfigStyles = `
   
   .form-input:focus {
     outline: none;
-    border-color: #4f46e5;
-    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.25);
+    border-color: #4a6e5a;
+    box-shadow: 0 0 0 2px rgba(74, 110, 90, 0.25);
   }
   
   .form-button {
     display: inline-block;
     padding: 12px 16px;
-    background-color: #4f46e5;
+    background-color: #4a6e5a;
     color: white;
     border: none;
     border-radius: 6px;
@@ -313,7 +313,7 @@ export const teamConfigStyles = `
   }
   
   .form-button:hover {
-    background-color: #4338ca;
+    background-color: #3c5c4a;
   }
   
   .form-button:disabled {
@@ -377,14 +377,14 @@ export const memberInputStyles = `
   
   .member-input__field:focus {
     outline: none;
-    border-color: #4f46e5;
-    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.25);
+    border-color: #4a6e5a;
+    box-shadow: 0 0 0 2px rgba(74, 110, 90, 0.25);
   }
   
   .member-input__button {
     display: inline-block;
     padding: 12px 16px;
-    background-color: #4f46e5;
+    background-color: #4a6e5a;
     color: white;
     border: none;
     border-radius: 6px;
@@ -396,7 +396,7 @@ export const memberInputStyles = `
   }
   
   .member-input__button:hover {
-    background-color: #4338ca;
+    background-color: #3c5c4a;
   }
   
   .member-input__status {
