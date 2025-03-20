@@ -214,7 +214,7 @@ export class TeamResult extends BaseComponent {
         .btn {
           display: inline-block;
           padding: 12px 16px;
-          background-color: #4f46e5;
+          background-color: #4a6e5a;
           color: white;
           border: none;
           border-radius: 6px;
@@ -226,7 +226,7 @@ export class TeamResult extends BaseComponent {
         }
         
         .btn:hover {
-          background-color: #4338ca;
+          background-color: #3c5c4a;
         }
         
         .btn:disabled {
