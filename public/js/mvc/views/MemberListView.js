@@ -99,7 +99,7 @@ export class MemberListView {
           }
           
           .member-count {
-            background-color: #4f46e5;
+            background-color: #4a6e5a;
             color: white;
             padding: 4px 10px;
             border-radius: 50px;
@@ -163,13 +163,13 @@ export class MemberListView {
           
           .member-input:focus {
             outline: none;
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.25);
+            border-color: #4a6e5a;
+            box-shadow: 0 0 0 2px rgba(74, 110, 90, 0.25);
           }
           
           .add-member-button {
             padding: 10px 16px;
-            background-color: #4f46e5;
+            background-color: #4a6e5a;
             color: white;
             border: none;
             border-radius: 6px;
@@ -179,7 +179,7 @@ export class MemberListView {
           }
           
           .add-member-button:hover {
-            background-color: #4338ca;
+            background-color: #3c5c4a;
           }
           
           .add-member-button:disabled,
@@ -241,7 +241,7 @@ export class MemberListView {
           }
           
           .member-suffix-numeric {
-            color: #4f46e5;
+            color: #4a6e5a;
             font-weight: 400;
             opacity: 0.9;
           }
@@ -297,7 +297,7 @@ export class MemberListView {
           
           /* 편집 모드 */
           .member-item.editing {
-            background-color: rgba(79, 70, 229, 0.1);
+            background-color: rgba(74, 110, 90, 0.1);
             padding: 18px 16px;
           }
           
@@ -318,8 +318,8 @@ export class MemberListView {
           
           .suffix-input:focus {
             outline: none;
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.25);
+            border-color: #4a6e5a;
+            box-shadow: 0 0 0 2px rgba(74, 110, 90, 0.25);
           }
           
           .edit-actions {
@@ -329,7 +329,7 @@ export class MemberListView {
           }
           
           .confirm-button {
-            background-color: #4f46e5;
+            background-color: #4a6e5a;
             color: white;
             border: none;
             padding: 8px 16px;
@@ -340,7 +340,7 @@ export class MemberListView {
           }
           
           .confirm-button:hover {
-            background-color: #4338ca;
+            background-color: #3c5c4a;
           }
           
           .cancel-button {
