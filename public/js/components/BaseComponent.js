@@ -108,7 +108,7 @@ export class BaseComponent extends HTMLElement {
           --color-text-primary: #ffffff;
           --color-text-secondary: #b3b3b3;
           --color-text-tertiary: #888888;
-          --color-primary: #4f46e5;
+          --color-primary: #4a6e5a;
           --color-border: #333333;
           --color-border-light: #444444;
           
