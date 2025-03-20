@@ -18,9 +18,9 @@
   --color-border: #dddddd;
   
   /* 브랜드 색상 (테마에 상관없이 일정하게 유지) */
-  --color-primary: #4f46e5;
-  --color-primary-hover: #4338ca;
-  --color-primary-light: rgba(79, 70, 229, 0.1);
+  --color-primary: #4a6e5a;
+  --color-primary-hover: #3c5c4a;
+  --color-primary-light: rgba(74, 110, 90, 0.1);
   
   --color-success: #36B37E;
   --color-success-light: rgba(54, 179, 126, 0.1);
@@ -82,12 +82,12 @@
     --button-secondary-bg: rgba(255, 255, 255, 0.06);
     
     /* 특수 컴포넌트 색상 - 다크 모드 */
-    --tag-bg: rgba(79, 70, 229, 0.2);
-    --tag-text: #6366f1;
+    --tag-bg: rgba(74, 110, 90, 0.2);
+    --tag-text: #5c8a70;
     
     --member-suffix-text: rgba(255, 255, 255, 0.6);
     --member-suffix-bg: rgba(255, 255, 255, 0.08);
-    --member-suffix-numeric: #4f46e5;
+    --member-suffix-numeric: #4a6e5a;
   }
 }
 
@@ -136,10 +136,10 @@
   --button-secondary-bg: rgba(255, 255, 255, 0.06);
   
   /* 특수 컴포넌트 색상 - 다크 모드 */
-  --tag-bg: rgba(79, 70, 229, 0.2);
-  --tag-text: #6366f1;
+  --tag-bg: rgba(74, 110, 90, 0.2);
+  --tag-text: #5c8a70;
   
   --member-suffix-text: rgba(255, 255, 255, 0.6);
   --member-suffix-bg: rgba(255, 255, 255, 0.08);
-  --member-suffix-numeric: #4f46e5;
+  --member-suffix-numeric: #4a6e5a;
 } 

@@ -4,8 +4,9 @@
   --color-dark-2: #1e1e1e;
   --color-dark-3: #252526;
   --color-dark-4: rgba(255, 255, 255, 0.06);
-  --color-primary: #4f46e5;
-  --color-primary-hover: #4338ca;
+  --color-primary: #4a6e5a;
+  --color-primary-hover: #3c5c4a;
+  --color-primary-light: rgba(74, 110, 90, 0.2);
   --color-error: rgba(239, 68, 68, 0.2);
   --color-error-border: #ef4444;
   --color-white: #ffffff;
