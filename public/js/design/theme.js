@@ -29,9 +29,9 @@ export const themeVariables = {
       focus: 'rgba(255, 255, 255, 0.2)'
     },
     accent: {
-      primary: '#4f46e5',
-      secondary: '#4338ca',
-      tertiary: 'rgba(79, 70, 229, 0.2)'
+      primary: '#4a6e5a',
+      secondary: '#3c5c4a',
+      tertiary: 'rgba(74, 110, 90, 0.2)'
     },
     feedback: {
       success: '#4ade80',
