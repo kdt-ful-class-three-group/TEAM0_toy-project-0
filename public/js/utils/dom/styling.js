@@ -3,7 +3,7 @@
  * @description DOM 요소의 스타일링을 처리하는 통합 유틸리티 함수
  */
 
-import { createStyles } from '../../utils/styleManager.js';
+import { createStyles } from '../style/styleManager.js';
 import { createElement, setStyles, addClass, removeClass } from './manipulation.js';
 
 /**

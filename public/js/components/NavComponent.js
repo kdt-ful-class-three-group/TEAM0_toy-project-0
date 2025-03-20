@@ -1,6 +1,6 @@
 import { BaseComponent } from './BaseComponent.js';
 import { renderNavigator } from '../renderers/index.js';
-import { navStyles } from '../styles/componentStyles.js';
+import { navStyles } from '../design/componentStyles.js';
 
 /**
  * 네비게이터 컴포넌트

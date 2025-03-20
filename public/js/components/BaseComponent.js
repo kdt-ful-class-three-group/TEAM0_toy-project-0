@@ -5,7 +5,7 @@
  * @version 1.1.0
  * @author Team0
  */
-import { createStyles } from '../utils/styleManager.js';
+import { createStyles } from '../utils/style/styleManager.js';
 import { debounce, throttle } from '../utils/performance.js';
 import { batchUpdater } from '../utils/domOptimizer.js';
 import eventBus from '../utils/EventBus.js';

@@ -1,7 +1,9 @@
 /**
- * @file styleManager.js
+ * @file utils/style/styleManager.js
  * @description 웹 컴포넌트 스타일 관리를 위한 유틸리티
  */
+
+import { themeVariables } from '../../design/core/theme.js';
 
 /**
  * @class StyleManager
@@ -76,10 +78,10 @@ export class StyleManager {
     return `
       /* 공통 변수 */
       :host {
-        --component-padding: var(--space-4, 1rem);
-        --component-margin: var(--space-4, 1rem);
-        --component-border-radius: var(--radius-md, 0.375rem);
-        --component-box-shadow: var(--shadow-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
+        --component-padding: var(--spacing-md, 1rem);
+        --component-margin: var(--spacing-md, 1rem);
+        --component-border-radius: var(--layout-borderRadius-md, 0.375rem);
+        --component-box-shadow: var(--shadows-sm, 0 1px 2px 0 rgba(0, 0, 0, 0.05));
       }
       
       /* 공통 스타일 */
@@ -105,7 +107,7 @@ export class StyleManager {
       
       /* 포커스 유틸리티 */
       .focus-visible {
-        outline: 2px solid var(--color-primary, #4a6e5a);
+        outline: 2px solid var(--colors-accent-primary, #4a6e5a);
         outline-offset: 2px;
       }
     `;
@@ -122,38 +124,38 @@ export class StyleManager {
       .flex-col { flex-direction: column; }
       .items-center { align-items: center; }
       .justify-between { justify-content: space-between; }
-      .gap-1 { gap: var(--space-1, 0.25rem); }
-      .gap-2 { gap: var(--space-2, 0.5rem); }
-      .gap-4 { gap: var(--space-4, 1rem); }
+      .gap-1 { gap: var(--spacing-xs, 0.25rem); }
+      .gap-2 { gap: var(--spacing-sm, 0.5rem); }
+      .gap-4 { gap: var(--spacing-md, 1rem); }
       
       /* 여백 유틸리티 */
-      .mt-1 { margin-top: var(--space-1, 0.25rem); }
-      .mt-2 { margin-top: var(--space-2, 0.5rem); }
-      .mb-2 { margin-bottom: var(--space-2, 0.5rem); }
-      .mb-4 { margin-bottom: var(--space-4, 1rem); }
+      .mt-1 { margin-top: var(--spacing-xs, 0.25rem); }
+      .mt-2 { margin-top: var(--spacing-sm, 0.5rem); }
+      .mb-2 { margin-bottom: var(--spacing-sm, 0.5rem); }
+      .mb-4 { margin-bottom: var(--spacing-md, 1rem); }
       
       /* 패딩 유틸리티 */
-      .p-2 { padding: var(--space-2, 0.5rem); }
-      .p-4 { padding: var(--space-4, 1rem); }
-      .px-2 { padding-left: var(--space-2, 0.5rem); padding-right: var(--space-2, 0.5rem); }
-      .py-1 { padding-top: var(--space-1, 0.25rem); padding-bottom: var(--space-1, 0.25rem); }
+      .p-2 { padding: var(--spacing-sm, 0.5rem); }
+      .p-4 { padding: var(--spacing-md, 1rem); }
+      .px-2 { padding-left: var(--spacing-sm, 0.5rem); padding-right: var(--spacing-sm, 0.5rem); }
+      .py-1 { padding-top: var(--spacing-xs, 0.25rem); padding-bottom: var(--spacing-xs, 0.25rem); }
       
       /* 텍스트 유틸리티 */
-      .text-sm { font-size: var(--text-sm, 0.875rem); }
-      .text-lg { font-size: var(--text-lg, 1.125rem); }
-      .font-bold { font-weight: 700; }
+      .text-sm { font-size: var(--typography-fontSize-sm, 0.875rem); }
+      .text-lg { font-size: var(--typography-fontSize-lg, 1.125rem); }
+      .font-bold { font-weight: var(--typography-fontWeight-bold, 700); }
       .text-center { text-align: center; }
       
       /* 색상 유틸리티 */
-      .text-primary { color: var(--color-text-primary, #1a202c); }
-      .text-secondary { color: var(--color-text-secondary, #4a5568); }
-      .bg-primary { background-color: var(--color-bg-primary, #ffffff); }
-      .bg-secondary { background-color: var(--color-bg-secondary, #f7fafc); }
+      .text-primary { color: var(--colors-text-primary, #ffffff); }
+      .text-secondary { color: var(--colors-text-secondary, rgba(255, 255, 255, 0.7)); }
+      .bg-primary { background-color: var(--colors-background-primary, #121212); }
+      .bg-secondary { background-color: var(--colors-background-secondary, #1a1a1a); }
       
       /* 경계선 유틸리티 */
-      .border { border: 1px solid var(--color-border, #e2e8f0); }
-      .rounded { border-radius: var(--radius-md, 0.375rem); }
-      .rounded-sm { border-radius: var(--radius-sm, 0.25rem); }
+      .border { border: 1px solid var(--colors-border-primary, rgba(255, 255, 255, 0.1)); }
+      .rounded { border-radius: var(--layout-borderRadius-md, 0.375rem); }
+      .rounded-sm { border-radius: var(--layout-borderRadius-sm, 0.25rem); }
     `;
   }
   
@@ -164,8 +166,8 @@ export class StyleManager {
   static getAnimationStyles() {
     return `
       /* 트랜지션 */
-      .transition { transition: all 0.3s ease; }
-      .transition-fast { transition: all 0.15s ease; }
+      .transition { transition: all var(--animation-duration-normal, 0.3s) var(--animation-timing-ease, ease); }
+      .transition-fast { transition: all var(--animation-duration-fast, 0.15s) var(--animation-timing-ease, ease); }
       
       /* 애니메이션 */
       @keyframes fadeIn {
@@ -178,9 +180,62 @@ export class StyleManager {
         to { transform: translateY(0); opacity: 1; }
       }
       
-      .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
-      .animate-slide-in-up { animation: slideInUp 0.3s ease-out; }
+      .animate-fade-in { animation: fadeIn var(--animation-duration-normal, 0.3s) var(--animation-timing-easeOut, ease-out); }
+      .animate-slide-in-up { animation: slideInUp var(--animation-duration-normal, 0.3s) var(--animation-timing-easeOut, ease-out); }
     `;
+  }
+
+  /**
+   * 테마 변수를 스타일로 변환합니다.
+   * @returns {string} 테마 변수 스타일 문자열
+   */
+  static getThemeVariableStyles() {
+    const variables = themeVariables || {};
+    const cssVars = [];
+
+    // 색상 변수
+    if (variables.colors) {
+      Object.entries(variables.colors).forEach(([category, colors]) => {
+        Object.entries(colors).forEach(([name, value]) => {
+          cssVars.push(`--colors-${category}-${name}: ${value};`);
+        });
+      });
+    }
+
+    // 간격 변수
+    if (variables.spacing) {
+      Object.entries(variables.spacing).forEach(([name, value]) => {
+        cssVars.push(`--spacing-${name}: ${value};`);
+      });
+    }
+
+    // 타이포그래피 변수
+    if (variables.typography) {
+      if (variables.typography.fontFamily) {
+        cssVars.push(`--typography-fontFamily: ${variables.typography.fontFamily};`);
+      }
+      
+      if (variables.typography.fontSize) {
+        Object.entries(variables.typography.fontSize).forEach(([name, value]) => {
+          cssVars.push(`--typography-fontSize-${name}: ${value};`);
+        });
+      }
+      
+      if (variables.typography.fontWeight) {
+        Object.entries(variables.typography.fontWeight).forEach(([name, value]) => {
+          cssVars.push(`--typography-fontWeight-${name}: ${value};`);
+        });
+      }
+    }
+
+    // 레이아웃 변수
+    if (variables.layout && variables.layout.borderRadius) {
+      Object.entries(variables.layout.borderRadius).forEach(([name, value]) => {
+        cssVars.push(`--layout-borderRadius-${name}: ${value};`);
+      });
+    }
+
+    return `:host {\n  ${cssVars.join('\n  ')}\n}`;
   }
 }
 
@@ -198,6 +253,7 @@ const styleCache = new Map();
  * @param {boolean} [options.useCommon=true] - 공통 스타일 사용 여부
  * @param {boolean} [options.useUtility=true] - 유틸리티 클래스 사용 여부
  * @param {boolean} [options.useAnimation=false] - 애니메이션 스타일 사용 여부
+ * @param {boolean} [options.useThemeVars=true] - 테마 변수 사용 여부
  * @returns {string} 완성된 스타일 문자열
  */
 export function createStyles(options) {
@@ -206,19 +262,28 @@ export function createStyles(options) {
     styles = '', 
     useCommon = true, 
     useUtility = true, 
-    useAnimation = false 
+    useAnimation = false,
+    useThemeVars = true
   } = options;
   
   // 캐시 키 생성
-  const cacheKey = `${name}-${useCommon}-${useUtility}-${useAnimation}`;
+  const cacheKey = `${name}-${useCommon}-${useUtility}-${useAnimation}-${useThemeVars}`;
   
   // 캐시된 스타일이 있으면 반환
   if (styleCache.has(cacheKey)) {
     return styleCache.get(cacheKey);
   }
   
+  // 스타일 생성 시작
+  let fullStyles = '';
+  
+  // 테마 변수 추가
+  if (useThemeVars) {
+    fullStyles += StyleManager.getThemeVariableStyles();
+  }
+  
   // 컴포넌트 스타일 생성
-  let fullStyles = StyleManager.createComponentStyle({ 
+  fullStyles += StyleManager.createComponentStyle({ 
     name, 
     styles,
     useVars: true
@@ -226,7 +291,7 @@ export function createStyles(options) {
   
   // 공통 스타일 추가
   if (useCommon) {
-    fullStyles = StyleManager.getCommonStyles() + fullStyles;
+    fullStyles += StyleManager.getCommonStyles();
   }
   
   // 유틸리티 클래스 추가
@@ -243,4 +308,9 @@ export function createStyles(options) {
   styleCache.set(cacheKey, fullStyles);
   
   return fullStyles;
-} 
+}
+
+export default {
+  StyleManager,
+  createStyles
+};

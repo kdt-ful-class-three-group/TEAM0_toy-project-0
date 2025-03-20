@@ -16,7 +16,7 @@ export * from './teamUtils.js';
 export * from './stringUtils.js';
 export * from './errorHandler.js';
 export * from './performance.js';
-export * from './styleManager.js';
+export * from './style/index.js';
 
 // 기존 모듈 가져오기 (하위 호환성 유지)
 import * as validation from './validation.js';
@@ -24,7 +24,7 @@ import * as memberUtils from './memberUtils.js';
 import * as teamUtils from './teamUtils.js';
 import * as stringUtils from './stringUtils.js';
 import * as performance from './performance.js';
-import * as styleManager from './styleManager.js';
+import * as styleManager from './style/styleManager.js';
 
 // 코어 유틸리티
 import * as functionalUtils from './core/functional.js';

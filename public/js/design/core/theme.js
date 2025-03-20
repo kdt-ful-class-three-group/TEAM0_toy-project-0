@@ -1,6 +1,6 @@
 /**
- * @file theme.js
- * @description 애플리케이션의 테마 시스템 및 디자인 변수를 정의합니다.
+ * @file design/core/theme.js
+ * @description 애플리케이션의 테마 시스템 및 디자인 변수를 정의하는 중앙 모듈
  */
 
 /**
@@ -317,4 +317,4 @@ export const applyThemeToDocument = (targetSelector = ':root') => {
 export const initializeTheme = () => {
   applyThemeToDocument();
   console.log('테마 시스템이 초기화되었습니다.');
-}; 
+};

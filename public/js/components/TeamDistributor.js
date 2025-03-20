@@ -1,6 +1,6 @@
 import { BaseComponent } from './BaseComponent.js';
 import store from '../store/index.js';
-import { teamDistributorStyles } from '../styles/componentStyles.js';
+import { teamDistributorStyles } from '../design/componentStyles.js';
 
 /**
  * 메인 컴포넌트

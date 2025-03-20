@@ -4,7 +4,7 @@
  */
 
 import { BaseComponent } from '../BaseComponent.js';
-import { formPanelStyles } from '../../styles/componentStyles.js';
+import { formPanelStyles } from '../../design/componentStyles.js';
 
 /**
  * 폼 요소들을 한 패널에 통합하는 컴포넌트
