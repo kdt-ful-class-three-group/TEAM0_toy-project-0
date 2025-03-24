@@ -43,8 +43,8 @@ export class Server {
    * 서버 시작
    */
   start() {
-    this.server.listen(3030, '0.0.0.0', () => {
-      console.log(`서버가 http://0.0.0.0:${this.port}/ 에서 실행 중입니다.`);
+    this.server.listen(this.port, () => {
+      console.log(`서버가 http://localhost:${this.port}/ 에서 실행 중입니다.`);
       console.log(`정적 파일 제공 경로: ${this.publicDir}`);
       console.log(`캐시 활성화 모드로 실행 중 (${SERVER_CONFIG.CACHE_DURATION}초 기간)`);
     });
