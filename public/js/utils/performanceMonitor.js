@@ -703,5 +703,4 @@ if (!window.__PERFORMANCE_MONITOR_INITIALIZED__) {
   }
 }
 
-export { PerformanceMonitor };
 export default performanceMonitor; 
