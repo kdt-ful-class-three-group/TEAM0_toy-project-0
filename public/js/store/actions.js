@@ -3,11 +3,6 @@
  * @description 애플리케이션의 액션 타입과 액션 생성자 함수를 정의합니다.
  */
 
-/**
- * @file actions.js
- * @description 애플리케이션의 액션 타입과 액션 생성자 함수를 정의합니다.
- */
-
 // 액션 타입 상수
 export const ACTION_TYPES = {
   // 멤버 관련 액션
