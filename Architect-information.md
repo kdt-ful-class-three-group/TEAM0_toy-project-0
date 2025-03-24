@@ -1,17 +1,20 @@
 # 프로젝트 아키텍처 정보
 
 ## 프로젝트 개요
-이 프로젝트는 정적 파일 서버를 구현한 웹 애플리케이션입니다. 서버는 정적 파일을 효율적으로 제공하고, 클라이언트는 모던한 UI/UX를 제공합니다.
+이 프로젝트는 정적 파일 서버와 팀 분배 시스템을 구현한 웹 애플리케이션입니다. 서버는 정적 파일을 효율적으로 제공하고, 클라이언트는 모던한 UI/UX를 제공합니다.
 
 ## 문서 인덱스
 - [1. Server 영역](#1-server-영역-src)
-  - [1.1 설정](#11-설정-srcconfig)
-  - [1.2 컨트롤러](#12-컨트롤러-srccontrollers)
-  - [1.3 서비스](#13-서비스-srcservices)
-  - [1.4 모델](#14-모델-srcmodels)
-  - [1.5 유틸리티](#15-유틸리티-srcutils)
 - [2. Front-end 영역](#2-front-end-영역-public)
 - [3. 데이터 영역](#3-데이터-영역-data)
+- [4. 컴포넌트 영역](#4-컴포넌트-영역-components)
+- [5. 스타일 영역](#5-스타일-영역-styles)
+- [6. 프로젝트 관리](#6-프로젝트-관리-project-management)
+
+## 관련 문서
+- [ARCHITECTURE.md](ARCHITECTURE.md): 상세 아키텍처 설계
+- [MODULARIZATION.md](MODULARIZATION.md): 모듈화 가이드라인
+- [Optimization.md](Optimization.md): 성능 최적화 전략
 
 ## 디렉토리 구조
 
@@ -94,6 +97,35 @@
   - `teamSettings.js` [ID: `data/teams/teamSettings`]
   - `teamAnalytics.js` [ID: `data/teams/teamAnalytics`]
 
+### 4. 컴포넌트 영역 (`/components`)
+웹 컴포넌트 기반의 UI 요소들을 담당하는 디렉토리입니다.
+
+#### 4.1 기본 컴포넌트
+- `BaseComponent.js`: 모든 컴포넌트의 기본 클래스
+- `TeamDistributor.js`: 메인 컴포넌트
+- `MemberList.js`: 멤버 관리 컴포넌트
+
+#### 4.2 폼 컴포넌트
+- `form/`
+  - `FormPanel.js`: 폼 패널 컴포넌트
+  - `MainPanel.js`: 메인 패널 컴포넌트
+  - `MemberInput.js`: 멤버 입력 컴포넌트
+  - `TeamConfig.js`: 팀 설정 컴포넌트
+  - `TeamInput.js`: 팀 입력 컴포넌트
+  - `TeamResult.js`: 팀 결과 컴포넌트
+  - `TotalMembersConfig.js`: 총 멤버 수 설정 컴포넌트
+
+### 5. 스타일 영역 (`/styles`)
+애플리케이션의 스타일 관련 파일을 담당하는 디렉토리입니다.
+
+#### 5.1 스타일 컴포넌트
+- `theme.js`: 전역 테마 설정
+- `animations.js`: 애니메이션 정의
+- `componentStyles.js`: 컴포넌트별 스타일
+
+### 6. 프로젝트 관리 (`/project-management`)
+프로젝트 관리 및 문서화 관련 파일을 담당하는 디렉토리입니다.
+
 ## 주요 기능 흐름
 
 1. 클라이언트 요청 처리 [ID: `flow/clientRequest`]
@@ -124,10 +156,7 @@
 - 에러 메시지 노출 제한 [ID: `security/error`]
 
 ## 성능 최적화 [ID: `performance`]
-- 캐시 전략 [ID: `performance/cache`]
-- 파일 전송 최적화 [ID: `performance/transfer`]
-- 에러 처리 효율화 [ID: `performance/error`]
-- 비동기 처리 [ID: `performance/async`]
+자세한 내용은 [Optimization.md](Optimization.md) 문서를 참조하세요.
 
 ## 개발 가이드라인 [ID: `guidelines`]
 1. 코드 스타일 [ID: `guidelines/style`]
