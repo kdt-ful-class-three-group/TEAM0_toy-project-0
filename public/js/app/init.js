@@ -7,6 +7,7 @@ import eventBus from '../utils/EventBus.js';
 import { themeManager } from '../utils/themeManager.js';
 import store from '../store/index.js';
 import { measurePerformance } from '../utils/performance.js';
+import { registerComponents } from '../components/index.js';
 
 /**
  * @function initializeEventBus
@@ -103,6 +104,9 @@ export const init = measurePerformance(function() {
  */
 export const domLoadHandler = () => {
   init();
+  
+  // 웹 컴포넌트 등록
+  registerComponents();
   
   // 상태 저장을 위한 윈도우 닫힘 이벤트
   window.addEventListener('beforeunload', () => {
