@@ -449,74 +449,130 @@ export const memberInputStyles = `
 `;
 
 /**
- * TeamResult의 스타일
- * @type {string}
+ * 팀 결과 컴포넌트 스타일
  */
-export const teamResultStyles = `
-  :host {
-    display: block;
+export const teamResultThemeStyles = `
+  ${createThemeStyles()}
+  
+  .team-result-container {
+    padding: 0;
+    margin-bottom: var(--spacing-md);
   }
   
-  .team-result {
-    background-color: var(--color-dark-3);
-    border-radius: var(--radius-md);
-    padding: var(--space-4);
+  .card {
+    background-color: var(--colors-background-secondary);
+    border-radius: var(--layout-borderRadius-md);
+    overflow: hidden;
   }
   
-  .team-result__header {
-    margin-bottom: var(--space-4);
+  .card.animate {
+    animation: fadeIn var(--animation-duration-normal) var(--animation-timing-ease);
   }
   
-  .team-result__title {
-    font-size: var(--text-lg);
-    font-weight: 600;
-    color: var(--color-text-primary);
-    margin-bottom: var(--space-2);
+  .card__content {
+    padding: var(--spacing-md);
   }
   
-  .team-result__description {
-    font-size: var(--text-sm);
-    color: var(--color-text-secondary);
+  .card__title {
+    font-size: var(--typography-fontSize-lg);
+    font-weight: var(--typography-fontWeight-semibold);
+    color: var(--colors-text-primary);
+    margin: 0 0 var(--spacing-md) 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
   
-  .team-grid {
+  .team-info {
+    font-size: var(--typography-fontSize-sm);
+    color: var(--colors-text-secondary);
+    font-weight: var(--typography-fontWeight-regular);
+  }
+  
+  .status-message {
+    font-size: var(--typography-fontSize-sm);
+    color: var(--colors-text-tertiary);
+    text-align: center;
+    padding: var(--spacing-md) 0;
+    margin-bottom: var(--spacing-md);
+  }
+  
+  .status-message.success {
+    color: var(--colors-feedback-success);
+  }
+  
+  .team-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 150px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-radius: var(--layout-borderRadius-md);
+    padding: var(--spacing-lg);
+    margin-top: var(--spacing-md);
+  }
+  
+  .placeholder-item {
+    color: var(--colors-text-tertiary);
+    font-size: var(--typography-fontSize-sm);
+    text-align: center;
+  }
+  
+  .team-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: var(--space-4);
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
   }
   
-  .team-card {
-    background-color: var(--color-dark-2);
-    border-radius: var(--radius-md);
-    padding: var(--space-4);
-    border: 1px solid var(--color-border);
+  .team-item {
+    background-color: rgba(255, 255, 255, 0.03);
+    border-radius: var(--layout-borderRadius-md);
+    padding: var(--spacing-md);
+    border: 1px solid var(--colors-border-primary);
   }
   
-  .team-card__header {
-    margin-bottom: var(--space-3);
-    border-bottom: 1px solid var(--color-border);
-    padding-bottom: var(--space-2);
+  .team-item__title {
+    font-size: var(--typography-fontSize-md);
+    font-weight: var(--typography-fontWeight-semibold);
+    color: var(--colors-text-primary);
+    margin: 0 0 var(--spacing-sm) 0;
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--colors-border-primary);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
   
-  .team-card__title {
-    font-size: var(--text-md);
-    font-weight: 600;
-    color: var(--color-text-primary);
+  .team-size {
+    font-size: var(--typography-fontSize-xs);
+    color: var(--colors-text-tertiary);
+    font-weight: var(--typography-fontWeight-regular);
   }
   
-  .team-card__member-list {
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
+  .team-item__members {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
   }
   
-  .team-card__member-item {
-    padding: var(--space-2);
-    border-bottom: 1px solid var(--color-border-light);
+  .team-item__member {
+    font-size: var(--typography-fontSize-sm);
+    color: var(--colors-text-secondary);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background-color: rgba(255, 255, 255, 0.04);
+    border-radius: var(--layout-borderRadius-sm);
+    transition: background-color var(--animation-duration-normal) var(--animation-timing-ease);
   }
   
-  .team-card__member-item:last-child {
-    border-bottom: none;
+  .team-item__member:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+  }
+  
+  .button-group {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
   }
 `;
 
@@ -783,137 +839,9 @@ export const memberListStyles = `
 `;
 
 /**
- * 팀 결과 컴포넌트 스타일
- */
-export const teamResultStyles = `
-  ${createThemeStyles()}
-  
-  .team-result-container {
-    padding: 0;
-    margin-bottom: var(--spacing-md);
-  }
-  
-  .card {
-    background-color: var(--colors-background-secondary);
-    border-radius: var(--layout-borderRadius-md);
-    overflow: hidden;
-  }
-  
-  .card.animate {
-    animation: fadeIn var(--animation-duration-normal) var(--animation-timing-ease);
-  }
-  
-  .card__content {
-    padding: var(--spacing-md);
-  }
-  
-  .card__title {
-    font-size: var(--typography-fontSize-lg);
-    font-weight: var(--typography-fontWeight-semibold);
-    color: var(--colors-text-primary);
-    margin: 0 0 var(--spacing-md) 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  
-  .team-info {
-    font-size: var(--typography-fontSize-sm);
-    color: var(--colors-text-secondary);
-    font-weight: var(--typography-fontWeight-regular);
-  }
-  
-  .status-message {
-    font-size: var(--typography-fontSize-sm);
-    color: var(--colors-text-tertiary);
-    text-align: center;
-    padding: var(--spacing-md) 0;
-    margin-bottom: var(--spacing-md);
-  }
-  
-  .status-message.success {
-    color: var(--colors-feedback-success);
-  }
-  
-  .team-placeholder {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 150px;
-    background-color: rgba(255, 255, 255, 0.03);
-    border-radius: var(--layout-borderRadius-md);
-    padding: var(--spacing-lg);
-    margin-top: var(--spacing-md);
-  }
-  
-  .placeholder-item {
-    color: var(--colors-text-tertiary);
-    font-size: var(--typography-fontSize-sm);
-    text-align: center;
-  }
-  
-  .team-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: var(--spacing-md);
-    margin-top: var(--spacing-md);
-  }
-  
-  .team-item {
-    background-color: rgba(255, 255, 255, 0.03);
-    border-radius: var(--layout-borderRadius-md);
-    padding: var(--spacing-md);
-    border: 1px solid var(--colors-border-primary);
-  }
-  
-  .team-item__title {
-    font-size: var(--typography-fontSize-md);
-    font-weight: var(--typography-fontWeight-semibold);
-    color: var(--colors-text-primary);
-    margin: 0 0 var(--spacing-sm) 0;
-    padding-bottom: var(--spacing-sm);
-    border-bottom: 1px solid var(--colors-border-primary);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  
-  .team-size {
-    font-size: var(--typography-fontSize-xs);
-    color: var(--colors-text-tertiary);
-    font-weight: var(--typography-fontWeight-regular);
-  }
-  
-  .team-item__members {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-sm);
-  }
-  
-  .team-item__member {
-    font-size: var(--typography-fontSize-sm);
-    color: var(--colors-text-secondary);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    background-color: rgba(255, 255, 255, 0.04);
-    border-radius: var(--layout-borderRadius-sm);
-    transition: background-color var(--animation-duration-normal) var(--animation-timing-ease);
-  }
-  
-  .team-item__member:hover {
-    background-color: rgba(255, 255, 255, 0.08);
-  }
-  
-  .button-group {
-    display: flex;
-    gap: var(--spacing-sm);
-    margin-top: var(--spacing-md);
-  }
-`;
-
-/**
  * 폼 패널 컴포넌트 스타일
  */
-export const formPanelStyles = `
+export const formPanelThemeStyles = `
   ${createThemeStyles()}
   
   .form-panel {
@@ -989,7 +917,7 @@ export const formPanelStyles = `
 /**
  * 팀 디스트리뷰터 컴포넌트 스타일
  */
-export const teamDistributorStyles = `
+export const teamDistributorThemeStyles = `
   ${createThemeStyles()}
   
   :host {
@@ -1055,7 +983,7 @@ export const teamDistributorStyles = `
 /**
  * 메인 패널 컴포넌트 스타일
  */
-export const mainPanelStyles = `
+export const mainPanelThemeStyles = `
   ${createThemeStyles()}
   
   :host {
@@ -1096,8 +1024,8 @@ export const mainPanelStyles = `
 // 모든 컴포넌트 스타일 내보내기
 export default {
   memberListStyles,
-  teamResultStyles,
-  formPanelStyles,
-  teamDistributorStyles,
-  mainPanelStyles
+  teamResultThemeStyles,
+  formPanelThemeStyles,
+  teamDistributorThemeStyles,
+  mainPanelThemeStyles
 }; 
